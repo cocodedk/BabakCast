@@ -10,15 +10,15 @@ plugins {
 }
 
 // Signing for release: set KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD (e.g. in CI)
-val keystorePath = System.getenv("KEYSTORE_PATH")
-val keystorePassword = System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
-val keyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
-val keyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-val hasSigningConfig = keystorePath != null &&
-    keyAlias != null &&
-    keystorePassword != null &&
-    keyPassword != null &&
-    File(keystorePath).exists()
+val signingKeystorePath = System.getenv("KEYSTORE_PATH")
+val signingKeystorePassword = System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
+val signingKeyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
+val signingKeyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+val hasSigningConfig = signingKeystorePath != null &&
+    signingKeyAlias != null &&
+    signingKeystorePassword != null &&
+    signingKeyPassword != null &&
+    File(signingKeystorePath).exists()
 
 android {
     namespace = "com.cocode.babakcast"
@@ -38,10 +38,10 @@ android {
     signingConfigs {
         if (hasSigningConfig) {
             create("release") {
-                storeFile = file(keystorePath!!)
-                storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
+                storeFile = file(signingKeystorePath!!)
+                storePassword = signingKeystorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
             }
         }
     }
