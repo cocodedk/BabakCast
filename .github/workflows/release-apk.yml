@@ -32,6 +32,15 @@ jobs:
           java-version: 17
           cache: gradle
 
+      - name: Verify signing secrets
+        run: |
+          missing=0
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then echo "Missing or empty secret: KEYSTORE_BASE64"; missing=1; fi
+          if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then echo "Missing or empty secret: KEYSTORE_PASSWORD"; missing=1; fi
+          if [ -z "${{ secrets.KEY_ALIAS }}" ]; then echo "Missing or empty secret: KEY_ALIAS"; missing=1; fi
+          if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then echo "Missing or empty secret: KEY_PASSWORD"; missing=1; fi
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
