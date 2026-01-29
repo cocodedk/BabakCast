@@ -170,14 +170,31 @@ fun SettingsScreen(
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
+
                 Text(
-                    text = "View on GitHub →",
+                    text = "Created by Babak Bandpey",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "cocode.dk",
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 12.sp
                     ),
                     color = BabakCastColors.SecondaryAccent,
-                    modifier = Modifier.clickable { /* TODO: Open GitHub */ }
+                    modifier = Modifier.clickable { /* TODO: Open cocode.dk */ }
+                )
+
+                Text(
+                    text = "cocodedk.github.io/BabakCast",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp
+                    ),
+                    color = BabakCastColors.SecondaryAccent,
+                    modifier = Modifier.clickable { /* TODO: Open GitHub Pages */ }
                 )
             }
         }
