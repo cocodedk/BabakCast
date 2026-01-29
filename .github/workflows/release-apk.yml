@@ -14,6 +14,9 @@ permissions:
 
 env:
   KEYSTORE_PATH: ${{ github.workspace }}/app/release.keystore
+  KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+  KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+  KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
   # Bump version per build: versionCode = run number, versionName = 1.0.<run>
   VERSION_CODE: ${{ github.run_number }}
   VERSION_NAME: "1.0.${{ github.run_number }}"
@@ -49,11 +52,6 @@ jobs:
 
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon
-        env:
-          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

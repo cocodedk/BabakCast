@@ -11,9 +11,9 @@ plugins {
 
 // Signing for release: set KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD (e.g. in CI)
 val keystorePath = System.getenv("KEYSTORE_PATH")
-val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
-val keyAlias = System.getenv("KEY_ALIAS")
-val keyPassword = System.getenv("KEY_PASSWORD")
+val keystorePassword = System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
+val keyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
+val keyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
 val hasSigningConfig = keystorePath != null &&
     keyAlias != null &&
     keystorePassword != null &&
