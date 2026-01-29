@@ -71,6 +71,21 @@ class ShareHelper @Inject constructor(
     }
 
     /**
+     * Share text, falling back to a file if it's too large for some share targets.
+     */
+    fun shareLongText(text: String, title: String = "Share", fileName: String = "summary.txt") {
+        val maxInlineChars = 8000
+        if (text.length <= maxInlineChars) {
+            shareText(text, title)
+            return
+        }
+
+        val cacheFile = File(context.cacheDir, fileName)
+        cacheFile.writeText(text, Charsets.UTF_8)
+        shareFile(cacheFile, "text/plain")
+    }
+
+    /**
      * Share multiple files
      */
     fun shareFiles(files: List<File>, mimeType: String = "video/*", title: String = "Share videos") {

@@ -206,7 +206,7 @@ class MainViewModel @Inject constructor(
     fun shareSummary() {
         val summary = _uiState.value.summary
         if (summary != null) {
-            shareHelper.shareText(summary, "Share Summary")
+            shareHelper.shareLongText(summary, "Share Summary")
         }
     }
 }
