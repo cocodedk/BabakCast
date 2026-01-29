@@ -14,6 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.ui.theme.BabakCastColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,12 +141,12 @@ fun SettingsScreen(
                         shape = MaterialTheme.shapes.medium
                     )
                 }
-                SettingsRow(
-                    label = "Summary Style",
-                    value = "Bullet Points",
-                    onClick = { /* TODO */ },
-                    isFirst = false,
-                    isLast = true
+
+                SummaryLengthRow(
+                    adaptiveEnabled = uiState.adaptiveSummaryLength,
+                    length = uiState.defaultSummaryLength,
+                    onAdaptiveChange = viewModel::updateAdaptiveSummaryLength,
+                    onLengthChange = viewModel::updateDefaultSummaryLength
                 )
             }
 
@@ -355,6 +359,88 @@ private fun SettingsRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun SummaryLengthRow(
+    adaptiveEnabled: Boolean,
+    length: SummaryLength,
+    onAdaptiveChange: (Boolean) -> Unit,
+    onLengthChange: (SummaryLength) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Adaptive length",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Automatically adjust summary length",
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = adaptiveEnabled,
+                    onCheckedChange = onAdaptiveChange
+                )
+            }
+        }
+
+        SettingsRow(
+            label = "Summary length",
+            value = if (adaptiveEnabled) "Automatic" else length.name.lowercase().replaceFirstChar { it.uppercase() },
+            onClick = { if (!adaptiveEnabled) showDialog = true },
+            isFirst = true,
+            isLast = true
+        )
+    }
+
+    if (showDialog && !adaptiveEnabled) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Summary length") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SummaryLength.values().forEach { option ->
+                        TextButton(
+                            onClick = {
+                                onLengthChange(option)
+                                showDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(option.name.lowercase().replaceFirstChar { it.uppercase() })
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
 

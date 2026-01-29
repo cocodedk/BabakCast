@@ -61,7 +61,9 @@ class MainViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
-                progress = 0f
+                progress = 0f,
+                isDownloading = true,
+                isSummarizing = false
             )
 
             youtubeRepository.downloadVideo(url) { progress ->
@@ -73,21 +75,24 @@ class MainViewModel @Inject constructor(
                             onSuccess = { splitVideoInfo ->
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
-                                    videoInfo = splitVideoInfo
+                                    videoInfo = splitVideoInfo,
+                                    isDownloading = false
                                 )
                                 shareHelper.shareVideos(splitVideoInfo)
                             },
                             onFailure = { error ->
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
-                                    error = ErrorHandler.handleException(error)
+                                    error = ErrorHandler.handleException(error),
+                                    isDownloading = false
                                 )
                             }
                         )
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            videoInfo = videoInfo
+                            videoInfo = videoInfo,
+                            isDownloading = false
                         )
                         shareHelper.shareVideos(videoInfo)
                     }
@@ -95,7 +100,8 @@ class MainViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = ErrorHandler.handleException(error)
+                        error = ErrorHandler.handleException(error),
+                        isDownloading = false
                     )
                 }
             )
@@ -115,7 +121,9 @@ class MainViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
-                progress = 0f
+                progress = 0f,
+                isDownloading = false,
+                isSummarizing = true
             )
 
             // Get transcript
@@ -134,34 +142,48 @@ class MainViewModel @Inject constructor(
                     val defaultProvider = providerId?.let {
                         providerRepository.getProviderWithSelectedModel(it)
                     } ?: run {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = AppError.ProviderMisconfigured("No AI provider configured")
-                        )
-                        return@launch
-                    }
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                error = AppError.ProviderMisconfigured("No AI provider configured"),
+                                isSummarizing = false
+                            )
+                            return@launch
+                        }
 
                     // Generate summary
-                    val summaryLanguage = settingsRepository.settings.first().defaultLanguage.ifBlank { "en" }
+                    val settings = settingsRepository.settings.first()
+                    val summaryLanguage = settings.defaultLanguage.ifBlank { "en" }
+                    val summaryLength = if (settings.adaptiveSummaryLength) {
+                        val wordCount = transcript.split(Regex("\\s+")).count { it.isNotBlank() }
+                        when {
+                            wordCount < 800 -> com.cocode.babakcast.data.model.SummaryLength.SHORT
+                            wordCount < 2500 -> com.cocode.babakcast.data.model.SummaryLength.MEDIUM
+                            else -> com.cocode.babakcast.data.model.SummaryLength.LONG
+                        }
+                    } else {
+                        settings.defaultSummaryLength
+                    }
 
                     aiRepository.generateSummary(
                         transcript = transcript,
                         providerId = defaultProvider.id,
                         style = com.cocode.babakcast.data.model.SummaryStyle.BULLET_POINTS,
-                        length = com.cocode.babakcast.data.model.SummaryLength.MEDIUM,
+                        length = summaryLength,
                         language = summaryLanguage,
                         temperature = 0.2
                     ).fold(
                         onSuccess = { summary ->
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
-                                summary = summary
+                                summary = summary,
+                                isSummarizing = false
                             )
                         },
                         onFailure = { error ->
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
-                                error = ErrorHandler.handleException(error)
+                                error = ErrorHandler.handleException(error),
+                                isSummarizing = false
                             )
                         }
                     )
@@ -169,7 +191,8 @@ class MainViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = ErrorHandler.handleException(error)
+                        error = ErrorHandler.handleException(error),
+                        isSummarizing = false
                     )
                 }
             )
@@ -195,6 +218,8 @@ data class MainUiState(
     val videoInfo: com.cocode.babakcast.data.model.VideoInfo? = null,
     val summary: String? = null,
     val error: AppError? = null,
+    val isDownloading: Boolean = false,
+    val isSummarizing: Boolean = false,
     val downloadEngineReady: Boolean = false,
     val downloadEngineError: String? = null
 )

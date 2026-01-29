@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SecureStorage
 import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.Provider
+import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.repository.ProviderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.settings.collect { settings ->
                 _uiState.value = _uiState.value.copy(
-                    defaultLanguage = settings.defaultLanguage
+                    defaultLanguage = settings.defaultLanguage,
+                    adaptiveSummaryLength = settings.adaptiveSummaryLength,
+                    defaultSummaryLength = settings.defaultSummaryLength
                 )
             }
         }
@@ -62,6 +65,20 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(defaultLanguage = language)
         viewModelScope.launch {
             settingsRepository.updateDefaultLanguage(language.trim())
+        }
+    }
+
+    fun updateAdaptiveSummaryLength(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(adaptiveSummaryLength = enabled)
+        viewModelScope.launch {
+            settingsRepository.updateAdaptiveSummaryLength(enabled)
+        }
+    }
+
+    fun updateDefaultSummaryLength(length: SummaryLength) {
+        _uiState.value = _uiState.value.copy(defaultSummaryLength = length)
+        viewModelScope.launch {
+            settingsRepository.updateDefaultSummaryLength(length)
         }
     }
 
@@ -217,7 +234,9 @@ data class SettingsUiState(
     val fetchedModelsProviderId: String? = null,
     val modelsLoading: Boolean = false,
     val modelsError: String? = null,
-    val defaultLanguage: String = "en"
+    val defaultLanguage: String = "en",
+    val adaptiveSummaryLength: Boolean = true,
+    val defaultSummaryLength: SummaryLength = SummaryLength.MEDIUM
 )
 
 data class ProviderState(

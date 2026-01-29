@@ -246,13 +246,25 @@ fun MainScreen(
                         )
                     )
                 ) {
-                    Text(
-                        "Summarize Transcript",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (uiState.isSummarizing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = BabakCastColors.PrimaryAccent
+                            )
+                        }
+                        Text(
+                            if (uiState.isSummarizing) "Summarizing…" else "Summarize Transcript",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            )
                         )
-                    )
+                    }
                 }
             }
 

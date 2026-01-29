@@ -28,6 +28,7 @@ class SettingsRepository @Inject constructor(
     private object Keys {
         val DEFAULT_PROVIDER_ID = stringPreferencesKey("default_provider_id")
         val DEFAULT_LANGUAGE = stringPreferencesKey("default_language")
+        val ADAPTIVE_SUMMARY_LENGTH = booleanPreferencesKey("adaptive_summary_length")
         val DEFAULT_SUMMARY_STYLE = stringPreferencesKey("default_summary_style")
         val DEFAULT_SUMMARY_LENGTH = stringPreferencesKey("default_summary_length")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
@@ -38,6 +39,7 @@ class SettingsRepository @Inject constructor(
         AppSettings(
             defaultProviderId = preferences[Keys.DEFAULT_PROVIDER_ID],
             defaultLanguage = preferences[Keys.DEFAULT_LANGUAGE] ?: "en",
+            adaptiveSummaryLength = preferences[Keys.ADAPTIVE_SUMMARY_LENGTH] ?: true,
             defaultSummaryStyle = SummaryStyle.valueOf(
                 preferences[Keys.DEFAULT_SUMMARY_STYLE] ?: SummaryStyle.BULLET_POINTS.name
             ),
@@ -62,6 +64,12 @@ class SettingsRepository @Inject constructor(
     suspend fun updateDefaultLanguage(language: String) {
         dataStore.edit { preferences ->
             preferences[Keys.DEFAULT_LANGUAGE] = language
+        }
+    }
+
+    suspend fun updateAdaptiveSummaryLength(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[Keys.ADAPTIVE_SUMMARY_LENGTH] = enabled
         }
     }
 
