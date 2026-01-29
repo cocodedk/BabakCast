@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,8 +53,39 @@ class SettingsViewModel @Inject constructor(
             editingApiUrl = provider.api_base_url,
             editingModel = selectedModel,
             showModelDropdown = false,
-            showProviderDialog = true
+            showProviderDialog = true,
+            modelsLoading = false,
+            modelsError = null
         )
+        fetchModelsForProvider(provider.id, currentApiKey)
+    }
+
+    private fun fetchModelsForProvider(providerId: String, apiKey: String?) {
+        _uiState.value = _uiState.value.copy(modelsLoading = true, modelsError = null)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                providerRepository.fetchModelsForProvider(providerId, apiKey.takeIf { !it.isNullOrBlank() })
+            }
+            _uiState.value = _uiState.value.copy(
+                modelsLoading = false,
+                fetchedModels = result.getOrElse { emptyList() },
+                fetchedModelsProviderId = providerId,
+                modelsError = result.exceptionOrNull()?.message
+            )
+        }
+    }
+
+    /**
+     * Models to show in the provider config dialog.
+     * Uses the fetched list when it matches the provider; otherwise falls back to provider.available_models.
+     */
+    fun getModelsForProvider(provider: Provider): List<String> {
+        val state = _uiState.value
+        return if (provider.id == state.fetchedModelsProviderId && state.fetchedModels.isNotEmpty()) {
+            state.fetchedModels
+        } else {
+            provider.available_models
+        }
     }
 
     fun dismissProviderDialog() {
@@ -143,7 +176,11 @@ data class SettingsUiState(
     val editingApiUrl: String = "",
     val editingModel: String = "",
     val showModelDropdown: Boolean = false,
-    val showProviderDialog: Boolean = false
+    val showProviderDialog: Boolean = false,
+    val fetchedModels: List<String> = emptyList(),
+    val fetchedModelsProviderId: String? = null,
+    val modelsLoading: Boolean = false,
+    val modelsError: String? = null
 )
 
 data class ProviderState(

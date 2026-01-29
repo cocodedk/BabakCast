@@ -11,9 +11,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +35,18 @@ fun MainScreen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Apply shared URL when user shares from YouTube (or other app) into BabakCast
+    val activity = LocalContext.current as? ComponentActivity
+    val shareIntentViewModel = activity?.let { viewModel<ShareIntentViewModel>(it) }
+    LaunchedEffect(shareIntentViewModel) {
+        shareIntentViewModel?.pendingSharedUrl?.collect { pendingUrl ->
+            if (pendingUrl != null) {
+                viewModel.updateUrl(pendingUrl)
+                shareIntentViewModel.clearPendingUrl()
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

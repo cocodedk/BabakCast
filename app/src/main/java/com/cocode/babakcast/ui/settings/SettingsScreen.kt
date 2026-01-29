@@ -182,8 +182,12 @@ fun SettingsScreen(
 
     // Provider Configuration Dialog
     if (uiState.showProviderDialog && uiState.selectedProvider != null) {
+        val selectedProvider = uiState.selectedProvider!!
         ProviderConfigDialog(
-            provider = uiState.selectedProvider!!,
+            provider = selectedProvider,
+            modelsToShow = viewModel.getModelsForProvider(selectedProvider),
+            modelsLoading = uiState.modelsLoading,
+            modelsError = uiState.modelsError,
             apiKey = uiState.editingApiKey,
             apiUrl = uiState.editingApiUrl,
             selectedModel = uiState.editingModel,
@@ -194,9 +198,9 @@ fun SettingsScreen(
             onToggleModelDropdown = viewModel::toggleModelDropdown,
             onDismissModelDropdown = viewModel::dismissModelDropdown,
             onSave = viewModel::saveProviderConfig,
-            onDelete = { viewModel.deleteProviderApiKey(uiState.selectedProvider!!.id) },
+            onDelete = { viewModel.deleteProviderApiKey(selectedProvider.id) },
             onDismiss = viewModel::dismissProviderDialog,
-            showUrlField = uiState.selectedProvider!!.id == "azure-openai",
+            showUrlField = selectedProvider.id == "azure-openai",
             hasExistingKey = uiState.editingApiKey.isNotBlank()
         )
     }
@@ -359,6 +363,9 @@ private fun SettingsRow(
 @Composable
 private fun ProviderConfigDialog(
     provider: com.cocode.babakcast.data.model.Provider,
+    modelsToShow: List<String>,
+    modelsLoading: Boolean,
+    modelsError: String?,
     apiKey: String,
     apiUrl: String,
     selectedModel: String,
@@ -416,6 +423,19 @@ private fun ProviderConfigDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
+                    if (modelsLoading) {
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = BabakCastColors.PrimaryAccent
+                        )
+                    }
+                    if (modelsError != null) {
+                        Text(
+                            text = modelsError,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                     ExposedDropdownMenuBox(
                         expanded = showModelDropdown,
                         onExpandedChange = { onToggleModelDropdown() }
@@ -450,13 +470,13 @@ private fun ProviderConfigDialog(
                             }
                         )
                         
-                        if (provider.available_models.isNotEmpty()) {
+                        if (modelsToShow.isNotEmpty()) {
                             ExposedDropdownMenu(
                                 expanded = showModelDropdown,
                                 onDismissRequest = onDismissModelDropdown,
                                 containerColor = MaterialTheme.colorScheme.surface
                             ) {
-                                provider.available_models.forEach { model ->
+                                modelsToShow.forEach { model ->
                                     DropdownMenuItem(
                                         text = {
                                             Text(

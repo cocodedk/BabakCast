@@ -82,6 +82,31 @@ You can pick from suggested models or enter a custom model name.
 
 ---
 
+## Release build (CI)
+
+On every **push or merge to `main`**, GitHub Actions builds a **signed release APK** and uploads it as a workflow artifact.
+
+To enable signing, add these **repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `KEYSTORE_BASE64` | Your release keystore file, base64-encoded (e.g. `base64 -w 0 release.keystore`) |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias |
+| `KEY_PASSWORD` | Key password |
+
+Create a keystore locally (once) with:
+
+```bash
+keytool -genkey -v -keystore release.keystore -alias my-key -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Then encode it for `KEYSTORE_BASE64`: e.g. `base64 -w 0 release.keystore` (Linux) or `base64 -i release.keystore` (macOS). Do **not** commit the keystore file.
+
+If the secrets are not set, the workflow will fail at the build step; set all four to get a signed APK from the [Actions](https://github.com/cocodedk/BabakCast/actions) run.
+
+---
+
 ## Development
 
 A pre-commit hook runs unit tests before each commit. Enable it once:

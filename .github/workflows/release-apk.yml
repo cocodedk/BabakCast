@@ -1,0 +1,47 @@
+# Build a signed release APK on push/merge to main.
+# Requires GitHub secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+# To create KEYSTORE_BASE64: base64 -w 0 your-release.keystore | pbcopy (mac) or base64 your-release.keystore (linux)
+
+name: Build signed release APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  KEYSTORE_PATH: ${{ github.workspace }}/app/release.keystore
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
+        env:
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --no-daemon
+        env:
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-signed
+          path: app/build/outputs/apk/release/app-release.apk
