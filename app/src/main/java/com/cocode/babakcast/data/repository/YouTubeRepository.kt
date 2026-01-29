@@ -20,6 +20,10 @@ import kotlin.math.roundToInt
 class YouTubeRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    companion object {
+        private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
+    }
+
     private val tag = "YouTubeRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
@@ -96,7 +100,7 @@ class YouTubeRepository @Inject constructor(
             val title = getVideoInfo(url).getOrNull()?.title?.trim().orEmpty()
             val safeTitle = sanitizeFileBaseName(title)
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$videoId" else videoId
-            val outputFile = File(videosDir, "$baseName.mp4")
+            val outputFile = File(videosDir, "${appendSuffix(baseName)}.mp4")
             
             lastLoggedProgressBucket = -1
             Log.d(tag, "Starting download for videoId=$videoId")
@@ -274,6 +278,11 @@ class YouTubeRepository @Inject constructor(
             .replace(Regex("\\s+"), " ")
             .trim()
             .take(80)
+    }
+
+    private fun appendSuffix(baseName: String): String {
+        val trimmed = baseName.trim()
+        return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
     }
 
     /**

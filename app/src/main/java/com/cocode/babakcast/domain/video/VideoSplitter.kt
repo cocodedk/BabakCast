@@ -19,6 +19,7 @@ class VideoSplitter @Inject constructor() {
         private const val MAX_CHUNK_SIZE_BYTES = 15 * 1024 * 1024 // 15 MB (WhatsApp-safe)
         private const val TARGET_CHUNK_SIZE_BYTES = 14 * 1024 * 1024 // 14 MB (safety margin)
         private const val MAX_SPLIT_ATTEMPTS = 5
+        private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
     }
 
     /**
@@ -52,7 +53,7 @@ class VideoSplitter @Inject constructor() {
 
             // Split video
             val outputDir = videoFile.parentFile
-            val baseName = videoFile.nameWithoutExtension
+            val baseName = stripSuffix(videoFile.nameWithoutExtension)
             val splitFiles = mutableListOf<File>()
 
             val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
@@ -63,7 +64,8 @@ class VideoSplitter @Inject constructor() {
 
             while (currentTime < duration) {
                 val partNumber = (chunkIndex + 1).toString().padStart(indexWidth, '0')
-                val outputFile = File(outputDir, "${baseName}_part${partNumber}.mp4")
+                val outputBaseName = "${baseName}_part${partNumber}"
+                val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.mp4")
                 
                 // Calculate segment duration
                 var segmentDuration = minOf(chunkDuration, duration - currentTime)
@@ -162,5 +164,18 @@ class VideoSplitter @Inject constructor() {
 
     private fun formatSeconds(value: Double): String {
         return String.format(java.util.Locale.US, "%.3f", value)
+    }
+
+    private fun stripSuffix(baseName: String): String {
+        return if (baseName.endsWith(FILE_NAME_SUFFIX)) {
+            baseName.dropLast(FILE_NAME_SUFFIX.length).trimEnd()
+        } else {
+            baseName
+        }
+    }
+
+    private fun appendSuffix(baseName: String): String {
+        val trimmed = baseName.trim()
+        return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
     }
 }
