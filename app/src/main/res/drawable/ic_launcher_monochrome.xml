@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Simplified monochrome icon: B with single wave arc -->
+    
+    <!-- Letter B -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M36,36 L36,72 L48,72 
+                         Q56,72 60,68 Q64,64 64,58 
+                         Q64,52 60,49 Q58,47 54,46
+                         Q58,45 60,43 Q64,40 64,34 
+                         Q64,28 60,24 Q56,20 48,20 
+                         L36,20 L36,36 Z
+                         M44,28 L48,28 
+                         Q52,28 54,30 Q56,32 56,36 
+                         Q56,40 54,42 Q52,44 48,44 
+                         L44,44 L44,28 Z
+                         M44,52 L48,52 
+                         Q52,52 54,54 Q56,56 56,60 
+                         Q56,64 54,66 Q52,68 48,68 
+                         L44,68 L44,52 Z"/>
+    
+    <!-- Single broadcast arc -->
+    <path
+        android:pathData="M68,36 Q80,44 80,54 Q80,64 68,72"
+        android:strokeWidth="4"
+        android:strokeColor="#000000"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round"/>
+</vector>

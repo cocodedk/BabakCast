@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- 
+    BabakCast Icon: Stylized "B" with broadcast waves
+    Colors: Amber-gold (#F4B860) on dark background
+    Design: Clean, minimal, recognizable at small sizes
+    -->
+    
+    <!-- Letter B - bold, clean -->
+    <path
+        android:fillColor="#F4B860"
+        android:pathData="M36,36 L36,72 L48,72 
+                         Q56,72 60,68 Q64,64 64,58 
+                         Q64,52 60,49 Q58,47 54,46
+                         Q58,45 60,43 Q64,40 64,34 
+                         Q64,28 60,24 Q56,20 48,20 
+                         L36,20 L36,36 Z
+                         M44,28 L48,28 
+                         Q52,28 54,30 Q56,32 56,36 
+                         Q56,40 54,42 Q52,44 48,44 
+                         L44,44 L44,28 Z
+                         M44,52 L48,52 
+                         Q52,52 54,54 Q56,56 56,60 
+                         Q56,64 54,66 Q52,68 48,68 
+                         L44,68 L44,52 Z"/>
+    
+    <!-- Broadcast wave 1 (inner) -->
+    <path
+        android:fillColor="#F4B860"
+        android:pathData="M66,40 
+                         Q72,44 72,54 Q72,64 66,68"
+        android:strokeWidth="3"
+        android:strokeColor="#F4B860"
+        android:fillAlpha="0"
+        android:strokeLineCap="round"/>
+    
+    <!-- Broadcast wave 2 (middle) -->
+    <path
+        android:fillColor="#F4B860"
+        android:pathData="M72,34 
+                         Q82,42 82,54 Q82,66 72,74"
+        android:strokeWidth="3"
+        android:strokeColor="#F4B860"
+        android:fillAlpha="0"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.7"/>
+    
+    <!-- Broadcast wave 3 (outer) -->
+    <path
+        android:fillColor="#F4B860"
+        android:pathData="M78,28 
+                         Q92,40 92,54 Q92,68 78,80"
+        android:strokeWidth="3"
+        android:strokeColor="#F4B860"
+        android:fillAlpha="0"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.4"/>
+</vector>

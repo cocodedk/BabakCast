@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- BabakCast Brand Colors -->
+    <color name="background_primary">#FF0F1115</color>
+    <color name="background_surface">#FF161A22</color>
+    <color name="background_card">#FF1E2430</color>
+    
+    <color name="primary_accent">#FFF4B860</color>
+    <color name="secondary_accent">#FF4DA3FF</color>
+    
+    <color name="text_primary">#FFE6E8EB</color>
+    <color name="text_secondary">#FFA0A4AB</color>
+    <color name="text_disabled">#FF6B7280</color>
+    
+    <color name="status_success">#FF4CAF50</color>
+    <color name="status_warning">#FFF59E0B</color>
+    <color name="status_error">#FFEF4444</color>
+    
+    <!-- Icon colors -->
+    <color name="ic_launcher_background">#FF161A22</color>
+    
+    <!-- Legacy colors (can be removed) -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
