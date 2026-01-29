@@ -9,8 +9,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write  # create release and upload APK
+
 env:
   KEYSTORE_PATH: ${{ github.workspace }}/app/release.keystore
+  # Bump version per build: versionCode = run number, versionName = 1.0.<run>
+  VERSION_CODE: ${{ github.run_number }}
+  VERSION_NAME: "1.0.${{ github.run_number }}"
 
 jobs:
   build:
@@ -45,3 +51,17 @@ jobs:
         with:
           name: app-release-signed
           path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Copy APK with fixed name for stable download URL
+        run: cp app/build/outputs/apk/release/app-release.apk BabakCast.apk
+
+      - name: Create GitHub Release and upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_NAME }}
+          name: Release ${{ env.VERSION_NAME }}
+          files: BabakCast.apk
+          draft: false
+          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

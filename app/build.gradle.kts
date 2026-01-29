@@ -28,8 +28,9 @@ android {
         applicationId = "com.cocode.babakcast"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // CI sets VERSION_CODE and VERSION_NAME; local builds use defaults
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
