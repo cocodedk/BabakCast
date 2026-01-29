@@ -73,16 +73,26 @@ class ShareHelper @Inject constructor(
     /**
      * Share text, falling back to a file if it's too large for some share targets.
      */
-    fun shareLongText(text: String, title: String = "Share", fileName: String = "summary.txt") {
+    fun shareLongText(
+        text: String,
+        title: String = "Share",
+        fileName: String = "summary.txt",
+        forceFile: Boolean = false
+    ) {
         val maxInlineChars = 8000
-        if (text.length <= maxInlineChars) {
+        if (!forceFile && text.length <= maxInlineChars) {
             shareText(text, title)
             return
         }
 
-        val cacheFile = File(context.cacheDir, fileName)
-        cacheFile.writeText(text, Charsets.UTF_8)
-        shareFile(cacheFile, "text/plain")
+        try {
+            val cacheFile = File(context.cacheDir, fileName)
+            cacheFile.writeText(text, Charsets.UTF_8)
+            shareFile(cacheFile, "text/plain", title)
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to write share file, falling back to text", e)
+            shareText(text, title)
+        }
     }
 
     /**
@@ -122,7 +132,7 @@ class ShareHelper @Inject constructor(
     /**
      * Share single file
      */
-    fun shareFile(file: File, mimeType: String = "application/octet-stream") {
+    fun shareFile(file: File, mimeType: String = "application/octet-stream", title: String = "Share file") {
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -136,7 +146,7 @@ class ShareHelper @Inject constructor(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooser = Intent.createChooser(shareIntent, "Share file").apply {
+        val chooser = Intent.createChooser(shareIntent, title).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(chooser)

@@ -15,10 +15,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.activity.compose.LocalActivity
+import android.content.ClipData
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.Modifier
@@ -35,16 +41,18 @@ import kotlin.math.roundToInt
 @Composable
 fun MainScreen(
     onNavigateToSettings: () -> Unit,
-    onNavigateToShare: (String) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val safeProgress = uiState.progress.coerceIn(0f, 1f)
     var selectedTab by rememberSaveable { mutableStateOf(0) }
+    val clipboardManager = LocalClipboard.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Apply shared URL when user shares from YouTube (or other app) into BabakCast
-    val activity = LocalContext.current as? ComponentActivity
-    val shareIntentViewModel = activity?.let { viewModel<ShareIntentViewModel>(it) }
+    val activity = LocalActivity.current as? ComponentActivity
+    val shareIntentViewModel = activity?.let { viewModel<ShareIntentViewModel>(viewModelStoreOwner = it) }
     LaunchedEffect(shareIntentViewModel) {
         shareIntentViewModel?.pendingSharedUrl?.collect { pendingUrl ->
             if (pendingUrl != null) {
@@ -56,6 +64,7 @@ fun MainScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Column {
                 TopAppBar(
@@ -337,10 +346,56 @@ fun MainScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             
+                            if (summary.length > 8000) {
+                                Text(
+                                    text = "Long summary detected — Copy is recommended instead of Share.",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 12.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.End
                             ) {
+                                TextButton(
+                                    onClick = {
+                                        scope.launch {
+                                            clipboardManager.setPlainText(summary)
+                                            snackbarHostState.showSnackbar(
+                                                message = "Copied to clipboard",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                ) {
+                                    Text(
+                                        "Copy",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                }
+                                TextButton(
+                                    onClick = viewModel::shareSummaryAsFile,
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                ) {
+                                    Text(
+                                        "Share as file",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                }
                                 TextButton(
                                     onClick = viewModel::shareSummary,
                                     colors = ButtonDefaults.textButtonColors(
@@ -440,4 +495,12 @@ fun MainScreen(
             )
         }
     }
+}
+
+private suspend fun androidx.compose.ui.platform.Clipboard.setPlainText(text: String) {
+    setClipEntry(
+        ClipEntry(
+            ClipData.newPlainText("summary", text)
+        )
+    )
 }

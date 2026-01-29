@@ -24,9 +24,6 @@ fun NavGraph(navController: NavHostController) {
             MainScreen(
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
-                },
-                onNavigateToShare = { content ->
-                    navController.navigate("share/$content")
                 }
             )
         }
