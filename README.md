@@ -7,6 +7,8 @@ A **local-first** Android app to download YouTube videos, summarize transcripts 
 ![Local-first](https://img.shields.io/badge/Local--first-161A22?style=flat)
 ![BYO-AI](https://img.shields.io/badge/BYO--AI-FFB860?style=flat)
 
+**Site:** [cocodedk.github.io/BabakCast](https://cocodedk.github.io/BabakCast)
+
 ---
 
 ## Features
@@ -77,6 +79,18 @@ A **local-first** Android app to download YouTube videos, summarize transcripts 
 | OpenRouter     | API key + model (e.g. openai/gpt-4o)   |
 
 You can pick from suggested models or enter a custom model name.
+
+---
+
+## Development
+
+A pre-commit hook runs unit tests before each commit. Enable it once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Or run `./scripts/install-hooks.sh`. Commits will be blocked if `./gradlew test` fails.
 
 ---
 

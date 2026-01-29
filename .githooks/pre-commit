@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pre-commit hook: run unit tests before allowing a commit.
+# Enable with: git config core.hooksPath .githooks
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+echo "Running unit tests..."
+./gradlew test --no-daemon --quiet
+
+echo "Tests passed. Proceeding with commit."

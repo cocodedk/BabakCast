@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BabakCast — Local-first YouTube & AI summaries</title>
+  <meta name="description" content="Download YouTube videos, summarize transcripts with your own AI. No backend, no tracking. Android." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="header">
+    <div class="wrap">
+      <a class="logo" href="#">BabakCast</a>
+      <nav class="nav">
+        <a href="#features">Features</a>
+        <a href="#philosophy">Philosophy</a>
+        <a href="#install">Install</a>
+        <a class="btn-gh" href="https://github.com/cocodedk/BabakCast" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <p class="hero-label">Local-first · Android</p>
+        <h1 class="hero-title">Download. Summarize. Share.</h1>
+        <p class="hero-lead">
+          BabakCast lets you grab YouTube videos and turn transcripts into summaries
+          using <em>your</em> AI provider. No backend, no accounts, no tracking.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="https://github.com/cocodedk/BabakCast/releases" target="_blank" rel="noopener">Get the app</a>
+          <a class="btn btn-outline" href="https://github.com/cocodedk/BabakCast" target="_blank" rel="noopener">View source</a>
+        </div>
+      </div>
+      <div class="hero-glow" aria-hidden="true"></div>
+    </section>
+
+    <section id="features" class="section features">
+      <div class="wrap">
+        <h2 class="section-title">What it does</h2>
+        <ul class="feature-grid">
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">↓</span>
+            <h3>YouTube download</h3>
+            <p>Paste a URL, get shareable video files. Auto-split at 16 MB so you can share anywhere.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">∑</span>
+            <h3>Transcript → summary</h3>
+            <p>Extract captions and summarize with your chosen model. Bullets, paragraph, or TL;DR.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">⊕</span>
+            <h3>Bring your own AI</h3>
+            <p>OpenAI, Azure, Anthropic, Gemini, OpenRouter. Set API key and model in Settings.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">◆</span>
+            <h3>Stays on device</h3>
+            <p>Everything runs locally. API keys stored with Android EncryptedSharedPreferences.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="philosophy" class="section philosophy">
+      <div class="wrap">
+        <blockquote class="philosophy-quote">
+          BabakCast is a personal-use tool. It does not ship with API keys, ads, analytics, or accounts. You control your data and your AI provider.
+        </blockquote>
+      </div>
+    </section>
+
+    <section id="install" class="section install">
+      <div class="wrap">
+        <h2 class="section-title">Install</h2>
+        <div class="install-cards">
+          <div class="install-card">
+            <h3>From source</h3>
+            <pre><code>git clone https://github.com/cocodedk/BabakCast.git
+cd BabakCast</code></pre>
+            <p>Open in Android Studio and run (API 26+).</p>
+          </div>
+          <div class="install-card">
+            <h3>APK</h3>
+            <p>Download the latest release from GitHub and install on your device.</p>
+            <a class="btn btn-outline btn-sm" href="https://github.com/cocodedk/BabakCast/releases" target="_blank" rel="noopener">Releases</a>
+          </div>
+        </div>
+        <p class="install-note">Requires Android 8.0+. For summarization, add an API key in Settings (OpenAI, Anthropic, Gemini, OpenRouter, or Azure OpenAI).</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p><a href="https://github.com/cocodedk/BabakCast">cocodedk/BabakCast</a> · <a href="https://github.com/cocodedk/BabakCast/blob/main/LICENSE">Apache 2.0</a></p>
+    </div>
+  </footer>
+</body>
+</html>
