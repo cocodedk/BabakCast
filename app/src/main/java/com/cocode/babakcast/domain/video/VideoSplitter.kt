@@ -55,11 +55,15 @@ class VideoSplitter @Inject constructor() {
             val baseName = videoFile.nameWithoutExtension
             val splitFiles = mutableListOf<File>()
 
+            val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
+            val indexWidth = estimatedParts.toString().length
+
             var currentTime = 0.0
             var chunkIndex = 0
 
             while (currentTime < duration) {
-                val outputFile = File(outputDir, "${baseName}_part${chunkIndex + 1}.mp4")
+                val partNumber = (chunkIndex + 1).toString().padStart(indexWidth, '0')
+                val outputFile = File(outputDir, "${baseName}_part${partNumber}.mp4")
                 
                 // Calculate segment duration
                 var segmentDuration = minOf(chunkDuration, duration - currentTime)
