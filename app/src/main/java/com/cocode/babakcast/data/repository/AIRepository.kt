@@ -38,9 +38,10 @@ class AIRepository @Inject constructor(
                 ?: return@withContext Result.failure(
                     IllegalArgumentException("Provider not found: $providerId")
                 )
+            val providerWithModel = providerRepository.getProviderWithSelectedModel(providerId) ?: provider
 
             // Process transcript
-            val processed = TranscriptProcessor.processTranscript(transcript, provider.limits)
+            val processed = TranscriptProcessor.processTranscript(transcript, providerWithModel.limits)
 
             // If single chunk, summarize directly
             if (processed.chunks.size == 1) {
@@ -63,10 +64,10 @@ class AIRepository @Inject constructor(
                 )
 
                 val response = aiClient.makeRequest(
-                    provider,
+                    providerWithModel,
                     messages,
                     temperature,
-                    provider.limits.max_output_tokens
+                    providerWithModel.limits.max_output_tokens
                 )
 
                 return@withContext response.map { it.content }
@@ -89,10 +90,10 @@ class AIRepository @Inject constructor(
                 )
 
                 val response = aiClient.makeRequest(
-                    provider,
+                    providerWithModel,
                     messages,
                     temperature,
-                    provider.limits.max_output_tokens
+                    providerWithModel.limits.max_output_tokens
                 )
 
                 when {
@@ -119,10 +120,10 @@ class AIRepository @Inject constructor(
             )
 
             val mergeResponse = aiClient.makeRequest(
-                provider,
+                providerWithModel,
                 mergeMessages,
                 temperature,
-                provider.limits.max_output_tokens
+                providerWithModel.limits.max_output_tokens
             )
 
             mergeResponse.map { it.content }
@@ -145,6 +146,7 @@ class AIRepository @Inject constructor(
                 ?: return@withContext Result.failure(
                     IllegalArgumentException("Provider not found: $providerId")
                 )
+            val providerWithModel = providerRepository.getProviderWithSelectedModel(providerId) ?: provider
 
             val prompt = PromptTemplates.getTranslationPrompt(text, targetLanguage)
             val messages = listOf(
@@ -159,10 +161,10 @@ class AIRepository @Inject constructor(
             )
 
             val response = aiClient.makeRequest(
-                provider,
+                providerWithModel,
                 messages,
                 temperature,
-                provider.limits.max_output_tokens
+                providerWithModel.limits.max_output_tokens
             )
 
             response.map { it.content }

@@ -54,6 +54,12 @@ sealed class AppError(
         fixHint = "Try again or check if the video is available"
     )
 
+    data class NotInitialized(override val message: String = "Download engine is still starting") : AppError(
+        title = "Please wait",
+        message = message,
+        fixHint = "Wait a few seconds and try again"
+    )
+
     data class VideoSplitFailed(override val message: String = "Video splitting failed") : AppError(
         title = "Processing Error",
         message = message,
@@ -96,7 +102,14 @@ object ErrorHandler {
                     else -> AppError.NetworkError(exception.message ?: "Network error")
                 }
             }
-            else -> AppError.UnknownError(exception.message ?: "Unexpected error")
+            else -> {
+                val msg = exception.message ?: "Unexpected error"
+                when {
+                    msg.contains("not initialized", ignoreCase = true) ->
+                        AppError.NotInitialized("Download engine is still starting.")
+                    else -> AppError.UnknownError(msg)
+                }
+            }
         }
     }
 

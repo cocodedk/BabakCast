@@ -2,9 +2,11 @@ package com.cocode.babakcast.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
 import com.cocode.babakcast.data.repository.YouTubeRepository
+import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
@@ -13,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,11 +25,23 @@ class MainViewModel @Inject constructor(
     private val videoSplitter: VideoSplitter,
     private val aiRepository: AIRepository,
     private val providerRepository: ProviderRepository,
+    private val settingsRepository: SettingsRepository,
     private val shareHelper: ShareHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            YoutubeDLReady.status.collect { initStatus ->
+                _uiState.value = _uiState.value.copy(
+                    downloadEngineReady = initStatus is YoutubeDLReady.YoutubeDLInitStatus.Ready,
+                    downloadEngineError = (initStatus as? YoutubeDLReady.YoutubeDLInitStatus.Failed)?.message
+                )
+            }
+        }
+    }
 
     fun updateUrl(url: String) {
         _uiState.value = _uiState.value.copy(url = url)
@@ -34,6 +49,7 @@ class MainViewModel @Inject constructor(
 
     fun downloadVideo() {
         val url = _uiState.value.url
+        if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
                 error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
@@ -105,23 +121,35 @@ class MainViewModel @Inject constructor(
             // Get transcript
             youtubeRepository.extractTranscript(url).fold(
                 onSuccess = { transcript ->
-                    // Get default provider (first available)
-                    val defaultProvider = providerRepository.getFirstProvider()
-                        ?: run {
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                error = AppError.ProviderMisconfigured("No AI provider configured")
-                            )
-                            return@launch
-                        }
+                    val defaultProviderId = settingsRepository.settings.first().defaultProviderId
+                    val providerId = when {
+                        defaultProviderId != null && providerRepository.hasApiKey(defaultProviderId) ->
+                            defaultProviderId
+                        else ->
+                            providerRepository.providers.value.firstOrNull {
+                                providerRepository.hasApiKey(it.id)
+                            }?.id
+                    }
+
+                    val defaultProvider = providerId?.let {
+                        providerRepository.getProviderWithSelectedModel(it)
+                    } ?: run {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = AppError.ProviderMisconfigured("No AI provider configured")
+                        )
+                        return@launch
+                    }
 
                     // Generate summary
+                    val summaryLanguage = settingsRepository.settings.first().defaultLanguage.ifBlank { "en" }
+
                     aiRepository.generateSummary(
                         transcript = transcript,
                         providerId = defaultProvider.id,
                         style = com.cocode.babakcast.data.model.SummaryStyle.BULLET_POINTS,
                         length = com.cocode.babakcast.data.model.SummaryLength.MEDIUM,
-                        language = "en",
+                        language = summaryLanguage,
                         temperature = 0.2
                     ).fold(
                         onSuccess = { summary ->
@@ -166,5 +194,7 @@ data class MainUiState(
     val progress: Float = 0f,
     val videoInfo: com.cocode.babakcast.data.model.VideoInfo? = null,
     val summary: String? = null,
-    val error: AppError? = null
+    val error: AppError? = null,
+    val downloadEngineReady: Boolean = false,
+    val downloadEngineError: String? = null
 )

@@ -16,8 +16,9 @@ import javax.inject.Singleton
 class VideoSplitter @Inject constructor() {
 
     companion object {
-        private const val MAX_CHUNK_SIZE_BYTES = 16 * 1024 * 1024 // 16 MB
-        private const val TARGET_CHUNK_SIZE_BYTES = 15 * 1024 * 1024 // 15 MB (safety margin)
+        private const val MAX_CHUNK_SIZE_BYTES = 15 * 1024 * 1024 // 15 MB (WhatsApp-safe)
+        private const val TARGET_CHUNK_SIZE_BYTES = 14 * 1024 * 1024 // 14 MB (safety margin)
+        private const val MAX_SPLIT_ATTEMPTS = 5
     }
 
     /**
@@ -38,7 +39,15 @@ class VideoSplitter @Inject constructor() {
             // Calculate target chunk duration (in seconds)
             // Estimate: file_size / duration = bytes_per_second
             // chunk_duration = target_chunk_size / bytes_per_second
+            if (duration <= 0.0) {
+                return@withContext Result.failure(Exception("Invalid video duration"))
+            }
+
             val bytesPerSecond = videoInfo.fileSizeBytes / duration
+            if (bytesPerSecond <= 0.0) {
+                return@withContext Result.failure(Exception("Invalid bitrate estimate"))
+            }
+
             val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
 
             // Split video
@@ -53,29 +62,44 @@ class VideoSplitter @Inject constructor() {
                 val outputFile = File(outputDir, "${baseName}_part${chunkIndex + 1}.mp4")
                 
                 // Calculate segment duration
-                val segmentDuration = minOf(chunkDuration, duration - currentTime)
+                var segmentDuration = minOf(chunkDuration, duration - currentTime)
+                var attempt = 0
+                var splitSuccess = false
 
-                // FFmpeg command: extract segment using copy codec for speed
-                val command = "-ss ${currentTime.toInt()} " +
-                    "-i \"${videoFile.absolutePath}\" " +
-                    "-t ${segmentDuration.toInt()} " +
-                    "-c copy " +
-                    "-avoid_negative_ts make_zero " +
-                    "\"${outputFile.absolutePath}\""
+                while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
+                    // FFmpeg command: extract segment using copy codec for speed
+                    val command = "-ss ${formatSeconds(currentTime)} " +
+                        "-i \"${videoFile.absolutePath}\" " +
+                        "-t ${formatSeconds(segmentDuration)} " +
+                        "-c copy " +
+                        "-avoid_negative_ts make_zero " +
+                        "\"${outputFile.absolutePath}\""
 
-                val session = FFmpegKit.execute(command)
-                
-                if (ReturnCode.isSuccess(session.returnCode)) {
-                    if (outputFile.exists() && outputFile.length() > 0) {
-                        splitFiles.add(outputFile)
+                    val session = FFmpegKit.execute(command)
+                    
+                    if (ReturnCode.isSuccess(session.returnCode)) {
+                        if (outputFile.exists() && outputFile.length() > 0) {
+                            if (outputFile.length() <= MAX_CHUNK_SIZE_BYTES) {
+                                splitFiles.add(outputFile)
+                                splitSuccess = true
+                            } else {
+                                outputFile.delete()
+                                segmentDuration *= 0.85
+                                attempt++
+                            }
+                        } else {
+                            return@withContext Result.failure(Exception("Split file was not created"))
+                        }
                     } else {
-                        return@withContext Result.failure(Exception("Split file was not created"))
+                        val errorOutput = session.failStackTrace ?: "Unknown error"
+                        return@withContext Result.failure(
+                            Exception("Failed to split video: $errorOutput")
+                        )
                     }
-                } else {
-                    val errorOutput = session.failStackTrace ?: "Unknown error"
-                    return@withContext Result.failure(
-                        Exception("Failed to split video: $errorOutput")
-                    )
+                }
+
+                if (!splitSuccess) {
+                    return@withContext Result.failure(Exception("Failed to split video into WhatsApp-sized parts"))
                 }
 
                 currentTime += segmentDuration
@@ -130,5 +154,9 @@ class VideoSplitter @Inject constructor() {
         } catch (e: Exception) {
             return null
         }
+    }
+
+    private fun formatSeconds(value: Double): String {
+        return String.format(java.util.Locale.US, "%.3f", value)
     }
 }

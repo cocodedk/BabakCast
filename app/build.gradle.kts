@@ -72,6 +72,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // youtubedl-android needs native libs extracted to filesystem (not compressed in APK)
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 

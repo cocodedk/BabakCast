@@ -3,12 +3,14 @@ package com.cocode.babakcast.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SecureStorage
+import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.Provider
 import com.cocode.babakcast.data.repository.ProviderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val providerRepository: ProviderRepository,
-    private val secureStorage: SecureStorage
+    private val secureStorage: SecureStorage,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -25,6 +28,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadProviders()
+        observeSettings()
     }
 
     private fun loadProviders() {
@@ -41,6 +45,23 @@ class SettingsViewModel @Inject constructor(
                 }
                 _uiState.value = _uiState.value.copy(providers = providerStates)
             }
+        }
+    }
+
+    private fun observeSettings() {
+        viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _uiState.value = _uiState.value.copy(
+                    defaultLanguage = settings.defaultLanguage
+                )
+            }
+        }
+    }
+
+    fun updateDefaultLanguage(language: String) {
+        _uiState.value = _uiState.value.copy(defaultLanguage = language)
+        viewModelScope.launch {
+            settingsRepository.updateDefaultLanguage(language.trim())
         }
     }
 
@@ -133,8 +154,16 @@ class SettingsViewModel @Inject constructor(
             // Save API key
             if (apiKey.isNotBlank()) {
                 secureStorage.saveApiKey(provider.id, apiKey)
+                settingsRepository.updateDefaultProvider(provider.id)
             } else {
                 secureStorage.deleteApiKey(provider.id)
+                val currentDefault = settingsRepository.settings.first().defaultProviderId
+                if (currentDefault == provider.id) {
+                    val fallback = providerRepository.providers.value.firstOrNull {
+                        secureStorage.getApiKey(it.id) != null
+                    }?.id
+                    settingsRepository.updateDefaultProvider(fallback)
+                }
             }
 
             // Save selected model
@@ -151,6 +180,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             secureStorage.deleteApiKey(providerId)
             providerRepository.deleteSelectedModel(providerId)
+            val currentDefault = settingsRepository.settings.first().defaultProviderId
+            if (currentDefault == providerId) {
+                val fallback = providerRepository.providers.value.firstOrNull {
+                    secureStorage.getApiKey(it.id) != null
+                }?.id
+                settingsRepository.updateDefaultProvider(fallback)
+            }
             refreshProviderStates()
             dismissProviderDialog()
         }
@@ -180,7 +216,8 @@ data class SettingsUiState(
     val fetchedModels: List<String> = emptyList(),
     val fetchedModelsProviderId: String? = null,
     val modelsLoading: Boolean = false,
-    val modelsError: String? = null
+    val modelsError: String? = null,
+    val defaultLanguage: String = "en"
 )
 
 data class ProviderState(

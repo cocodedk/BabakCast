@@ -101,13 +101,42 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                SettingsRow(
-                    label = "Language",
-                    value = "English",
-                    onClick = { /* TODO */ },
-                    isFirst = true,
-                    isLast = false
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "SUMMARY / TRANSLATION LANGUAGE",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = uiState.defaultLanguage,
+                        onValueChange = viewModel::updateDefaultLanguage,
+                        placeholder = {
+                            Text(
+                                "e.g. en, es, fa, German",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BabakCastColors.PrimaryAccent,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            cursorColor = BabakCastColors.PrimaryAccent
+                        ),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                }
                 SettingsRow(
                     label = "Summary Style",
                     value = "Bullet Points",
@@ -115,36 +144,6 @@ fun SettingsScreen(
                     isFirst = false,
                     isLast = true
                 )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Storage Section
-            SectionHeader(title = "Storage")
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { /* TODO */ },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
-                    )
-                ) {
-                    Text(
-                        "Clear Cache",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
