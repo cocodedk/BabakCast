@@ -10,4 +10,16 @@ cd "$ROOT"
 echo "Running unit tests..."
 ./gradlew test --no-daemon --quiet
 
+if [ -z "$KEYSTORE_PATH" ] && [ -f "$ROOT/release.keystore" ]; then
+  export KEYSTORE_PATH="$ROOT/release.keystore"
+fi
+
+if [ -n "$KEYSTORE_PATH" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+  echo "Running release build (signing enabled)..."
+  ./gradlew assembleRelease --no-daemon --quiet
+else
+  echo "Skipping release build: signing env vars not fully set."
+  echo "Required: KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD"
+fi
+
 echo "Tests passed. Proceeding with commit."
