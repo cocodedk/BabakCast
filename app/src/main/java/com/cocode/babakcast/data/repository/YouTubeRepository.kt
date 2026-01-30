@@ -3,6 +3,7 @@ package com.cocode.babakcast.data.repository
 import android.content.Context
 import android.util.Log
 import com.cocode.babakcast.data.model.VideoInfo
+import com.cocode.babakcast.util.YouTubeUrlParser
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -40,20 +41,7 @@ class YouTubeRepository @Inject constructor(
      * Extract video ID from YouTube URL
      */
     fun extractVideoId(url: String): String? {
-        val patterns = listOf(
-            "(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/embed\\/)([^&\\n?#]+)",
-            "youtube\\.com\\/watch\\?.*v=([^&\\n?#]+)"
-        )
-        
-        for (pattern in patterns) {
-            val regex = Regex(pattern)
-            val match = regex.find(url)
-            if (match != null) {
-                return match.groupValues[1]
-            }
-        }
-        
-        return null
+        return YouTubeUrlParser.extractVideoId(url)
     }
 
     /**
