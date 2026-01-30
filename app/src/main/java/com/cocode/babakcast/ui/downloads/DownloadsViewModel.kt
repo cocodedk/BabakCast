@@ -67,6 +67,31 @@ class DownloadsViewModel @Inject constructor(
         shareHelper.shareFiles(item.files, "video/*")
     }
 
+    fun deleteDownload(item: DownloadItem) {
+        _uiState.value = _uiState.value.copy(message = null)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    item.files.all { file ->
+                        if (file.exists()) {
+                            file.delete()
+                        } else {
+                            true
+                        }
+                    }
+                }
+            }
+            _uiState.value = _uiState.value.copy(
+                message = if (result.isSuccess && result.getOrDefault(false)) {
+                    "Download deleted"
+                } else {
+                    "Failed to delete download"
+                }
+            )
+            loadDownloads()
+        }
+    }
+
     private fun loadDownloads() {
         _uiState.value = _uiState.value.copy(isLoadingDownloads = true, downloadsError = null)
         viewModelScope.launch {

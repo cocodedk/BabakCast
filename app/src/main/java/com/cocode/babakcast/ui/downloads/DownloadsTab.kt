@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,6 +55,7 @@ fun DownloadsTab(
     var activePlaybackItems by remember { mutableStateOf<List<PlaybackItem>>(emptyList()) }
     var activePlaybackStartIndex by remember { mutableStateOf(0) }
     var pendingPartSelection by remember { mutableStateOf<DownloadItem?>(null) }
+    var pendingDeleteSelection by remember { mutableStateOf<DownloadItem?>(null) }
 
     Column(
         modifier = modifier
@@ -212,6 +214,13 @@ fun DownloadsTab(
                                     tint = BabakCastColors.SecondaryAccent
                                 )
                             }
+                            IconButton(onClick = { pendingDeleteSelection = item }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Delete,
+                                    contentDescription = "Delete download",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -249,6 +258,34 @@ fun DownloadsTab(
             },
             confirmButton = {
                 TextButton(onClick = { pendingPartSelection = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (pendingDeleteSelection != null) {
+        val item = pendingDeleteSelection!!
+        AlertDialog(
+            onDismissRequest = { pendingDeleteSelection = null },
+            title = { Text(text = "Delete download?") },
+            text = {
+                Text(
+                    text = "This will remove the downloaded file${if (item.partCount > 1) "s" else ""} from your device."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteDownload(item)
+                        pendingDeleteSelection = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteSelection = null }) {
                     Text("Cancel")
                 }
             }
