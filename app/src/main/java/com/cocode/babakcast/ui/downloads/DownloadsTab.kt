@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -21,9 +23,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,9 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import com.cocode.babakcast.ui.player.PlaybackItem
+import com.cocode.babakcast.ui.player.VideoPlayerDialog
+import com.cocode.babakcast.util.DownloadFileParser
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun DownloadsTab(
@@ -41,6 +51,9 @@ fun DownloadsTab(
     viewModel: DownloadsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var activePlaybackItems by remember { mutableStateOf<List<PlaybackItem>>(emptyList()) }
+    var activePlaybackStartIndex by remember { mutableStateOf(0) }
+    var pendingPartSelection by remember { mutableStateOf<DownloadItem?>(null) }
 
     Column(
         modifier = modifier
@@ -170,6 +183,28 @@ fun DownloadsTab(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            IconButton(onClick = {
+                                if (item.files.size <= 1) {
+                                    val file = item.files.firstOrNull()
+                                    if (file != null) {
+                                        openPlayback(
+                                            file = file,
+                                            downloads = uiState.downloads
+                                        ) { items, startIndex ->
+                                            activePlaybackItems = items
+                                            activePlaybackStartIndex = startIndex
+                                        }
+                                    }
+                                } else {
+                                    pendingPartSelection = item
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.PlayArrow,
+                                    contentDescription = "Play download",
+                                    tint = BabakCastColors.PrimaryAccent
+                                )
+                            }
                             IconButton(onClick = { viewModel.shareDownload(item) }) {
                                 Icon(
                                     imageVector = Icons.Outlined.Share,
@@ -184,6 +219,52 @@ fun DownloadsTab(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    if (pendingPartSelection != null) {
+        val item = pendingPartSelection!!
+        AlertDialog(
+            onDismissRequest = { pendingPartSelection = null },
+            title = { Text(text = "Choose part to play") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    item.files.forEachIndexed { index, file ->
+                        TextButton(
+                            onClick = {
+                                openPlayback(
+                                    file = file,
+                                    downloads = uiState.downloads
+                                ) { items, startIndex ->
+                                    activePlaybackItems = items
+                                    activePlaybackStartIndex = startIndex
+                                }
+                                pendingPartSelection = null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = partLabel(file, index))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { pendingPartSelection = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (activePlaybackItems.isNotEmpty()) {
+        VideoPlayerDialog(
+            items = activePlaybackItems,
+            startIndex = activePlaybackStartIndex,
+            autoPlayEnabled = uiState.autoPlayNext,
+            onDismiss = {
+                activePlaybackItems = emptyList()
+                activePlaybackStartIndex = 0
+            }
+        )
     }
 }
 
@@ -207,4 +288,36 @@ private fun formatFileSize(bytes: Long): String {
 private fun formatDate(timestamp: Long): String {
     val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
     return formatter.format(Date(timestamp))
+}
+
+private fun partLabel(file: File, index: Int): String {
+    val base = file.nameWithoutExtension
+    val number = DownloadFileParser.extractPartNumber(base)?.toString() ?: (index + 1).toString()
+    return "Part $number"
+}
+
+private fun openPlayback(
+    file: File,
+    downloads: List<DownloadItem>,
+    onReady: (List<PlaybackItem>, Int) -> Unit
+) {
+    val items = buildPlaybackItems(downloads)
+    val startIndex = items.indexOfFirst { it.file.absolutePath == file.absolutePath }
+    onReady(items, if (startIndex >= 0) startIndex else 0)
+}
+
+private fun buildPlaybackItems(downloads: List<DownloadItem>): List<PlaybackItem> {
+    val items = mutableListOf<PlaybackItem>()
+    downloads.forEach { item ->
+        item.files.forEachIndexed { index, file ->
+            val suffix = if (item.files.size > 1) " • ${partLabel(file, index)}" else ""
+            items.add(
+                PlaybackItem(
+                    file = file,
+                    title = item.displayName + suffix
+                )
+            )
+        }
+    }
+    return items
 }

@@ -2,7 +2,9 @@ package com.cocode.babakcast.ui.downloads
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.repository.YouTubeRepository
+import com.cocode.babakcast.util.DownloadFileParser
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DownloadsViewModel @Inject constructor(
     private val youtubeRepository: YouTubeRepository,
-    private val shareHelper: ShareHelper
+    private val shareHelper: ShareHelper,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
@@ -24,6 +27,7 @@ class DownloadsViewModel @Inject constructor(
 
     init {
         loadDownloads()
+        observeSettings()
     }
 
     fun refreshDownloads() {
@@ -77,18 +81,25 @@ class DownloadsViewModel @Inject constructor(
         }
     }
 
+    private fun observeSettings() {
+        viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _uiState.value = _uiState.value.copy(autoPlayNext = settings.autoPlayNext)
+            }
+        }
+    }
+
     private fun buildDownloadItems(files: List<java.io.File>): List<DownloadItem> {
-        val partRegex = Regex("(.+)_part(\\d+)$")
         val groups = files.groupBy { file ->
             val base = file.name.substringBeforeLast(".")
-            partRegex.find(base)?.groupValues?.get(1) ?: base
+            DownloadFileParser.extractGroupKey(base)
         }
 
         return groups.entries
             .map { (groupKey, groupFiles) ->
                 val sortedFiles = groupFiles.sortedWith(compareBy<java.io.File> { file ->
                     val base = file.name.substringBeforeLast(".")
-                    partRegex.find(base)?.groupValues?.get(2)?.toIntOrNull() ?: Int.MAX_VALUE
+                    DownloadFileParser.extractPartNumber(base) ?: Int.MAX_VALUE
                 }.thenBy { it.name })
 
                 val totalSize = groupFiles.sumOf { it.length() }
@@ -122,7 +133,8 @@ data class DownloadsUiState(
     val isLoadingDownloads: Boolean = false,
     val downloadsError: String? = null,
     val isCleaningDownloads: Boolean = false,
-    val message: String? = null
+    val message: String? = null,
+    val autoPlayNext: Boolean = false
 )
 
 data class DownloadItem(

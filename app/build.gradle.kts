@@ -123,6 +123,10 @@ dependencies {
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // Media playback
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
     
     // Testing
     testImplementation(libs.junit)

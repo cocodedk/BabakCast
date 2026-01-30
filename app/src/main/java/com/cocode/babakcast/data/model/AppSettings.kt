@@ -12,6 +12,7 @@ data class AppSettings(
     val adaptiveSummaryLength: Boolean = true,
     val defaultSummaryStyle: SummaryStyle = SummaryStyle.BULLET_POINTS,
     val defaultSummaryLength: SummaryLength = SummaryLength.MEDIUM,
+    val autoPlayNext: Boolean = false,
     val darkMode: Boolean = false,
     val temperature: Double = 0.2
 )
