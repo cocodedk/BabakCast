@@ -31,6 +31,7 @@ class SettingsRepository @Inject constructor(
         val ADAPTIVE_SUMMARY_LENGTH = booleanPreferencesKey("adaptive_summary_length")
         val DEFAULT_SUMMARY_STYLE = stringPreferencesKey("default_summary_style")
         val DEFAULT_SUMMARY_LENGTH = stringPreferencesKey("default_summary_length")
+        val AUTO_PLAY_NEXT = booleanPreferencesKey("auto_play_next")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val TEMPERATURE = doublePreferencesKey("temperature")
     }
@@ -46,6 +47,7 @@ class SettingsRepository @Inject constructor(
             defaultSummaryLength = SummaryLength.valueOf(
                 preferences[Keys.DEFAULT_SUMMARY_LENGTH] ?: SummaryLength.MEDIUM.name
             ),
+            autoPlayNext = preferences[Keys.AUTO_PLAY_NEXT] ?: false,
             darkMode = preferences[Keys.DARK_MODE] ?: false,
             temperature = preferences[Keys.TEMPERATURE] ?: 0.2
         )
@@ -82,6 +84,12 @@ class SettingsRepository @Inject constructor(
     suspend fun updateDefaultSummaryLength(length: SummaryLength) {
         dataStore.edit { preferences ->
             preferences[Keys.DEFAULT_SUMMARY_LENGTH] = length.name
+        }
+    }
+
+    suspend fun updateAutoPlayNext(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[Keys.AUTO_PLAY_NEXT] = enabled
         }
     }
 

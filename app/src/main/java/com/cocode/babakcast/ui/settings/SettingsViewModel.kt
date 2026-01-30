@@ -55,7 +55,8 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     defaultLanguage = settings.defaultLanguage,
                     adaptiveSummaryLength = settings.adaptiveSummaryLength,
-                    defaultSummaryLength = settings.defaultSummaryLength
+                    defaultSummaryLength = settings.defaultSummaryLength,
+                    autoPlayNext = settings.autoPlayNext
                 )
             }
         }
@@ -79,6 +80,13 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(defaultSummaryLength = length)
         viewModelScope.launch {
             settingsRepository.updateDefaultSummaryLength(length)
+        }
+    }
+
+    fun updateAutoPlayNext(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(autoPlayNext = enabled)
+        viewModelScope.launch {
+            settingsRepository.updateAutoPlayNext(enabled)
         }
     }
 
@@ -236,7 +244,8 @@ data class SettingsUiState(
     val modelsError: String? = null,
     val defaultLanguage: String = "en",
     val adaptiveSummaryLength: Boolean = true,
-    val defaultSummaryLength: SummaryLength = SummaryLength.MEDIUM
+    val defaultSummaryLength: SummaryLength = SummaryLength.MEDIUM,
+    val autoPlayNext: Boolean = false
 )
 
 data class ProviderState(
