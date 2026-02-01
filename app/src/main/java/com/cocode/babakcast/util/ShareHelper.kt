@@ -45,6 +45,9 @@ class ShareHelper @Inject constructor(
             action = Intent.ACTION_SEND_MULTIPLE
             type = "video/*"
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+            if (videoInfo.title.isNotBlank()) {
+                putExtra(Intent.EXTRA_TEXT, videoInfo.title)
+            }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
@@ -98,13 +101,18 @@ class ShareHelper @Inject constructor(
     /**
      * Share multiple files
      */
-    fun shareFiles(files: List<File>, mimeType: String = "video/*", title: String = "Share videos") {
+    fun shareFiles(
+        files: List<File>,
+        mimeType: String = "video/*",
+        title: String = "Share videos",
+        text: String? = null
+    ) {
         if (files.isEmpty()) {
             Log.w(tag, "No files to share")
             return
         }
         if (files.size == 1) {
-            shareFile(files.first(), mimeType)
+            shareFile(files.first(), mimeType, title, text)
             return
         }
 
@@ -120,6 +128,9 @@ class ShareHelper @Inject constructor(
             action = Intent.ACTION_SEND_MULTIPLE
             type = mimeType
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+            if (!text.isNullOrBlank()) {
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
@@ -132,7 +143,12 @@ class ShareHelper @Inject constructor(
     /**
      * Share single file
      */
-    fun shareFile(file: File, mimeType: String = "application/octet-stream", title: String = "Share file") {
+    fun shareFile(
+        file: File,
+        mimeType: String = "application/octet-stream",
+        title: String = "Share file",
+        text: String? = null
+    ) {
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -143,6 +159,9 @@ class ShareHelper @Inject constructor(
             action = Intent.ACTION_SEND
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
+            if (!text.isNullOrBlank()) {
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 

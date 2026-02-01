@@ -234,6 +234,48 @@ fun MainScreen(
                     )
                 }
 
+                // Download Audio Button - Secondary action
+                OutlinedButton(
+                    onClick = viewModel::downloadAudio,
+                    enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()).copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(
+                            if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank())
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            else
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        )
+                    )
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (uiState.isDownloadingAudio) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = BabakCastColors.PrimaryAccent
+                            )
+                        }
+                        Text(
+                            if (uiState.isDownloadingAudio) "Downloading Audio…" else "Download Audio",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                }
+
                 // Summarize Transcript Button - Secondary action
                 OutlinedButton(
                     onClick = viewModel::generateSummary,

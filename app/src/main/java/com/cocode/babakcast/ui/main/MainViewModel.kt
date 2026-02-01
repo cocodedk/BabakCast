@@ -7,6 +7,8 @@ import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
 import com.cocode.babakcast.data.repository.YouTubeRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
+import com.cocode.babakcast.domain.audio.AudioExtractor
+import com.cocode.babakcast.domain.audio.AudioSplitter
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
@@ -23,6 +25,8 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val youtubeRepository: YouTubeRepository,
     private val videoSplitter: VideoSplitter,
+    private val audioExtractor: AudioExtractor,
+    private val audioSplitter: AudioSplitter,
     private val aiRepository: AIRepository,
     private val providerRepository: ProviderRepository,
     private val settingsRepository: SettingsRepository,
@@ -63,7 +67,8 @@ class MainViewModel @Inject constructor(
                 error = null,
                 progress = 0f,
                 isDownloading = true,
-                isSummarizing = false
+                isSummarizing = false,
+                isDownloadingAudio = false
             )
 
             youtubeRepository.downloadVideo(url) { progress ->
@@ -76,7 +81,8 @@ class MainViewModel @Inject constructor(
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     videoInfo = splitVideoInfo,
-                                    isDownloading = false
+                                    isDownloading = false,
+                                    isDownloadingAudio = false
                                 )
                                 shareHelper.shareVideos(splitVideoInfo)
                             },
@@ -84,7 +90,8 @@ class MainViewModel @Inject constructor(
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     error = ErrorHandler.handleException(error),
-                                    isDownloading = false
+                                    isDownloading = false,
+                                    isDownloadingAudio = false
                                 )
                             }
                         )
@@ -92,7 +99,8 @@ class MainViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             videoInfo = videoInfo,
-                            isDownloading = false
+                            isDownloading = false,
+                            isDownloadingAudio = false
                         )
                         shareHelper.shareVideos(videoInfo)
                     }
@@ -101,7 +109,85 @@ class MainViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = ErrorHandler.handleException(error),
-                        isDownloading = false
+                        isDownloading = false,
+                        isDownloadingAudio = false
+                    )
+                }
+            )
+        }
+    }
+
+    fun downloadAudio() {
+        val url = _uiState.value.url
+        if (!_uiState.value.downloadEngineReady) return
+        if (url.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                error = null,
+                progress = 0f,
+                isDownloading = false,
+                isSummarizing = false,
+                isDownloadingAudio = true
+            )
+
+            youtubeRepository.downloadVideo(url) { progress ->
+                _uiState.value = _uiState.value.copy(progress = progress)
+            }.fold(
+                onSuccess = { videoInfo ->
+                    val videoFile = videoInfo.file
+                    if (videoFile == null || !videoFile.exists()) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = AppError.DownloadFailed("Downloaded video file not found"),
+                            isDownloadingAudio = false
+                        )
+                        return@fold
+                    }
+
+                    audioExtractor.extractAudio(videoFile).fold(
+                        onSuccess = { audioFile ->
+                            audioSplitter.splitAudioIfNeeded(audioFile).fold(
+                                onSuccess = { audioFiles ->
+                                    _uiState.value = _uiState.value.copy(
+                                        isLoading = false,
+                                        isDownloadingAudio = false
+                                    )
+                                    val caption = videoInfo.title.ifBlank { "Audio" }
+                                    shareHelper.shareFiles(audioFiles, "audio/mpeg", "Share audio", caption)
+                                    if (videoFile.exists()) {
+                                        videoFile.delete()
+                                    }
+                                },
+                                onFailure = { error ->
+                                    _uiState.value = _uiState.value.copy(
+                                        isLoading = false,
+                                        error = AppError.AudioSplitFailed(error.message ?: "Audio splitting failed"),
+                                        isDownloadingAudio = false
+                                    )
+                                }
+                            )
+                        },
+                        onFailure = { error ->
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                error = AppError.AudioExtractFailed(error.message ?: "Audio extraction failed"),
+                                isDownloadingAudio = false
+                            )
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = ErrorHandler.handleException(error),
+                        isDownloadingAudio = false
                     )
                 }
             )
@@ -123,7 +209,8 @@ class MainViewModel @Inject constructor(
                 error = null,
                 progress = 0f,
                 isDownloading = false,
-                isSummarizing = true
+                isSummarizing = true,
+                isDownloadingAudio = false
             )
 
             // Get transcript
@@ -145,7 +232,8 @@ class MainViewModel @Inject constructor(
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = AppError.ProviderMisconfigured("No AI provider configured"),
-                                isSummarizing = false
+                                isSummarizing = false,
+                                isDownloadingAudio = false
                             )
                             return@launch
                         }
@@ -176,14 +264,16 @@ class MainViewModel @Inject constructor(
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 summary = summary,
-                                isSummarizing = false
+                                isSummarizing = false,
+                                isDownloadingAudio = false
                             )
                         },
                         onFailure = { error ->
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = ErrorHandler.handleException(error),
-                                isSummarizing = false
+                                isSummarizing = false,
+                                isDownloadingAudio = false
                             )
                         }
                     )
@@ -192,7 +282,8 @@ class MainViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = ErrorHandler.handleException(error),
-                        isSummarizing = false
+                        isSummarizing = false,
+                        isDownloadingAudio = false
                     )
                 }
             )
@@ -227,6 +318,7 @@ data class MainUiState(
     val error: AppError? = null,
     val isDownloading: Boolean = false,
     val isSummarizing: Boolean = false,
+    val isDownloadingAudio: Boolean = false,
     val downloadEngineReady: Boolean = false,
     val downloadEngineError: String? = null
 )

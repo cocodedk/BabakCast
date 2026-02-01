@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import java.util.Locale
 
 @HiltViewModel
 class DownloadsViewModel @Inject constructor(
@@ -64,7 +65,13 @@ class DownloadsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(message = "File not found")
             return
         }
-        shareHelper.shareFiles(item.files, "video/*")
+        val mimeType = resolveMimeType(item.files)
+        val title = when {
+            mimeType.startsWith("audio") -> "Share audio"
+            mimeType.startsWith("video") -> "Share video"
+            else -> "Share file"
+        }
+        shareHelper.shareFiles(item.files, mimeType, title, item.displayName)
     }
 
     fun deleteDownload(item: DownloadItem) {
@@ -135,7 +142,8 @@ class DownloadsViewModel @Inject constructor(
                     files = sortedFiles,
                     sizeBytes = totalSize,
                     lastModified = lastModified,
-                    partCount = groupFiles.size
+                    partCount = groupFiles.size,
+                    mediaType = resolveMediaType(groupFiles)
                 )
             }
             .sortedByDescending { it.lastModified }
@@ -150,6 +158,25 @@ class DownloadsViewModel @Inject constructor(
             .trim()
             .ifBlank { groupKey }
         return cleaned
+    }
+
+    private fun resolveMimeType(files: List<java.io.File>): String {
+        val extension = files.firstOrNull()?.extension?.lowercase(Locale.getDefault()).orEmpty()
+        return when (extension) {
+            "mp4", "mkv", "mov", "webm" -> "video/*"
+            "m4a", "aac", "wav", "ogg", "opus" -> "audio/*"
+            "mp3" -> "audio/mpeg"
+            else -> "application/octet-stream"
+        }
+    }
+
+    private fun resolveMediaType(files: List<java.io.File>): DownloadMediaType {
+        val extension = files.firstOrNull()?.extension?.lowercase(Locale.getDefault()).orEmpty()
+        return when (extension) {
+            "mp4", "mkv", "mov", "webm" -> DownloadMediaType.Video
+            "m4a", "aac", "wav", "ogg", "opus", "mp3" -> DownloadMediaType.Audio
+            else -> DownloadMediaType.Unknown
+        }
     }
 }
 
@@ -167,5 +194,12 @@ data class DownloadItem(
     val files: List<java.io.File>,
     val sizeBytes: Long,
     val lastModified: Long,
-    val partCount: Int
+    val partCount: Int,
+    val mediaType: DownloadMediaType
 )
+
+enum class DownloadMediaType(val label: String) {
+    Audio("Audio"),
+    Video("Video"),
+    Unknown("File")
+}

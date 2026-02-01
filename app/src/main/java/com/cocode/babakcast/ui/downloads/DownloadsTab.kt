@@ -180,7 +180,7 @@ fun DownloadsTab(
                                     ""
                                 }
                                 Text(
-                                    text = "${formatFileSize(item.sizeBytes)} • ${formatDate(item.lastModified)}$partsLabel",
+                                    text = "${formatFileSize(item.sizeBytes)} • ${formatDate(item.lastModified)} • ${item.mediaType.label}$partsLabel",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
