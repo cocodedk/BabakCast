@@ -18,6 +18,7 @@ class ShareHelper @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val tag = "ShareHelper"
+    private val fileProviderAuthority = "${context.packageName}.fileprovider"
     /**
      * Share video files
      */
@@ -33,41 +34,23 @@ class ShareHelper @Inject constructor(
             return
         }
 
-        val uris = filesToShare.map { file ->
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
+        val chooser = buildShareFilesChooser(
+            files = filesToShare,
+            mimeType = "video/*",
+            title = "Share video",
+            text = videoInfo.title.ifBlank { null }
+        )
+        if (chooser != null) {
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
         }
-
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND_MULTIPLE
-            type = "video/*"
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
-            if (videoInfo.title.isNotBlank()) {
-                putExtra(Intent.EXTRA_TEXT, videoInfo.title)
-            }
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        val chooser = Intent.createChooser(shareIntent, "Share video").apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(chooser)
     }
 
     /**
      * Share text content
      */
     fun shareText(text: String, title: String = "Share") {
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, text)
-        }
-
-        val chooser = Intent.createChooser(shareIntent, title).apply {
+        val chooser = buildShareTextChooser(text, title).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(chooser)
@@ -107,36 +90,12 @@ class ShareHelper @Inject constructor(
         title: String = "Share videos",
         text: String? = null
     ) {
-        if (files.isEmpty()) {
+        val chooser = buildShareFilesChooser(files, mimeType, title, text)
+        if (chooser == null) {
             Log.w(tag, "No files to share")
             return
         }
-        if (files.size == 1) {
-            shareFile(files.first(), mimeType, title, text)
-            return
-        }
-
-        val uris = files.map { file ->
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-        }
-
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND_MULTIPLE
-            type = mimeType
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
-            if (!text.isNullOrBlank()) {
-                putExtra(Intent.EXTRA_TEXT, text)
-            }
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        val chooser = Intent.createChooser(shareIntent, title).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     }
 
@@ -149,9 +108,59 @@ class ShareHelper @Inject constructor(
         title: String = "Share file",
         text: String? = null
     ) {
+        val chooser = buildShareFileChooser(file, mimeType, title, text)
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(chooser)
+    }
+
+    fun buildShareTextChooser(text: String, title: String = "Share"): Intent {
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        return Intent.createChooser(shareIntent, title)
+    }
+
+    fun buildShareFilesChooser(
+        files: List<File>,
+        mimeType: String,
+        title: String,
+        text: String? = null
+    ): Intent? {
+        if (files.isEmpty()) return null
+        return if (files.size == 1) {
+            buildShareFileChooser(files.first(), mimeType, title, text)
+        } else {
+            val uris = files.map { file ->
+                FileProvider.getUriForFile(
+                    context,
+                    fileProviderAuthority,
+                    file
+                )
+            }
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND_MULTIPLE
+                type = mimeType
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                if (!text.isNullOrBlank()) {
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            Intent.createChooser(shareIntent, title)
+        }
+    }
+
+    fun buildShareFileChooser(
+        file: File,
+        mimeType: String,
+        title: String,
+        text: String? = null
+    ): Intent {
         val uri = FileProvider.getUriForFile(
             context,
-            "${context.packageName}.fileprovider",
+            fileProviderAuthority,
             file
         )
 
@@ -164,10 +173,6 @@ class ShareHelper @Inject constructor(
             }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-
-        val chooser = Intent.createChooser(shareIntent, title).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(chooser)
+        return Intent.createChooser(shareIntent, title)
     }
 }

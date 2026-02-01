@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,9 +55,10 @@ fun DownloadsTab(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var activePlaybackItems by remember { mutableStateOf<List<PlaybackItem>>(emptyList()) }
-    var activePlaybackStartIndex by remember { mutableStateOf(0) }
+    var activePlaybackStartIndex by remember { mutableIntStateOf(0) }
     var pendingPartSelection by remember { mutableStateOf<DownloadItem?>(null) }
     var pendingDeleteSelection by remember { mutableStateOf<DownloadItem?>(null) }
+    var pendingClearDownloads by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -65,7 +68,7 @@ fun DownloadsTab(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         OutlinedButton(
-            onClick = viewModel::clearDownloads,
+            onClick = { pendingClearDownloads = true },
             enabled = !uiState.isCleaningDownloads,
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
@@ -214,6 +217,13 @@ fun DownloadsTab(
                                     tint = BabakCastColors.SecondaryAccent
                                 )
                             }
+                            IconButton(onClick = { viewModel.shareTitle(item) }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Create,
+                                    contentDescription = "Share title",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             IconButton(onClick = { pendingDeleteSelection = item }) {
                                 Icon(
                                     imageVector = Icons.Outlined.Delete,
@@ -286,6 +296,31 @@ fun DownloadsTab(
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteSelection = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (pendingClearDownloads) {
+        AlertDialog(
+            onDismissRequest = { pendingClearDownloads = false },
+            title = { Text(text = "Clear all downloads?") },
+            text = {
+                Text(text = "This will remove all downloaded files from your device.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearDownloads()
+                        pendingClearDownloads = false
+                    }
+                ) {
+                    Text("Clear")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingClearDownloads = false }) {
                     Text("Cancel")
                 }
             }

@@ -24,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.ClipData
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.ComponentActivity
@@ -32,9 +34,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
 import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.ShareHelper
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +53,29 @@ fun MainScreen(
     val clipboardManager = LocalClipboard.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val shareHelper = remember(context) { ShareHelper(context.applicationContext) }
+    var pendingAudioShare by remember { mutableStateOf<ShareRequest.AudioTwoStep?>(null) }
+    val audioShareLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { }
+    val textShareLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        val pending = pendingAudioShare
+        if (pending != null) {
+            val shareIntent = shareHelper.buildShareFilesChooser(
+                files = pending.files,
+                mimeType = pending.mimeType,
+                title = pending.title,
+                text = pending.caption
+            )
+            if (shareIntent != null) {
+                audioShareLauncher.launch(shareIntent)
+            }
+            pendingAudioShare = null
+        }
+    }
 
     // Apply shared URL when user shares from YouTube (or other app) into BabakCast
     val activity = LocalActivity.current as? ComponentActivity
@@ -58,6 +85,33 @@ fun MainScreen(
             if (pendingUrl != null) {
                 viewModel.updateUrl(pendingUrl)
                 shareIntentViewModel.clearPendingUrl()
+            }
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.shareRequests.collect { request ->
+            when (request) {
+                is ShareRequest.AudioTwoStep -> {
+                    if (request.caption.isBlank()) {
+                        val shareIntent = shareHelper.buildShareFilesChooser(
+                            files = request.files,
+                            mimeType = request.mimeType,
+                            title = request.title,
+                            text = null
+                        )
+                        if (shareIntent != null) {
+                            audioShareLauncher.launch(shareIntent)
+                        }
+                    } else {
+                        pendingAudioShare = request
+                        val textIntent = shareHelper.buildShareTextChooser(
+                            text = request.caption,
+                            title = "Share title"
+                        )
+                        textShareLauncher.launch(textIntent)
+                    }
+                }
             }
         }
     }

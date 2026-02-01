@@ -74,6 +74,10 @@ class DownloadsViewModel @Inject constructor(
         shareHelper.shareFiles(item.files, mimeType, title, item.displayName)
     }
 
+    fun shareTitle(item: DownloadItem) {
+        shareHelper.shareText(item.displayName, "Share title")
+    }
+
     fun deleteDownload(item: DownloadItem) {
         _uiState.value = _uiState.value.copy(message = null)
         viewModelScope.launch {

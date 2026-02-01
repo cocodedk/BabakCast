@@ -14,11 +14,15 @@ import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,6 +39,9 @@ class MainViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    private val _shareRequests = MutableSharedFlow<ShareRequest>(extraBufferCapacity = 1)
+    val shareRequests: SharedFlow<ShareRequest> = _shareRequests.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -160,7 +167,14 @@ class MainViewModel @Inject constructor(
                                         isDownloadingAudio = false
                                     )
                                     val caption = videoInfo.title.ifBlank { "Audio" }
-                                    shareHelper.shareFiles(audioFiles, "audio/mpeg", "Share audio", caption)
+                                    _shareRequests.emit(
+                                        ShareRequest.AudioTwoStep(
+                                            caption = caption,
+                                            files = audioFiles,
+                                            mimeType = "audio/mpeg",
+                                            title = "Share audio"
+                                        )
+                                    )
                                     if (videoFile.exists()) {
                                         videoFile.delete()
                                     }
@@ -322,3 +336,12 @@ data class MainUiState(
     val downloadEngineReady: Boolean = false,
     val downloadEngineError: String? = null
 )
+
+sealed class ShareRequest {
+    data class AudioTwoStep(
+        val caption: String,
+        val files: List<File>,
+        val mimeType: String,
+        val title: String
+    ) : ShareRequest()
+}
