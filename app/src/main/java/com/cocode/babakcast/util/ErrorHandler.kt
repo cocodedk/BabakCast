@@ -66,6 +66,18 @@ sealed class AppError(
         fixHint = "The video may be corrupted or in an unsupported format"
     )
 
+    data class AudioExtractFailed(override val message: String = "Audio extraction failed") : AppError(
+        title = "Audio Error",
+        message = message,
+        fixHint = "Try again or use a different video"
+    )
+
+    data class AudioSplitFailed(override val message: String = "Audio splitting failed") : AppError(
+        title = "Audio Error",
+        message = message,
+        fixHint = "The audio may be corrupted or too large to process"
+    )
+
     data class UnknownError(override val message: String = "An unexpected error occurred") : AppError(
         title = "Error",
         message = message,
@@ -107,6 +119,10 @@ object ErrorHandler {
                 when {
                     msg.contains("not initialized", ignoreCase = true) ->
                         AppError.NotInitialized("Download engine is still starting.")
+                    msg.contains("audio extraction", ignoreCase = true) ->
+                        AppError.AudioExtractFailed(msg)
+                    msg.contains("audio split", ignoreCase = true) ->
+                        AppError.AudioSplitFailed(msg)
                     else -> AppError.UnknownError(msg)
                 }
             }

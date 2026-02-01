@@ -14,6 +14,7 @@ A **local-first** Android app to download YouTube videos, summarize transcripts 
 ## Features
 
 - **YouTube video download** — Paste a URL, get shareable video files (auto-split at 16 MB for sharing limits).
+- **YouTube audio download** — Extract audio (MP3) from a video and share audio files (auto-split at 16 MB for sharing limits).
 - **Transcript summarization** — Extract captions and summarize with your chosen AI model (bullet points, paragraph, or TL;DR).
 - **Bring-your-own AI** — OpenAI, Azure OpenAI, Anthropic, Google Gemini, OpenRouter. Configure API key and model in Settings.
 - **No backend** — Everything runs on your device. No accounts, no analytics, no tracking.
@@ -64,7 +65,8 @@ A **local-first** Android app to download YouTube videos, summarize transcripts 
 ## Usage
 
 1. **Download video** — Paste a YouTube URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
-2. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose.
+2. **Download audio** — Paste a YouTube URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
+3. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose.
 
 ---
 
