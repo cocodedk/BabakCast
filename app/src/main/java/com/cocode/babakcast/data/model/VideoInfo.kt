@@ -9,6 +9,7 @@ data class VideoInfo(
     val videoId: String,
     val title: String,
     val url: String,
+    val chapters: List<VideoChapter> = emptyList(),
     val file: File? = null,
     val splitFiles: List<File> = emptyList(),
     val fileSizeBytes: Long = 0,

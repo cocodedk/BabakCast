@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
+import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
@@ -611,6 +612,44 @@ fun MainScreen(
             )
         }
     }
+
+    uiState.splitChoicePrompt?.let { prompt ->
+        SplitChoiceDialog(
+            prompt = prompt,
+            onChoose = viewModel::chooseSplitMode
+        )
+    }
+}
+
+@Composable
+internal fun SplitChoiceDialog(
+    prompt: SplitChoicePrompt,
+    onChoose: (SplitMode) -> Unit
+) {
+    val mediaLabel = when (prompt.mediaType) {
+        SplitChoiceMediaType.VIDEO -> "video"
+        SplitChoiceMediaType.AUDIO -> "audio"
+    }
+    AlertDialog(
+        onDismissRequest = { onChoose(SplitMode.SIZE_16MB) },
+        title = { Text(text = "Choose split mode") },
+        text = {
+            Text(
+                text = "This $mediaLabel source includes ${prompt.chapterCount} chapters. " +
+                    "Split by chapters or keep standard 16 MB chunks?"
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onChoose(SplitMode.CHAPTERS) }) {
+                Text("Split by chapters")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onChoose(SplitMode.SIZE_16MB) }) {
+                Text("Use 16 MB chunks")
+            }
+        }
+    )
 }
 
 private suspend fun androidx.compose.ui.platform.Clipboard.setPlainText(text: String) {
