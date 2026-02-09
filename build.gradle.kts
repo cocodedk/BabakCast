@@ -7,3 +7,13 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt.android) apply false
 }
+
+tasks.register("buildSmoke") {
+    group = "verification"
+    description = "Build debug, run unit tests, and lint to ensure a clean build."
+    dependsOn(
+        ":app:assembleDebug",
+        ":app:testDebugUnitTest",
+        ":app:lintDebug"
+    )
+}
