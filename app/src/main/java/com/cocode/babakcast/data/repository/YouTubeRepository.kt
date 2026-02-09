@@ -108,7 +108,7 @@ class YouTubeRepository @Inject constructor(
             }
 
             val fileSize = outputFile.length()
-            val needsSplitting = fileSize > 15 * 1024 * 1024 // 15 MB (WhatsApp-safe)
+            val needsSplitting = fileSize > 16 * 1024 * 1024 // 16 MB limit
 
             Log.d(tag, "Download complete for videoId=$videoId sizeBytes=$fileSize needsSplitting=$needsSplitting")
             Result.success(

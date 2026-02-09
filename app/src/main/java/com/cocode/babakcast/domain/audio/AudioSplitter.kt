@@ -1,5 +1,6 @@
 package com.cocode.babakcast.domain.audio
 
+import android.util.Log
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import kotlinx.coroutines.Dispatchers
@@ -11,21 +12,34 @@ import javax.inject.Singleton
 @Singleton
 class AudioSplitter @Inject constructor() {
 
+    private val tag = "AudioSplitter"
+
     companion object {
-        private const val MAX_CHUNK_SIZE_BYTES = 15 * 1024 * 1024
-        private const val TARGET_CHUNK_SIZE_BYTES = 14 * 1024 * 1024
+        private const val MAX_CHUNK_SIZE_BYTES = 16 * 1024 * 1024
+        private const val TARGET_CHUNK_SIZE_BYTES = 15 * 1024 * 1024
         private const val MAX_SPLIT_ATTEMPTS = 5
         private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
         private const val DEFAULT_EXTENSION = "mp3"
     }
 
-    suspend fun splitAudioIfNeeded(audioFile: File): Result<List<File>> = withContext(Dispatchers.IO) {
+    suspend fun splitAudioIfNeeded(
+        audioFile: File,
+        onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
+    ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
             if (!audioFile.exists()) {
+                Log.e(tag, "splitAudioIfNeeded aborted: source file missing path=${audioFile.absolutePath}")
                 return@withContext Result.failure(Exception("Audio file not found"))
             }
 
-            if (audioFile.length() <= MAX_CHUNK_SIZE_BYTES) {
+            val sourceSize = audioFile.length()
+            Log.d(
+                tag,
+                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES"
+            )
+
+            if (sourceSize <= MAX_CHUNK_SIZE_BYTES) {
+                Log.d(tag, "splitAudioIfNeeded skip: size within limit, returning original file")
                 return@withContext Result.success(listOf(audioFile))
             }
 
@@ -51,10 +65,16 @@ class AudioSplitter @Inject constructor() {
             val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
             val indexWidth = estimatedParts.toString().length
 
+            Log.d(
+                tag,
+                "splitAudioIfNeeded planning durationSec=${formatSeconds(duration)} bytesPerSec=${"%.2f".format(java.util.Locale.US, bytesPerSecond)} targetChunkSec=${formatSeconds(chunkDuration)} estimatedParts=$estimatedParts"
+            )
+
             var currentTime = 0.0
             var chunkIndex = 0
 
             while (currentTime < duration) {
+                onProgress?.invoke(chunkIndex + 1, estimatedParts)
                 val partNumber = (chunkIndex + 1).toString().padStart(indexWidth, '0')
                 val outputBaseName = "${baseName}_part${partNumber}"
                 val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.$outputExtension")
@@ -64,6 +84,10 @@ class AudioSplitter @Inject constructor() {
                 var splitSuccess = false
 
                 while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
+                    Log.d(
+                        tag,
+                        "splitAudioIfNeeded chunk=${chunkIndex + 1} attempt=${attempt + 1} startSec=${formatSeconds(currentTime)} durationSec=${formatSeconds(segmentDuration)}"
+                    )
                     val command = "-ss ${formatSeconds(currentTime)} " +
                         "-i \"${audioFile.absolutePath}\" " +
                         "-t ${formatSeconds(segmentDuration)} " +
@@ -76,9 +100,17 @@ class AudioSplitter @Inject constructor() {
                     if (ReturnCode.isSuccess(session.returnCode)) {
                         if (outputFile.exists() && outputFile.length() > 0) {
                             if (outputFile.length() <= MAX_CHUNK_SIZE_BYTES) {
+                                Log.d(
+                                    tag,
+                                    "splitAudioIfNeeded chunk=${chunkIndex + 1} success path=${outputFile.name} sizeBytes=${outputFile.length()}"
+                                )
                                 splitFiles.add(outputFile)
                                 splitSuccess = true
                             } else {
+                                Log.w(
+                                    tag,
+                                    "splitAudioIfNeeded chunk=${chunkIndex + 1} oversize sizeBytes=${outputFile.length()} retrying with shorter duration"
+                                )
                                 outputFile.delete()
                                 segmentDuration *= 0.85
                                 attempt++
@@ -88,11 +120,13 @@ class AudioSplitter @Inject constructor() {
                         }
                     } else {
                         val errorOutput = session.failStackTrace ?: "Unknown error"
+                        Log.e(tag, "splitAudioIfNeeded ffmpeg failed chunk=${chunkIndex + 1} error=$errorOutput")
                         return@withContext Result.failure(Exception("Failed to split audio: $errorOutput"))
                     }
                 }
 
                 if (!splitSuccess) {
+                    Log.e(tag, "splitAudioIfNeeded failed after retries chunk=${chunkIndex + 1}")
                     return@withContext Result.failure(Exception("Failed to split audio into WhatsApp-sized parts"))
                 }
 
@@ -101,11 +135,19 @@ class AudioSplitter @Inject constructor() {
             }
 
             if (splitFiles.isNotEmpty()) {
+                Log.d(tag, "splitAudioIfNeeded deleting source after split path=${audioFile.name}")
                 audioFile.delete()
             }
 
+            val totalOutputSize = splitFiles.sumOf { it.length() }
+            Log.d(
+                tag,
+                "splitAudioIfNeeded completed parts=${splitFiles.size} totalOutputBytes=$totalOutputSize sourceBytes=$sourceSize"
+            )
+
             Result.success(splitFiles)
         } catch (e: Exception) {
+            Log.e(tag, "splitAudioIfNeeded exception", e)
             Result.failure(e)
         }
     }

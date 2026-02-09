@@ -16,8 +16,8 @@ import javax.inject.Singleton
 class VideoSplitter @Inject constructor() {
 
     companion object {
-        private const val MAX_CHUNK_SIZE_BYTES = 15 * 1024 * 1024 // 15 MB (WhatsApp-safe)
-        private const val TARGET_CHUNK_SIZE_BYTES = 14 * 1024 * 1024 // 14 MB (safety margin)
+        private const val MAX_CHUNK_SIZE_BYTES = 16 * 1024 * 1024 // 16 MB limit
+        private const val TARGET_CHUNK_SIZE_BYTES = 15 * 1024 * 1024 // 15 MB target to reduce tiny chunks
         private const val MAX_SPLIT_ATTEMPTS = 5
         private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
     }
@@ -25,7 +25,10 @@ class VideoSplitter @Inject constructor() {
     /**
      * Split video into chunks if it exceeds 16MB
      */
-    suspend fun splitVideoIfNeeded(videoInfo: VideoInfo): Result<VideoInfo> = withContext(Dispatchers.IO) {
+    suspend fun splitVideoIfNeeded(
+        videoInfo: VideoInfo,
+        onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
+    ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
             val videoFile = videoInfo.file ?: return@withContext Result.success(videoInfo)
 
@@ -63,6 +66,7 @@ class VideoSplitter @Inject constructor() {
             var chunkIndex = 0
 
             while (currentTime < duration) {
+                onProgress?.invoke(chunkIndex + 1, estimatedParts)
                 val partNumber = (chunkIndex + 1).toString().padStart(indexWidth, '0')
                 val outputBaseName = "${baseName}_part${partNumber}"
                 val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.mp4")
