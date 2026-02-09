@@ -164,7 +164,7 @@ class ShareHelper @Inject constructor(
         }
 
         val normalized = withPartNumbers
-            .sortedWith(compareBy<Pair<File, Int?>> { it.second ?: Int.MAX_VALUE }.thenBy { it.first.name })
+            .sortedWith(compareBy<Pair<File, Int?>> { it.second }.thenBy { it.first.name })
             .map { it.first }
 
         Log.d(

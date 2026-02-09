@@ -291,7 +291,9 @@ class MainViewModel @Inject constructor(
                 progress = 0f,
                 isDownloading = false,
                 isSummarizing = true,
-                isDownloadingAudio = false
+                isDownloadingAudio = false,
+                loadingMessage = "Fetching transcript...",
+                isProgressIndeterminate = true
             )
 
             // Get transcript
@@ -314,7 +316,9 @@ class MainViewModel @Inject constructor(
                                 isLoading = false,
                                 error = AppError.ProviderMisconfigured("No AI provider configured"),
                                 isSummarizing = false,
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                             return@launch
                         }
@@ -333,6 +337,11 @@ class MainViewModel @Inject constructor(
                         settings.defaultSummaryLength
                     }
 
+                    _uiState.value = _uiState.value.copy(
+                        loadingMessage = "Generating summary...",
+                        isProgressIndeterminate = true
+                    )
+
                     aiRepository.generateSummary(
                         transcript = transcript,
                         providerId = defaultProvider.id,
@@ -346,7 +355,9 @@ class MainViewModel @Inject constructor(
                                 isLoading = false,
                                 summary = summary,
                                 isSummarizing = false,
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                         },
                         onFailure = { error ->
@@ -354,7 +365,9 @@ class MainViewModel @Inject constructor(
                                 isLoading = false,
                                 error = ErrorHandler.handleException(error),
                                 isSummarizing = false,
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                         }
                     )
@@ -364,7 +377,9 @@ class MainViewModel @Inject constructor(
                         isLoading = false,
                         error = ErrorHandler.handleException(error),
                         isSummarizing = false,
-                        isDownloadingAudio = false
+                        isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
                     )
                 }
             )

@@ -16,7 +16,7 @@ import javax.inject.Singleton
 class VideoSplitter @Inject constructor() {
 
     companion object {
-        private const val MAX_CHUNK_SIZE_BYTES = 16 * 1024 * 1024 // 16 MB limit
+        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024 // 16 MB limit
         private const val TARGET_CHUNK_SIZE_BYTES = 15 * 1024 * 1024 // 15 MB target to reduce tiny chunks
         private const val MAX_SPLIT_ATTEMPTS = 5
         private const val FILE_NAME_SUFFIX = " - Visit BabakCast"

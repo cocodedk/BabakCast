@@ -12,9 +12,8 @@ import javax.inject.Singleton
 @Singleton
 class AudioSplitter @Inject constructor() {
 
-    private val tag = "AudioSplitter"
-
     companion object {
+        private const val TAG = "AudioSplitter"
         private const val MAX_CHUNK_SIZE_BYTES = 16 * 1024 * 1024
         private const val TARGET_CHUNK_SIZE_BYTES = 15 * 1024 * 1024
         private const val MAX_SPLIT_ATTEMPTS = 5
@@ -28,18 +27,18 @@ class AudioSplitter @Inject constructor() {
     ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
             if (!audioFile.exists()) {
-                Log.e(tag, "splitAudioIfNeeded aborted: source file missing path=${audioFile.absolutePath}")
+                Log.e(TAG, "splitAudioIfNeeded aborted: source file missing path=${audioFile.absolutePath}")
                 return@withContext Result.failure(Exception("Audio file not found"))
             }
 
             val sourceSize = audioFile.length()
             Log.d(
-                tag,
+                TAG,
                 "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES"
             )
 
             if (sourceSize <= MAX_CHUNK_SIZE_BYTES) {
-                Log.d(tag, "splitAudioIfNeeded skip: size within limit, returning original file")
+                Log.d(TAG, "splitAudioIfNeeded skip: size within limit, returning original file")
                 return@withContext Result.success(listOf(audioFile))
             }
 
@@ -66,7 +65,7 @@ class AudioSplitter @Inject constructor() {
             val indexWidth = estimatedParts.toString().length
 
             Log.d(
-                tag,
+                TAG,
                 "splitAudioIfNeeded planning durationSec=${formatSeconds(duration)} bytesPerSec=${"%.2f".format(java.util.Locale.US, bytesPerSecond)} targetChunkSec=${formatSeconds(chunkDuration)} estimatedParts=$estimatedParts"
             )
 
@@ -74,7 +73,8 @@ class AudioSplitter @Inject constructor() {
             var chunkIndex = 0
 
             while (currentTime < duration) {
-                onProgress?.invoke(chunkIndex + 1, estimatedParts)
+                val currentPart = (chunkIndex + 1).coerceAtMost(estimatedParts)
+                onProgress?.invoke(currentPart, estimatedParts)
                 val partNumber = (chunkIndex + 1).toString().padStart(indexWidth, '0')
                 val outputBaseName = "${baseName}_part${partNumber}"
                 val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.$outputExtension")
@@ -85,7 +85,7 @@ class AudioSplitter @Inject constructor() {
 
                 while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
                     Log.d(
-                        tag,
+                        TAG,
                         "splitAudioIfNeeded chunk=${chunkIndex + 1} attempt=${attempt + 1} startSec=${formatSeconds(currentTime)} durationSec=${formatSeconds(segmentDuration)}"
                     )
                     val command = "-ss ${formatSeconds(currentTime)} " +
@@ -101,14 +101,14 @@ class AudioSplitter @Inject constructor() {
                         if (outputFile.exists() && outputFile.length() > 0) {
                             if (outputFile.length() <= MAX_CHUNK_SIZE_BYTES) {
                                 Log.d(
-                                    tag,
+                                    TAG,
                                     "splitAudioIfNeeded chunk=${chunkIndex + 1} success path=${outputFile.name} sizeBytes=${outputFile.length()}"
                                 )
                                 splitFiles.add(outputFile)
                                 splitSuccess = true
                             } else {
                                 Log.w(
-                                    tag,
+                                    TAG,
                                     "splitAudioIfNeeded chunk=${chunkIndex + 1} oversize sizeBytes=${outputFile.length()} retrying with shorter duration"
                                 )
                                 outputFile.delete()
@@ -120,13 +120,13 @@ class AudioSplitter @Inject constructor() {
                         }
                     } else {
                         val errorOutput = session.failStackTrace ?: "Unknown error"
-                        Log.e(tag, "splitAudioIfNeeded ffmpeg failed chunk=${chunkIndex + 1} error=$errorOutput")
+                        Log.e(TAG, "splitAudioIfNeeded ffmpeg failed chunk=${chunkIndex + 1} error=$errorOutput")
                         return@withContext Result.failure(Exception("Failed to split audio: $errorOutput"))
                     }
                 }
 
                 if (!splitSuccess) {
-                    Log.e(tag, "splitAudioIfNeeded failed after retries chunk=${chunkIndex + 1}")
+                    Log.e(TAG, "splitAudioIfNeeded failed after retries chunk=${chunkIndex + 1}")
                     return@withContext Result.failure(Exception("Failed to split audio into WhatsApp-sized parts"))
                 }
 
@@ -135,19 +135,19 @@ class AudioSplitter @Inject constructor() {
             }
 
             if (splitFiles.isNotEmpty()) {
-                Log.d(tag, "splitAudioIfNeeded deleting source after split path=${audioFile.name}")
+                Log.d(TAG, "splitAudioIfNeeded deleting source after split path=${audioFile.name}")
                 audioFile.delete()
             }
 
             val totalOutputSize = splitFiles.sumOf { it.length() }
             Log.d(
-                tag,
+                TAG,
                 "splitAudioIfNeeded completed parts=${splitFiles.size} totalOutputBytes=$totalOutputSize sourceBytes=$sourceSize"
             )
 
             Result.success(splitFiles)
         } catch (e: Exception) {
-            Log.e(tag, "splitAudioIfNeeded exception", e)
+            Log.e(TAG, "splitAudioIfNeeded exception", e)
             Result.failure(e)
         }
     }
