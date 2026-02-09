@@ -386,16 +386,36 @@ fun MainScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    LinearProgressIndicator(
-                        progress = { safeProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp),
-                        color = BabakCastColors.PrimaryAccent,
-                        trackColor = MaterialTheme.colorScheme.surface
-                    )
+                    if (uiState.isProgressIndeterminate) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp),
+                            color = BabakCastColors.PrimaryAccent,
+                            trackColor = MaterialTheme.colorScheme.surface
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { safeProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp),
+                            color = BabakCastColors.PrimaryAccent,
+                            trackColor = MaterialTheme.colorScheme.surface
+                        )
+                    }
+                    uiState.loadingMessage?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
-                        text = "${(safeProgress * 100).roundToInt()}%",
+                        text = if (uiState.isProgressIndeterminate) "Working..." else "${(safeProgress * 100).roundToInt()}%",
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium

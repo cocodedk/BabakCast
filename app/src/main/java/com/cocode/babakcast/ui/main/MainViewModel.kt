@@ -1,5 +1,6 @@
 package com.cocode.babakcast.ui.main
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SettingsRepository
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.math.max
 import java.io.File
 import javax.inject.Inject
 
@@ -36,6 +38,7 @@ class MainViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val shareHelper: ShareHelper
 ) : ViewModel() {
+    private val tag = "MainViewModel"
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -75,7 +78,9 @@ class MainViewModel @Inject constructor(
                 progress = 0f,
                 isDownloading = true,
                 isSummarizing = false,
-                isDownloadingAudio = false
+                isDownloadingAudio = false,
+                loadingMessage = "Downloading video...",
+                isProgressIndeterminate = false
             )
 
             youtubeRepository.downloadVideo(url) { progress ->
@@ -83,13 +88,25 @@ class MainViewModel @Inject constructor(
             }.fold(
                 onSuccess = { videoInfo ->
                     if (videoInfo.needsSplitting) {
-                        videoSplitter.splitVideoIfNeeded(videoInfo).fold(
+                        _uiState.value = _uiState.value.copy(
+                            progress = 0f,
+                            loadingMessage = "Splitting video..."
+                        )
+                        videoSplitter.splitVideoIfNeeded(videoInfo) { currentPart, totalParts ->
+                            val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
+                            _uiState.value = _uiState.value.copy(
+                                progress = (currentPart / denominator).coerceIn(0f, 1f),
+                                loadingMessage = "Splitting video part $currentPart/$totalParts..."
+                            )
+                        }.fold(
                             onSuccess = { splitVideoInfo ->
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     videoInfo = splitVideoInfo,
                                     isDownloading = false,
-                                    isDownloadingAudio = false
+                                    isDownloadingAudio = false,
+                                    loadingMessage = null,
+                                    isProgressIndeterminate = false
                                 )
                                 shareHelper.shareVideos(splitVideoInfo)
                             },
@@ -98,7 +115,9 @@ class MainViewModel @Inject constructor(
                                     isLoading = false,
                                     error = ErrorHandler.handleException(error),
                                     isDownloading = false,
-                                    isDownloadingAudio = false
+                                    isDownloadingAudio = false,
+                                    loadingMessage = null,
+                                    isProgressIndeterminate = false
                                 )
                             }
                         )
@@ -107,7 +126,9 @@ class MainViewModel @Inject constructor(
                             isLoading = false,
                             videoInfo = videoInfo,
                             isDownloading = false,
-                            isDownloadingAudio = false
+                            isDownloadingAudio = false,
+                            loadingMessage = null,
+                            isProgressIndeterminate = false
                         )
                         shareHelper.shareVideos(videoInfo)
                     }
@@ -117,7 +138,9 @@ class MainViewModel @Inject constructor(
                         isLoading = false,
                         error = ErrorHandler.handleException(error),
                         isDownloading = false,
-                        isDownloadingAudio = false
+                        isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
                     )
                 }
             )
@@ -141,7 +164,9 @@ class MainViewModel @Inject constructor(
                 progress = 0f,
                 isDownloading = false,
                 isSummarizing = false,
-                isDownloadingAudio = true
+                isDownloadingAudio = true,
+                loadingMessage = "Downloading source video...",
+                isProgressIndeterminate = false
             )
 
             youtubeRepository.downloadVideo(url) { progress ->
@@ -153,18 +178,51 @@ class MainViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = AppError.DownloadFailed("Downloaded video file not found"),
-                            isDownloadingAudio = false
+                            isDownloadingAudio = false,
+                            loadingMessage = null,
+                            isProgressIndeterminate = false
                         )
                         return@fold
                     }
 
+                    Log.d(
+                        tag,
+                        "downloadAudio video ready file=${videoFile.name} sizeBytes=${videoFile.length()} needsSplitting=${videoInfo.needsSplitting}"
+                    )
+                    _uiState.value = _uiState.value.copy(
+                        loadingMessage = "Extracting audio...",
+                        isProgressIndeterminate = true
+                    )
+
                     audioExtractor.extractAudio(videoFile).fold(
                         onSuccess = { audioFile ->
-                            audioSplitter.splitAudioIfNeeded(audioFile).fold(
+                            Log.d(
+                                tag,
+                                "downloadAudio extracted audio file=${audioFile.name} sizeBytes=${audioFile.length()}"
+                            )
+                            _uiState.value = _uiState.value.copy(
+                                progress = 0f,
+                                loadingMessage = "Splitting audio...",
+                                isProgressIndeterminate = false
+                            )
+                            audioSplitter.splitAudioIfNeeded(audioFile) { currentPart, totalParts ->
+                                val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
+                                _uiState.value = _uiState.value.copy(
+                                    progress = (currentPart / denominator).coerceIn(0f, 1f),
+                                    loadingMessage = "Splitting audio part $currentPart/$totalParts..."
+                                )
+                            }.fold(
                                 onSuccess = { audioFiles ->
+                                    val details = audioFiles.joinToString { "${it.name}:${it.length()}" }
+                                    Log.d(
+                                        tag,
+                                        "downloadAudio split success partCount=${audioFiles.size} parts=[$details]"
+                                    )
                                     _uiState.value = _uiState.value.copy(
                                         isLoading = false,
-                                        isDownloadingAudio = false
+                                        isDownloadingAudio = false,
+                                        loadingMessage = null,
+                                        isProgressIndeterminate = false
                                     )
                                     val caption = videoInfo.title.ifBlank { "Audio" }
                                     _shareRequests.emit(
@@ -175,24 +233,31 @@ class MainViewModel @Inject constructor(
                                             title = "Share audio"
                                         )
                                     )
+                                    Log.d(tag, "downloadAudio share request emitted with ${audioFiles.size} file(s)")
                                     if (videoFile.exists()) {
                                         videoFile.delete()
                                     }
                                 },
                                 onFailure = { error ->
+                                    Log.e(tag, "downloadAudio split failed", error)
                                     _uiState.value = _uiState.value.copy(
                                         isLoading = false,
                                         error = AppError.AudioSplitFailed(error.message ?: "Audio splitting failed"),
-                                        isDownloadingAudio = false
+                                        isDownloadingAudio = false,
+                                        loadingMessage = null,
+                                        isProgressIndeterminate = false
                                     )
                                 }
                             )
                         },
                         onFailure = { error ->
+                            Log.e(tag, "downloadAudio extract failed", error)
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = AppError.AudioExtractFailed(error.message ?: "Audio extraction failed"),
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                         }
                     )
@@ -201,7 +266,9 @@ class MainViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = ErrorHandler.handleException(error),
-                        isDownloadingAudio = false
+                        isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
                     )
                 }
             )
@@ -224,7 +291,9 @@ class MainViewModel @Inject constructor(
                 progress = 0f,
                 isDownloading = false,
                 isSummarizing = true,
-                isDownloadingAudio = false
+                isDownloadingAudio = false,
+                loadingMessage = "Fetching transcript...",
+                isProgressIndeterminate = true
             )
 
             // Get transcript
@@ -247,7 +316,9 @@ class MainViewModel @Inject constructor(
                                 isLoading = false,
                                 error = AppError.ProviderMisconfigured("No AI provider configured"),
                                 isSummarizing = false,
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                             return@launch
                         }
@@ -266,6 +337,11 @@ class MainViewModel @Inject constructor(
                         settings.defaultSummaryLength
                     }
 
+                    _uiState.value = _uiState.value.copy(
+                        loadingMessage = "Generating summary...",
+                        isProgressIndeterminate = true
+                    )
+
                     aiRepository.generateSummary(
                         transcript = transcript,
                         providerId = defaultProvider.id,
@@ -279,7 +355,9 @@ class MainViewModel @Inject constructor(
                                 isLoading = false,
                                 summary = summary,
                                 isSummarizing = false,
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                         },
                         onFailure = { error ->
@@ -287,7 +365,9 @@ class MainViewModel @Inject constructor(
                                 isLoading = false,
                                 error = ErrorHandler.handleException(error),
                                 isSummarizing = false,
-                                isDownloadingAudio = false
+                                isDownloadingAudio = false,
+                                loadingMessage = null,
+                                isProgressIndeterminate = false
                             )
                         }
                     )
@@ -297,7 +377,9 @@ class MainViewModel @Inject constructor(
                         isLoading = false,
                         error = ErrorHandler.handleException(error),
                         isSummarizing = false,
-                        isDownloadingAudio = false
+                        isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
                     )
                 }
             )
@@ -334,7 +416,9 @@ data class MainUiState(
     val isSummarizing: Boolean = false,
     val isDownloadingAudio: Boolean = false,
     val downloadEngineReady: Boolean = false,
-    val downloadEngineError: String? = null
+    val downloadEngineError: String? = null,
+    val loadingMessage: String? = null,
+    val isProgressIndeterminate: Boolean = false
 )
 
 sealed class ShareRequest {

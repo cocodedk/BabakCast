@@ -129,10 +129,11 @@ class ShareHelper @Inject constructor(
         text: String? = null
     ): Intent? {
         if (files.isEmpty()) return null
-        return if (files.size == 1) {
-            buildShareFileChooser(files.first(), mimeType, title, text)
+        val orderedFiles = normalizeShareFileOrder(files)
+        return if (orderedFiles.size == 1) {
+            buildShareFileChooser(orderedFiles.first(), mimeType, title, text)
         } else {
-            val uris = files.map { file ->
+            val uris = orderedFiles.map { file ->
                 FileProvider.getUriForFile(
                     context,
                     fileProviderAuthority,
@@ -150,6 +151,27 @@ class ShareHelper @Inject constructor(
             }
             Intent.createChooser(shareIntent, title)
         }
+    }
+
+    private fun normalizeShareFileOrder(files: List<File>): List<File> {
+        if (files.size < 2) return files
+
+        val withPartNumbers = files.map { file ->
+            file to DownloadFileParser.extractPartNumber(file.nameWithoutExtension)
+        }
+        if (withPartNumbers.any { it.second == null }) {
+            return files
+        }
+
+        val normalized = withPartNumbers
+            .sortedWith(compareBy<Pair<File, Int?>> { it.second }.thenBy { it.first.name })
+            .map { it.first }
+
+        Log.d(
+            tag,
+            "normalizeShareFileOrder applied multipart sort input=[${files.joinToString { it.name }}] output=[${normalized.joinToString { it.name }}]"
+        )
+        return normalized
     }
 
     fun buildShareFileChooser(

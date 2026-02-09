@@ -3,6 +3,7 @@ package com.cocode.babakcast.data.repository
 import android.content.Context
 import android.util.Log
 import com.cocode.babakcast.data.model.VideoInfo
+import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.YouTubeUrlParser
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -108,7 +109,7 @@ class YouTubeRepository @Inject constructor(
             }
 
             val fileSize = outputFile.length()
-            val needsSplitting = fileSize > 15 * 1024 * 1024 // 15 MB (WhatsApp-safe)
+            val needsSplitting = fileSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES
 
             Log.d(tag, "Download complete for videoId=$videoId sizeBytes=$fileSize needsSplitting=$needsSplitting")
             Result.success(
