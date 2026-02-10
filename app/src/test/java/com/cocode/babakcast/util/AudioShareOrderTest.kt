@@ -10,7 +10,7 @@ class AudioShareOrderTest {
         val estimatedParts = 9
         val orderedNames = listOf(1, 2, 9, 10, 11).map { part ->
             val token = DownloadFileParser.formatPartNumber(part, estimatedParts)
-            "episode_part${token} - Visit BabakCast.mp3"
+            "episode_part${token}.mp3"
         }
 
         assertEquals(

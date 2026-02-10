@@ -1,5 +1,10 @@
 # Repository Guidelines
 
+## Working Boundaries
+- All work must be performed within the project root directory.
+- Do not create, modify, or access files outside this project folder.
+- Do not run commands outside the project directory without explicit user permission.
+
 ## Project Structure & Module Organization
 - `app/` — Android application module.
   - `app/src/main/java/com/cocode/babakcast/` — Kotlin source (Compose UI, domain, data).

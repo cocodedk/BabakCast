@@ -22,7 +22,6 @@ class AudioSplitter @Inject constructor() {
         internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024
         private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024
         private const val MAX_SPLIT_ATTEMPTS = 5
-        private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
         private const val DEFAULT_EXTENSION = "mp3"
     }
 
@@ -64,7 +63,7 @@ class AudioSplitter @Inject constructor() {
 
             val outputDir = audioFile.parentFile
                 ?: return@withContext Result.failure(Exception("Invalid output directory"))
-            val baseName = stripSuffix(audioFile.nameWithoutExtension)
+            val baseName = audioFile.nameWithoutExtension
             val outputExtension = audioFile.extension.ifBlank { DEFAULT_EXTENSION }
 
             if (splitMode == SplitMode.CHAPTERS) {
@@ -98,7 +97,7 @@ class AudioSplitter @Inject constructor() {
                 onProgress?.invoke(currentPart, estimatedParts)
                 val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
                 val outputBaseName = "${baseName}_part${partNumber}"
-                val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.$outputExtension")
+                val outputFile = File(outputDir, "$outputBaseName.$outputExtension")
 
                 var segmentDuration = minOf(chunkDuration, duration - currentTime)
                 var attempt = 0
@@ -304,20 +303,7 @@ class AudioSplitter @Inject constructor() {
     ): File {
         val partNumber = DownloadFileParser.formatPartNumber(partIndex, totalParts)
         val outputBaseName = "${baseName}_part${partNumber}"
-        return File(outputDir, "${appendSuffix(outputBaseName)}.$outputExtension")
-    }
-
-    private fun stripSuffix(baseName: String): String {
-        return if (baseName.endsWith(FILE_NAME_SUFFIX)) {
-            baseName.dropLast(FILE_NAME_SUFFIX.length).trimEnd()
-        } else {
-            baseName
-        }
-    }
-
-    private fun appendSuffix(baseName: String): String {
-        val trimmed = baseName.trim()
-        return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
+        return File(outputDir, "$outputBaseName.$outputExtension")
     }
 
     private fun cleanupFiles(files: List<File>) {

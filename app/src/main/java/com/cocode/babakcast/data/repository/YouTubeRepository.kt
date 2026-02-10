@@ -23,10 +23,6 @@ import kotlin.math.roundToInt
 class YouTubeRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    companion object {
-        private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
-    }
-
     private val tag = "YouTubeRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
@@ -64,15 +60,18 @@ class YouTubeRepository @Inject constructor(
             val title = YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
             val chapters = YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
 
-            Result.success(
-                VideoInfo(
-                    videoId = videoId,
-                    title = title,
-                    url = url,
-                    chapters = chapters
-                )
+            val videoInfo = VideoInfo(
+                videoId = videoId,
+                title = title,
+                url = url,
+                chapters = chapters
             )
+
+            Log.d(tag, "getVideoInfo success: videoId=$videoId title='$title' chapters=${chapters.size}")
+
+            Result.success(videoInfo)
         } catch (e: Exception) {
+            Log.e(tag, "getVideoInfo failed", e)
             Result.failure(e)
         }
     }
@@ -88,15 +87,16 @@ class YouTubeRepository @Inject constructor(
             val videoId = extractVideoId(url)
                 ?: return@withContext Result.failure(IllegalArgumentException("Invalid YouTube URL"))
 
-            val metadata = getVideoInfo(url).getOrNull()
+            val metadataResult = getVideoInfo(url)
+            val metadata = metadataResult.getOrNull()
             val title = metadata?.title?.trim().orEmpty()
             val chapters = metadata?.chapters.orEmpty()
+
             val safeTitle = sanitizeFileBaseName(title)
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$videoId" else videoId
-            val outputFile = File(videosDir, "${appendSuffix(baseName)}.mp4")
-            
+            val outputFile = File(videosDir, "${baseName}.mp4")
+
             lastLoggedProgressBucket = -1
-            Log.d(tag, "Starting download for videoId=$videoId")
             val request = YoutubeDLRequest(url)
             request.addOption("-f", "best[ext=mp4]/best")
             request.addOption("-o", outputFile.absolutePath)
@@ -108,18 +108,19 @@ class YouTubeRepository @Inject constructor(
             }
 
             if (!outputFile.exists()) {
-                Log.e(tag, "Download failed: file not created for videoId=$videoId")
                 return@withContext Result.failure(Exception("Download failed: file not created"))
             }
 
             val fileSize = outputFile.length()
             val needsSplitting = fileSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES
 
-            Log.d(tag, "Download complete for videoId=$videoId sizeBytes=$fileSize needsSplitting=$needsSplitting")
+            Log.d(tag, "Download complete: baseName=$baseName path=${outputFile.absolutePath} sizeBytes=$fileSize needsSplitting=$needsSplitting")
             Result.success(
                 VideoInfo(
                     videoId = videoId,
-                    title = title.ifBlank { outputFile.nameWithoutExtension },
+                    title = title.ifBlank {
+                        outputFile.nameWithoutExtension.trim()
+                    },
                     url = url,
                     chapters = chapters,
                     file = outputFile,
@@ -263,11 +264,6 @@ class YouTubeRepository @Inject constructor(
             .replace(Regex("\\s+"), " ")
             .trim()
             .take(80)
-    }
-
-    private fun appendSuffix(baseName: String): String {
-        val trimmed = baseName.trim()
-        return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
     }
 
 

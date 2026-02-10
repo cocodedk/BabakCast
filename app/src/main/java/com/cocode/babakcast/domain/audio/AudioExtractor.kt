@@ -15,7 +15,6 @@ class AudioExtractor @Inject constructor() {
 
     companion object {
         private const val TAG = "AudioExtractor"
-        private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
         private const val AUDIO_EXTENSION = "mp3"
         private const val AUDIO_TAG = "_audio"
         private const val AUDIO_BITRATE = "128k"
@@ -32,9 +31,9 @@ class AudioExtractor @Inject constructor() {
 
             val outputDir = videoFile.parentFile
                 ?: return@withContext Result.failure(Exception("Invalid output directory"))
-            val baseName = DownloadFileParser.stripSuffix(videoFile.nameWithoutExtension)
+            val baseName = videoFile.nameWithoutExtension
             val audioBaseName = buildAudioBaseName(baseName)
-            val outputFile = File(outputDir, "${appendSuffix(audioBaseName)}.$AUDIO_EXTENSION")
+            val outputFile = File(outputDir, "${audioBaseName}.$AUDIO_EXTENSION")
 
             Log.d(
                 TAG,
@@ -59,11 +58,6 @@ class AudioExtractor @Inject constructor() {
             Log.e(TAG, "extractAudio exception", e)
             Result.failure(e)
         }
-    }
-
-    private fun appendSuffix(baseName: String): String {
-        val trimmed = baseName.trim()
-        return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
     }
 
     private fun buildAudioBaseName(baseName: String): String {

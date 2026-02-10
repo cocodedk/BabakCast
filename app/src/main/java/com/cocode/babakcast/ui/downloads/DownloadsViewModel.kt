@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.repository.YouTubeRepository
 import com.cocode.babakcast.util.DownloadFileParser
+import com.cocode.babakcast.util.FileNameUtils
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -142,7 +143,7 @@ class DownloadsViewModel @Inject constructor(
                 val lastModified = groupFiles.maxOfOrNull { it.lastModified() } ?: 0L
 
                 DownloadItem(
-                    displayName = humanizeGroupName(groupKey),
+                    displayName = FileNameUtils.humanizeGroupName(groupKey),
                     files = sortedFiles,
                     sizeBytes = totalSize,
                     lastModified = lastModified,
@@ -153,16 +154,6 @@ class DownloadsViewModel @Inject constructor(
             .sortedByDescending { it.lastModified }
     }
 
-    private fun humanizeGroupName(groupKey: String): String {
-        val idMatch = Regex("(.+)[_-]([A-Za-z0-9_-]{11})$").find(groupKey)
-        val withoutId = idMatch?.groupValues?.get(1) ?: groupKey
-        val cleaned = withoutId
-            .replace('_', ' ')
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .ifBlank { groupKey }
-        return cleaned
-    }
 
     private fun resolveMimeType(files: List<java.io.File>): String {
         val extension = files.firstOrNull()?.extension?.lowercase(Locale.getDefault()).orEmpty()
