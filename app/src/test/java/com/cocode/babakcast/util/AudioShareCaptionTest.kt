@@ -18,7 +18,7 @@ class AudioShareCaptionTest {
         val base = fileNameWithExtension.substringBeforeLast(".")
 
         val groupKey = DownloadFileParser.extractGroupKey(base)
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         assertEquals(
             "Audio file should extract title correctly WITHOUT audio marker",
@@ -51,7 +51,7 @@ class AudioShareCaptionTest {
         testCases.forEach { (filename, expectedTitle) ->
             val base = filename.substringBeforeLast(".")
             val groupKey = DownloadFileParser.extractGroupKey(base)
-            val humanized = humanizeGroupName(groupKey)
+            val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
             assertEquals(
                 "Format ${filename.substringAfterLast(".")} should extract title correctly WITHOUT audio marker",
@@ -73,7 +73,7 @@ class AudioShareCaptionTest {
         val base = fileNameWithExtension.substringBeforeLast(".")
 
         val groupKey = DownloadFileParser.extractGroupKey(base)
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         // Edge case should be handled by extractGroupKey
         assertNotNull(
@@ -88,7 +88,7 @@ class AudioShareCaptionTest {
         val base = fileNameWithExtension.substringBeforeLast(".")
 
         val groupKey = DownloadFileParser.extractGroupKey(base)
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         // Note: underscores become spaces, but special chars are preserved
         assertEquals(
@@ -115,7 +115,7 @@ class AudioShareCaptionTest {
         val humanizedTitles = parts.map { filename ->
             val base = filename.substringBeforeLast(".")
             val groupKey = DownloadFileParser.extractGroupKey(base)
-            humanizeGroupName(groupKey)
+            FileNameUtils.humanizeGroupName(groupKey)
         }
 
         // All parts should have the same humanized title WITHOUT audio marker
@@ -151,7 +151,7 @@ class AudioShareCaptionTest {
         val base = fileNameWithExtension.substringBeforeLast(".")
 
         val groupKey = DownloadFileParser.extractGroupKey(base)
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         assertNotNull("Should handle unicode characters", humanized)
     }
@@ -185,8 +185,8 @@ class AudioShareCaptionTest {
         val videoGroupKey = DownloadFileParser.extractGroupKey(videoBase)
         val audioGroupKey = DownloadFileParser.extractGroupKey(audioBase)
 
-        val videoHumanized = humanizeGroupName(videoGroupKey)
-        val audioHumanized = humanizeGroupName(audioGroupKey)
+        val videoHumanized = FileNameUtils.humanizeGroupName(videoGroupKey)
+        val audioHumanized = FileNameUtils.humanizeGroupName(audioGroupKey)
 
         // Both audio and video should have the SAME caption (original YouTube title)
         assertEquals("Same Title", videoHumanized)
@@ -200,19 +200,4 @@ class AudioShareCaptionTest {
         )
     }
 
-    // Helper method matching the actual implementation
-    private fun humanizeGroupName(groupKey: String): String {
-        val idMatch = Regex("(.+)[_-]([A-Za-z0-9_-]{11})$").find(groupKey)
-        val withoutId = idMatch?.groupValues?.get(1) ?: groupKey
-
-        // Remove the _audio marker if present (audio files have Title_audio_VideoID format)
-        val withoutAudioMarker = withoutId.removeSuffix("_audio")
-
-        val cleaned = withoutAudioMarker
-            .replace('_', ' ')
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .ifBlank { groupKey }
-        return cleaned
-    }
 }

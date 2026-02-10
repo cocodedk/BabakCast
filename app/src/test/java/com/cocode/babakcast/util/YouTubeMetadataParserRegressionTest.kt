@@ -20,7 +20,7 @@ class YouTubeMetadataParserRegressionTest {
      * This is the JSON that successfully extracts the title but causes getVideoInfo() to fail.
      */
     private val actualYtDlpOutput = """
-        {"id": "QCMXvU4tYp0", "title": "Scientists Discover How To Regrow Cartilage", "formats": [{"format_id": "sb2", "format_note": "storyboard", "ext": "mhtml", "protocol": "mhtml", "acodec": "none", "vcodec": "none", "url": "https://i.ytimg.com/sb/QCMXvU4tYp0/storyboard3_L1/M${'$'}M.jpg?sqp=-oaymwENSDfyq4qpAwVwAcABBqLzl_8DBgiJ_vzLBg==&sigh=rs${'$'}AOn4CLAUizN4Nk_Dy6W-Zg7W1KFyywTTng", "width": 25, "height": 45}]}
+        {"id": "QCMXvU4tYp0", "title": "Scientists Discover How To Regrow Cartilage", "formats": [{"format_id": "sb2", "format_note": "storyboard", "ext": "mhtml", "protocol": "mhtml", "acodec": "none", "vcodec": "none", "url": "https://example.com/thumbnail.jpg", "width": 25, "height": 45}]}
     """.trimIndent()
 
     @Test

@@ -23,9 +23,6 @@ import kotlin.math.roundToInt
 class YouTubeRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    companion object {
-    }
-
     private val tag = "YouTubeRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
@@ -60,21 +57,8 @@ class YouTubeRepository @Inject constructor(
             val output = YoutubeDL.getInstance().execute(request, null)
             val jsonOutput = output.out
 
-            Log.d(tag, "===== getVideoInfo DEBUG START =====")
-            Log.d(tag, "URL: $url")
-            Log.d(tag, "VideoID: $videoId")
-            Log.d(tag, "output.out length: ${output.out.length}")
-            Log.d(tag, "output.err length: ${output.err.length}")
-            Log.d(tag, "output.out isBlank: ${output.out.isBlank()}")
-            Log.d(tag, "output.err isBlank: ${output.err.isBlank()}")
-            Log.d(tag, "output.out first 1000 chars: ${output.out.take(1000)}")
-            Log.d(tag, "output.err first 500 chars: ${output.err.take(500)}")
-
             val title = YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
-            Log.d(tag, "Extracted title: '$title'")
-
             val chapters = YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
-            Log.d(tag, "Extracted chapters: ${chapters.size}")
 
             val videoInfo = VideoInfo(
                 videoId = videoId,
@@ -83,15 +67,11 @@ class YouTubeRepository @Inject constructor(
                 chapters = chapters
             )
 
-            Log.d(tag, "Created VideoInfo: videoId='${videoInfo.videoId}', title='${videoInfo.title}', chapters=${videoInfo.chapters.size}")
-            Log.d(tag, "===== getVideoInfo DEBUG END =====")
+            Log.d(tag, "getVideoInfo success: videoId=$videoId title='$title' chapters=${chapters.size}")
 
             Result.success(videoInfo)
         } catch (e: Exception) {
-            Log.e(tag, "===== getVideoInfo EXCEPTION =====", e)
-            Log.e(tag, "Exception type: ${e.javaClass.name}")
-            Log.e(tag, "Exception message: ${e.message}")
-            e.printStackTrace()
+            Log.e(tag, "getVideoInfo failed", e)
             Result.failure(e)
         }
     }
@@ -108,37 +88,15 @@ class YouTubeRepository @Inject constructor(
                 ?: return@withContext Result.failure(IllegalArgumentException("Invalid YouTube URL"))
 
             val metadataResult = getVideoInfo(url)
-            Log.d(tag, "===== downloadVideo METADATA DEBUG =====")
-            Log.d(tag, "metadataResult.isSuccess: ${metadataResult.isSuccess}")
-            Log.d(tag, "metadataResult.isFailure: ${metadataResult.isFailure}")
-
             val metadata = metadataResult.getOrNull()
-            Log.d(tag, "metadata is null: ${metadata == null}")
-            if (metadata != null) {
-                Log.d(tag, "metadata.videoId: '${metadata.videoId}'")
-                Log.d(tag, "metadata.title: '${metadata.title}'")
-                Log.d(tag, "metadata.chapters.size: ${metadata.chapters.size}")
-            }
-
             val title = metadata?.title?.trim().orEmpty()
             val chapters = metadata?.chapters.orEmpty()
 
-            Log.d(tag, "===== downloadVideo TITLE DEBUG =====")
-            Log.d(tag, "title after trim: '$title'")
-            Log.d(tag, "title.isBlank(): ${title.isBlank()}")
-
             val safeTitle = sanitizeFileBaseName(title)
-            Log.d(tag, "safeTitle after sanitize: '$safeTitle'")
-
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$videoId" else videoId
-            Log.d(tag, "baseName: '$baseName'")
-
             val outputFile = File(videosDir, "${baseName}.mp4")
-            Log.d(tag, "outputFile name: '${outputFile.name}'")
-            Log.d(tag, "===== downloadVideo TITLE DEBUG END =====")
-            
+
             lastLoggedProgressBucket = -1
-            Log.d(tag, "Starting download for videoId=$videoId")
             val request = YoutubeDLRequest(url)
             request.addOption("-f", "best[ext=mp4]/best")
             request.addOption("-o", outputFile.absolutePath)
@@ -150,14 +108,13 @@ class YouTubeRepository @Inject constructor(
             }
 
             if (!outputFile.exists()) {
-                Log.e(tag, "Download failed: file not created for videoId=$videoId")
                 return@withContext Result.failure(Exception("Download failed: file not created"))
             }
 
             val fileSize = outputFile.length()
             val needsSplitting = fileSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES
 
-            Log.d(tag, "Download complete for videoId=$videoId sizeBytes=$fileSize needsSplitting=$needsSplitting")
+            Log.d(tag, "Download complete: baseName=$baseName path=${outputFile.absolutePath} sizeBytes=$fileSize needsSplitting=$needsSplitting")
             Result.success(
                 VideoInfo(
                     videoId = videoId,

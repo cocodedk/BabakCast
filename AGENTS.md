@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Working Boundaries
-- All work must be performed within the project directory (`/home/cocodedk/0-projects/BabakCast`).
+- All work must be performed within the project root directory.
 - Do not create, modify, or access files outside this project folder.
 - Do not run commands outside the project directory without explicit user permission.
 

@@ -5,13 +5,11 @@ object DownloadFileParser {
     private val partRegex = Regex("(.+)_part(\\d+)$")
 
     fun extractGroupKey(fileNameNoExt: String): String {
-        val normalized = fileNameNoExt
-        return partRegex.find(normalized)?.groupValues?.get(1) ?: normalized
+        return partRegex.find(fileNameNoExt)?.groupValues?.get(1) ?: fileNameNoExt
     }
 
     fun extractPartNumber(fileNameNoExt: String): Int? {
-        val normalized = fileNameNoExt
-        return partRegex.find(normalized)?.groupValues?.get(2)?.toIntOrNull()
+        return partRegex.find(fileNameNoExt)?.groupValues?.get(2)?.toIntOrNull()
     }
 
     /**

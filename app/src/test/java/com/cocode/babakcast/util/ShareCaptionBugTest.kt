@@ -28,7 +28,7 @@ class ShareCaptionBugTest {
         )
 
         // Now humanize it
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         assertEquals(
             "Humanized name should be the video ID",
@@ -51,7 +51,7 @@ class ShareCaptionBugTest {
             groupKey
         )
 
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         assertEquals(
             "Should fall back to video ID when title is empty (underscore gets replaced with space and trimmed)",
@@ -69,7 +69,7 @@ class ShareCaptionBugTest {
         val groupKey = DownloadFileParser.extractGroupKey(base)
         assertEquals("Some Amazing Title_dQw4w9WgXcQ", groupKey)
 
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         assertEquals(
             "Should extract clean title",
@@ -85,7 +85,7 @@ class ShareCaptionBugTest {
         val base = fileNameWithExtension.substringBeforeLast(".")
 
         val groupKey = DownloadFileParser.extractGroupKey(base)
-        val humanized = humanizeGroupName(groupKey)
+        val humanized = FileNameUtils.humanizeGroupName(groupKey)
 
         // Should extract "Some Title" (audio tag should be removed)
         assertEquals(
@@ -100,19 +100,4 @@ class ShareCaptionBugTest {
         )
     }
 
-    // Helper method copied from DownloadsViewModel to test the actual logic
-    private fun humanizeGroupName(groupKey: String): String {
-        val idMatch = Regex("(.+)[_-]([A-Za-z0-9_-]{11})$").find(groupKey)
-        val withoutId = idMatch?.groupValues?.get(1) ?: groupKey
-
-        // Remove the _audio marker if present (audio files have Title_audio_VideoID format)
-        val withoutAudioMarker = withoutId.removeSuffix("_audio")
-
-        val cleaned = withoutAudioMarker
-            .replace('_', ' ')
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .ifBlank { groupKey }
-        return cleaned
-    }
 }
