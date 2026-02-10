@@ -55,11 +55,25 @@ object PromptTemplates {
     /**
      * Chunk summary prompt template
      */
-    fun getChunkSummaryPrompt(chunk: String): String {
+    fun getChunkSummaryPrompt(
+        chunk: String,
+        style: SummaryStyle,
+        language: String
+    ): String {
+        val styleText = when (style) {
+            SummaryStyle.BULLET_POINTS -> "bullet points"
+            SummaryStyle.PARAGRAPH -> "paragraph"
+            SummaryStyle.TLDR -> "TL;DR"
+        }
+
         return """
             Summarize the following transcript segment.
             Focus on key points only.
-            
+
+            Requirements:
+            - Style: $styleText
+            - Language: $language
+
             Transcript:
             $chunk
         """.trimIndent()
@@ -71,6 +85,7 @@ object PromptTemplates {
     fun getMergePrompt(
         summaries: String,
         style: SummaryStyle,
+        length: SummaryLength,
         language: String
     ): String {
         val styleText = when (style) {
@@ -79,15 +94,22 @@ object PromptTemplates {
             SummaryStyle.TLDR -> "TL;DR"
         }
 
+        val lengthText = when (length) {
+            SummaryLength.SHORT -> "short"
+            SummaryLength.MEDIUM -> "medium"
+            SummaryLength.LONG -> "long"
+        }
+
         return """
             Combine the following partial summaries into a single coherent summary.
-            
+
             Rules:
             - Remove repetition
             - Preserve key details
             - Style: $styleText
+            - Length: $lengthText
             - Language: $language
-            
+
             Summaries:
             $summaries
         """.trimIndent()

@@ -77,7 +77,7 @@ class AIRepository @Inject constructor(
             val chunkSummaries = mutableListOf<String>()
             
             for (chunk in processed.chunks) {
-                val chunkPrompt = PromptTemplates.getChunkSummaryPrompt(chunk.text)
+                val chunkPrompt = PromptTemplates.getChunkSummaryPrompt(chunk.text, style, language)
                 val messages = listOf(
                     com.cocode.babakcast.data.model.AIMessage(
                         role = "system",
@@ -106,8 +106,8 @@ class AIRepository @Inject constructor(
 
             // Merge summaries
             val summariesText = chunkSummaries.joinToString("\n\n")
-            val mergePrompt = PromptTemplates.getMergePrompt(summariesText, style, language)
-            
+            val mergePrompt = PromptTemplates.getMergePrompt(summariesText, style, length, language)
+
             val mergeMessages = listOf(
                 com.cocode.babakcast.data.model.AIMessage(
                     role = "system",

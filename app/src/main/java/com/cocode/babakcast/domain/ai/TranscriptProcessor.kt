@@ -43,35 +43,40 @@ object TranscriptProcessor {
 
     /**
      * Split transcript into chunks based on token budget
+     *
+     * @param text The transcript text (should be pre-cleaned)
+     * @param inputBudget Maximum tokens per chunk
+     * @param overlapRatio Ratio of overlap between chunks (0.0-1.0) to preserve context at boundaries
+     * @return List of chunks with optional overlap
      */
     fun chunkTranscript(
         text: String,
-        inputBudget: Int
+        inputBudget: Int,
+        overlapRatio: Double = 0.15
     ): List<TranscriptChunk> {
-        val cleaned = cleanTranscript(text)
         val chunks = mutableListOf<TranscriptChunk>()
-        
+
         // If text fits in budget, return single chunk
-        val totalTokens = estimateTokens(cleaned)
+        val totalTokens = estimateTokens(text)
         if (totalTokens <= inputBudget) {
             return listOf(
                 TranscriptChunk(
-                    text = cleaned,
+                    text = text,
                     estimatedTokens = totalTokens,
                     startIndex = 0,
-                    endIndex = cleaned.length
+                    endIndex = text.length
                 )
             )
         }
 
-        // Split into chunks
+        // Split into chunks with overlap
         var currentIndex = 0
         var chunkIndex = 0
-        
-        while (currentIndex < cleaned.length) {
-            val remainingText = cleaned.substring(currentIndex)
+
+        while (currentIndex < text.length) {
+            val remainingText = text.substring(currentIndex)
             val remainingTokens = estimateTokens(remainingText)
-            
+
             if (remainingTokens <= inputBudget) {
                 // Last chunk
                 chunks.add(
@@ -79,22 +84,22 @@ object TranscriptProcessor {
                         text = remainingText,
                         estimatedTokens = remainingTokens,
                         startIndex = currentIndex,
-                        endIndex = cleaned.length
+                        endIndex = text.length
                     )
                 )
                 break
             }
-            
+
             // Find split point (prefer sentence boundaries)
             val targetLength = inputBudget * 4 // Convert tokens to chars
-            val searchEnd = minOf(currentIndex + targetLength + 1000, cleaned.length)
-            val searchText = cleaned.substring(currentIndex, searchEnd)
-            
+            val searchEnd = minOf(currentIndex + targetLength + 1000, text.length)
+            val searchText = text.substring(currentIndex, searchEnd)
+
             // Try to split at sentence boundary
             val sentenceEnd = findSentenceBoundary(searchText, targetLength)
             val chunkEnd = currentIndex + sentenceEnd
-            
-            val chunkText = cleaned.substring(currentIndex, chunkEnd)
+
+            val chunkText = text.substring(currentIndex, chunkEnd)
             chunks.add(
                 TranscriptChunk(
                     text = chunkText,
@@ -103,11 +108,17 @@ object TranscriptProcessor {
                     endIndex = chunkEnd
                 )
             )
-            
-            currentIndex = chunkEnd
+
+            // Calculate overlap for next chunk (but not for first chunk)
+            if (chunkIndex > 0 || chunks.size > 0) {
+                val overlapChars = (chunkText.length * overlapRatio).toInt().coerceAtLeast(0)
+                currentIndex = (chunkEnd - overlapChars).coerceAtLeast(currentIndex + 1)
+            } else {
+                currentIndex = chunkEnd
+            }
             chunkIndex++
         }
-        
+
         return chunks
     }
 
