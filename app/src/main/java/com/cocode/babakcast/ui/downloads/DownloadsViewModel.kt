@@ -156,7 +156,11 @@ class DownloadsViewModel @Inject constructor(
     private fun humanizeGroupName(groupKey: String): String {
         val idMatch = Regex("(.+)[_-]([A-Za-z0-9_-]{11})$").find(groupKey)
         val withoutId = idMatch?.groupValues?.get(1) ?: groupKey
-        val cleaned = withoutId
+
+        // Remove the _audio marker if present (audio files have Title_audio_VideoID format)
+        val withoutAudioMarker = withoutId.removeSuffix("_audio")
+
+        val cleaned = withoutAudioMarker
             .replace('_', ' ')
             .replace(Regex("\\s+"), " ")
             .trim()

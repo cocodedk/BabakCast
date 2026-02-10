@@ -23,7 +23,6 @@ class VideoSplitter @Inject constructor() {
         internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024 // 16 MB limit
         private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024 // 15 MB target to reduce tiny chunks
         private const val MAX_SPLIT_ATTEMPTS = 5
-        private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
     }
 
     /**
@@ -61,7 +60,7 @@ class VideoSplitter @Inject constructor() {
 
             val outputDir = videoFile.parentFile
                 ?: return@withContext Result.failure(Exception("Invalid output directory"))
-            val baseName = stripSuffix(videoFile.nameWithoutExtension)
+            val baseName = videoFile.nameWithoutExtension
 
             if (splitMode == SplitMode.CHAPTERS) {
                 return@withContext splitByChapters(
@@ -88,7 +87,7 @@ class VideoSplitter @Inject constructor() {
                 onProgress?.invoke(chunkIndex + 1, estimatedParts)
                 val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
                 val outputBaseName = "${baseName}_part${partNumber}"
-                val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.mp4")
+                val outputFile = File(outputDir, "${outputBaseName}.mp4")
                 
                 // Calculate segment duration
                 var segmentDuration = minOf(chunkDuration, duration - currentTime)
@@ -294,21 +293,9 @@ class VideoSplitter @Inject constructor() {
     ): File {
         val partNumber = DownloadFileParser.formatPartNumber(partIndex, totalParts)
         val outputBaseName = "${baseName}_part${partNumber}"
-        return File(outputDir, "${appendSuffix(outputBaseName)}.$extension")
+        return File(outputDir, "${outputBaseName}.$extension")
     }
 
-    private fun stripSuffix(baseName: String): String {
-        return if (baseName.endsWith(FILE_NAME_SUFFIX)) {
-            baseName.dropLast(FILE_NAME_SUFFIX.length).trimEnd()
-        } else {
-            baseName
-        }
-    }
-
-    private fun appendSuffix(baseName: String): String {
-        val trimmed = baseName.trim()
-        return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
-    }
 
     private fun cleanupFiles(files: List<File>) {
         files.forEach { file ->

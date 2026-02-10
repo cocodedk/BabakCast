@@ -83,7 +83,12 @@ object YouTubeMetadataParser {
     }
 
     private fun parseChaptersFromObject(root: JsonObject): List<VideoChapter> {
-        val chapters = root["chapters"]?.jsonArray ?: return emptyList()
+        val chaptersElement = root["chapters"] ?: return emptyList()
+
+        // Handle case where chapters field exists but is null
+        val chapters = runCatching {
+            chaptersElement.jsonArray
+        }.getOrNull() ?: return emptyList()
 
         return chapters.mapNotNull { chapterElement ->
             val chapterObject = chapterElement.jsonObject
