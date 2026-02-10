@@ -3,26 +3,34 @@ package com.cocode.babakcast.domain.audio
 import android.util.Log
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
+import com.cocode.babakcast.data.model.VideoChapter
+import com.cocode.babakcast.domain.split.ChapterSplitEstimator
+import com.cocode.babakcast.domain.split.SplitMode
+import com.cocode.babakcast.util.DownloadFileParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.jvm.JvmName
 
 @Singleton
 class AudioSplitter @Inject constructor() {
 
     companion object {
         private const val TAG = "AudioSplitter"
-        private const val MAX_CHUNK_SIZE_BYTES = 16 * 1024 * 1024
-        private const val TARGET_CHUNK_SIZE_BYTES = 15 * 1024 * 1024
+        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024
+        private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024
         private const val MAX_SPLIT_ATTEMPTS = 5
         private const val FILE_NAME_SUFFIX = " - Visit BabakCast"
         private const val DEFAULT_EXTENSION = "mp3"
     }
 
+    @JvmName("splitAudioIfNeeded")
     suspend fun splitAudioIfNeeded(
         audioFile: File,
+        chapterHints: List<VideoChapter> = emptyList(),
+        splitMode: SplitMode = SplitMode.SIZE_16MB,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
@@ -34,10 +42,10 @@ class AudioSplitter @Inject constructor() {
             val sourceSize = audioFile.length()
             Log.d(
                 TAG,
-                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES"
+                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES splitMode=$splitMode chapterHints=${chapterHints.size}"
             )
 
-            if (sourceSize <= MAX_CHUNK_SIZE_BYTES) {
+            if (sourceSize <= MAX_CHUNK_SIZE_BYTES && splitMode == SplitMode.SIZE_16MB) {
                 Log.d(TAG, "splitAudioIfNeeded skip: size within limit, returning original file")
                 return@withContext Result.success(listOf(audioFile))
             }
@@ -49,20 +57,33 @@ class AudioSplitter @Inject constructor() {
                 return@withContext Result.failure(Exception("Invalid audio duration"))
             }
 
-            val bytesPerSecond = audioFile.length() / duration
+            val bytesPerSecond = sourceSize / duration
             if (bytesPerSecond <= 0.0) {
                 return@withContext Result.failure(Exception("Invalid bitrate estimate"))
             }
 
-            val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
             val outputDir = audioFile.parentFile
                 ?: return@withContext Result.failure(Exception("Invalid output directory"))
             val baseName = stripSuffix(audioFile.nameWithoutExtension)
             val outputExtension = audioFile.extension.ifBlank { DEFAULT_EXTENSION }
+
+            if (splitMode == SplitMode.CHAPTERS) {
+                return@withContext splitByChapters(
+                    audioFile = audioFile,
+                    outputDir = outputDir,
+                    baseName = baseName,
+                    outputExtension = outputExtension,
+                    sourceSize = sourceSize,
+                    duration = duration,
+                    chapterHints = chapterHints,
+                    onProgress = onProgress
+                )
+            }
+
+            val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
             val splitFiles = mutableListOf<File>()
 
             val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
-            val indexWidth = estimatedParts.toString().length
 
             Log.d(
                 TAG,
@@ -75,7 +96,7 @@ class AudioSplitter @Inject constructor() {
             while (currentTime < duration) {
                 val currentPart = (chunkIndex + 1).coerceAtMost(estimatedParts)
                 onProgress?.invoke(currentPart, estimatedParts)
-                val partNumber = (chunkIndex + 1).toString().padStart(indexWidth, '0')
+                val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
                 val outputBaseName = "${baseName}_part${partNumber}"
                 val outputFile = File(outputDir, "${appendSuffix(outputBaseName)}.$outputExtension")
 
@@ -93,6 +114,7 @@ class AudioSplitter @Inject constructor() {
                         "-t ${formatSeconds(segmentDuration)} " +
                         "-c copy " +
                         "-avoid_negative_ts make_zero " +
+                        "-y " +
                         "\"${outputFile.absolutePath}\""
 
                     val session = FFmpegKit.execute(command)
@@ -127,6 +149,7 @@ class AudioSplitter @Inject constructor() {
 
                 if (!splitSuccess) {
                     Log.e(TAG, "splitAudioIfNeeded failed after retries chunk=${chunkIndex + 1}")
+                    cleanupFiles(splitFiles)
                     return@withContext Result.failure(Exception("Failed to split audio into WhatsApp-sized parts"))
                 }
 
@@ -150,6 +173,97 @@ class AudioSplitter @Inject constructor() {
             Log.e(TAG, "splitAudioIfNeeded exception", e)
             Result.failure(e)
         }
+    }
+
+    private fun splitByChapters(
+        audioFile: File,
+        outputDir: File,
+        baseName: String,
+        outputExtension: String,
+        sourceSize: Long,
+        duration: Double,
+        chapterHints: List<VideoChapter>,
+        onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
+    ): Result<List<File>> {
+        val estimatedChapters = ChapterSplitEstimator.estimateChapterBytes(
+            chapters = chapterHints,
+            totalDurationSeconds = duration,
+            totalBytes = sourceSize
+        )
+        if (estimatedChapters.isEmpty()) {
+            return Result.failure(Exception("No valid chapters available for chapter split"))
+        }
+
+        val oversized = ChapterSplitEstimator.firstOversizedChapter(
+            estimatedChapters = estimatedChapters,
+            maxChunkBytes = MAX_CHUNK_SIZE_BYTES
+        )
+        if (oversized != null) {
+            val label = oversized.chapter.title.ifBlank { "Unnamed chapter" }
+            val sizeMb = oversized.estimatedBytes.toDouble() / (1024.0 * 1024.0)
+            return Result.failure(
+                Exception(
+                    "Chapter split exceeds 16MB for \"$label\" (estimated ${
+                        String.format(java.util.Locale.US, "%.1f", sizeMb)
+                    } MB). Choose 16 MB split."
+                )
+            )
+        }
+
+        val splitFiles = mutableListOf<File>()
+        val totalParts = estimatedChapters.size
+
+        for ((index, estimated) in estimatedChapters.withIndex()) {
+            val currentPart = index + 1
+            onProgress?.invoke(currentPart, totalParts)
+            val outputFile = buildOutputFile(
+                outputDir = outputDir,
+                baseName = baseName,
+                outputExtension = outputExtension,
+                partIndex = currentPart,
+                totalParts = totalParts
+            )
+            val segmentDuration = estimated.chapter.endTimeSeconds - estimated.chapter.startTimeSeconds
+            val command = "-ss ${formatSeconds(estimated.chapter.startTimeSeconds)} " +
+                "-i \"${audioFile.absolutePath}\" " +
+                "-t ${formatSeconds(segmentDuration)} " +
+                "-c copy " +
+                "-avoid_negative_ts make_zero " +
+                "-y " +
+                "\"${outputFile.absolutePath}\""
+
+            val session = FFmpegKit.execute(command)
+            if (!ReturnCode.isSuccess(session.returnCode)) {
+                cleanupFiles(splitFiles)
+                val errorOutput = session.failStackTrace ?: "Unknown error"
+                return Result.failure(Exception("Failed to split audio by chapter: $errorOutput"))
+            }
+            if (!outputFile.exists() || outputFile.length() <= 0L) {
+                cleanupFiles(splitFiles)
+                return Result.failure(Exception("Chapter split file was not created"))
+            }
+            if (outputFile.length() > MAX_CHUNK_SIZE_BYTES) {
+                cleanupFiles(splitFiles + outputFile)
+                val label = estimated.chapter.title.ifBlank { "Unnamed chapter" }
+                val sizeMb = outputFile.length().toDouble() / (1024.0 * 1024.0)
+                return Result.failure(
+                    Exception(
+                        "Chapter split produced chunk larger than 16MB for \"$label\" (${
+                            String.format(java.util.Locale.US, "%.1f", sizeMb)
+                        } MB). Choose 16 MB split."
+                    )
+                )
+            }
+
+            splitFiles.add(outputFile)
+        }
+
+        if (splitFiles.isNotEmpty()) {
+            Log.d(TAG, "splitAudioIfNeeded deleting source after chapter split path=${audioFile.name}")
+            audioFile.delete()
+        }
+
+        return Result.success(splitFiles)
     }
 
     private fun getMediaDuration(mediaFile: File): Double? {
@@ -181,6 +295,18 @@ class AudioSplitter @Inject constructor() {
         return String.format(java.util.Locale.US, "%.3f", value)
     }
 
+    private fun buildOutputFile(
+        outputDir: File,
+        baseName: String,
+        outputExtension: String,
+        partIndex: Int,
+        totalParts: Int
+    ): File {
+        val partNumber = DownloadFileParser.formatPartNumber(partIndex, totalParts)
+        val outputBaseName = "${baseName}_part${partNumber}"
+        return File(outputDir, "${appendSuffix(outputBaseName)}.$outputExtension")
+    }
+
     private fun stripSuffix(baseName: String): String {
         return if (baseName.endsWith(FILE_NAME_SUFFIX)) {
             baseName.dropLast(FILE_NAME_SUFFIX.length).trimEnd()
@@ -192,5 +318,13 @@ class AudioSplitter @Inject constructor() {
     private fun appendSuffix(baseName: String): String {
         val trimmed = baseName.trim()
         return if (trimmed.endsWith(FILE_NAME_SUFFIX)) trimmed else trimmed + FILE_NAME_SUFFIX
+    }
+
+    private fun cleanupFiles(files: List<File>) {
+        files.forEach { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
     }
 }

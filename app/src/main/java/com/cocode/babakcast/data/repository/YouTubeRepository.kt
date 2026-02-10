@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.video.VideoSplitter
+import com.cocode.babakcast.util.YouTubeMetadataParser
 import com.cocode.babakcast.util.YouTubeUrlParser
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -60,14 +61,15 @@ class YouTubeRepository @Inject constructor(
             val output = YoutubeDL.getInstance().execute(request, null)
             val jsonOutput = output.out
 
-            // Parse title from JSON (simplified - youtubedl-android may return JSON)
-            val title = extractTitleFromJson(jsonOutput) ?: "Video"
+            val title = YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
+            val chapters = YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
 
             Result.success(
                 VideoInfo(
                     videoId = videoId,
                     title = title,
-                    url = url
+                    url = url,
+                    chapters = chapters
                 )
             )
         } catch (e: Exception) {
@@ -86,7 +88,9 @@ class YouTubeRepository @Inject constructor(
             val videoId = extractVideoId(url)
                 ?: return@withContext Result.failure(IllegalArgumentException("Invalid YouTube URL"))
 
-            val title = getVideoInfo(url).getOrNull()?.title?.trim().orEmpty()
+            val metadata = getVideoInfo(url).getOrNull()
+            val title = metadata?.title?.trim().orEmpty()
+            val chapters = metadata?.chapters.orEmpty()
             val safeTitle = sanitizeFileBaseName(title)
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$videoId" else videoId
             val outputFile = File(videosDir, "${appendSuffix(baseName)}.mp4")
@@ -117,6 +121,7 @@ class YouTubeRepository @Inject constructor(
                     videoId = videoId,
                     title = title.ifBlank { outputFile.nameWithoutExtension },
                     url = url,
+                    chapters = chapters,
                     file = outputFile,
                     fileSizeBytes = fileSize,
                     needsSplitting = needsSplitting
@@ -168,15 +173,6 @@ class YouTubeRepository @Inject constructor(
             Log.e(tag, "Transcript extraction failed", e)
             Result.failure(e)
         }
-    }
-
-    /**
-     * Extract title from JSON output (simplified)
-     */
-    private fun extractTitleFromJson(jsonOutput: String): String? {
-        // Simple JSON parsing - in production, use proper JSON parser
-        val titleMatch = Regex("\"title\"\\s*:\\s*\"([^\"]+)\"").find(jsonOutput)
-        return titleMatch?.groupValues?.get(1)
     }
 
     /**

@@ -78,6 +78,12 @@ sealed class AppError(
         fixHint = "The audio may be corrupted or too large to process"
     )
 
+    data class ChapterSplitTooLarge(override val message: String = "Chapter split exceeds 16 MB limits") : AppError(
+        title = "Chapter split unavailable",
+        message = message,
+        fixHint = "Choose 16 MB split mode for this source"
+    )
+
     data class UnknownError(override val message: String = "An unexpected error occurred") : AppError(
         title = "Error",
         message = message,
@@ -119,6 +125,9 @@ object ErrorHandler {
                 when {
                     msg.contains("not initialized", ignoreCase = true) ->
                         AppError.NotInitialized("Download engine is still starting.")
+                    msg.contains("chapter split exceeds 16mb", ignoreCase = true) ||
+                        msg.contains("chapter split produced chunk larger than 16mb", ignoreCase = true) ->
+                        AppError.ChapterSplitTooLarge(msg)
                     msg.contains("audio extraction", ignoreCase = true) ->
                         AppError.AudioExtractFailed(msg)
                     msg.contains("audio split", ignoreCase = true) ->
