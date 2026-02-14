@@ -37,6 +37,7 @@ body {
 .brand-logo { width: 30px; height: 30px; }
 nav { display: flex; gap: 16px; align-items: center; }
 a { color: var(--text); text-decoration: none; }
+main a:not(.btn):not(.lang-switch) { text-decoration: underline; text-underline-offset: 2px; }
 nav a { color: var(--muted); font-size: 0.95rem; }
 nav a:hover { color: var(--neon-blue); }
 
@@ -66,15 +67,19 @@ h1 { margin-top: 10px; max-width: 780px; font-size: clamp(2rem, 5.5vw, 4rem); li
 .btn:hover { transform: translateY(-1px); }
 .btn-primary { background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink)); color: #040811; box-shadow: 0 0 24px rgba(68, 191, 255, 0.45); }
 .btn-ghost { border: 1px solid var(--line); background: rgba(11, 17, 33, 0.52); }
+.btn:focus-visible { outline: 2px solid var(--neon-amber); outline-offset: 3px; }
 
-.card {
-  margin-top: 20px;
-  padding: 22px;
+.glass-panel {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--surface);
   backdrop-filter: blur(10px);
   box-shadow: 0 0 36px rgba(16, 32, 66, 0.48);
+}
+
+.card {
+  margin-top: 20px;
+  padding: 22px;
 }
 .card h2 { font-size: clamp(1.4rem, 3.2vw, 2rem); margin-bottom: 16px; }
 .flow-grid, .feature-grid { display: grid; gap: 14px; }
@@ -91,11 +96,6 @@ p { margin: 0; color: var(--muted); line-height: 1.65; }
 .philosophy-block {
   margin-top: 20px;
   padding: 26px 28px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 36px rgba(16, 32, 66, 0.48);
 }
 .philosophy-block blockquote {
   margin: 0;

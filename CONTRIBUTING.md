@@ -28,6 +28,7 @@ Built by [Cocode](https://cocode.dk).
 ## PR Checklist
 - [ ] `./gradlew buildSmoke` passes.
 - [ ] Manual test completed for changed functionality.
+- [ ] Screenshots attached for UI changes.
 - [ ] Video download and split verified if download logic changed.
 - [ ] Transcript summarization verified if AI provider logic changed.
 - [ ] Updated docs if behavior changed.
