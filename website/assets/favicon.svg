@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BabakCast">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f1730"/>
+      <stop offset="1" stop-color="#3b1e67"/>
+    </linearGradient>
+    <linearGradient id="cast" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#44bfff"/>
+      <stop offset="1" stop-color="#ff4edc"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <path d="M20 40v-4a16 16 0 0 1 16-16h4" fill="none" stroke="url(#cast)" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M20 32v-4a8 8 0 0 1 8-8h4" fill="none" stroke="#f7c164" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="22" cy="42" r="4" fill="url(#cast)"/>
+  <path d="M36 24l10 8-10 8z" fill="#f7c164" opacity=".9"/>
+</svg>

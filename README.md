@@ -7,7 +7,9 @@ A **local-first** Android app to download YouTube videos, summarize transcripts 
 ![Local-first](https://img.shields.io/badge/Local--first-161A22?style=flat)
 ![BYO-AI](https://img.shields.io/badge/BYO--AI-FFB860?style=flat)
 
-**Site:** [cocodedk.github.io/BabakCast](https://cocodedk.github.io/BabakCast)
+## Website
+- [English](https://cocodedk.github.io/BabakCast/)
+- [فارسی (Persian)](https://cocodedk.github.io/BabakCast/fa/)
 
 ---
 
@@ -18,14 +20,14 @@ A **local-first** Android app to download YouTube videos, summarize transcripts 
 - **Transcript summarization** — Extract captions and summarize with your chosen AI model (bullet points, paragraph, or TL;DR).
 - **Bring-your-own AI** — OpenAI, Azure OpenAI, Anthropic, Google Gemini, OpenRouter. Configure API key and model in Settings.
 - **No backend** — Everything runs on your device. No accounts, no analytics, no tracking.
-- **Encrypted API keys** — Stored locally with Android’s EncryptedSharedPreferences.
+- **Encrypted API keys** — Stored locally with Android's EncryptedSharedPreferences.
 
 ---
 
 ## Philosophy
 
-> **BabakCast is a personal-use tool.**  
-> It does not ship with API keys, ads, analytics, or accounts.  
+> **BabakCast is a personal-use tool.**
+> It does not ship with API keys, ads, analytics, or accounts.
 > You control your data and your AI provider.
 
 ---
@@ -134,3 +136,5 @@ Or run `./scripts/install-hooks.sh`. Commits will be blocked if `./gradlew test`
 ## License
 
 [Apache License 2.0](LICENSE). Use it, modify it, share it.
+
+© 2026 [Cocode](https://cocode.dk) | BabakCast
