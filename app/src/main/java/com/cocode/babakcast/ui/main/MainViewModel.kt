@@ -33,7 +33,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val youtubeRepository: MediaRepository,
+    private val mediaRepository: MediaRepository,
     private val videoSplitter: VideoSplitter,
     private val audioExtractor: AudioExtractor,
     private val audioSplitter: AudioSplitter,
@@ -93,7 +93,7 @@ class MainViewModel @Inject constructor(
                 splitChoicePrompt = null
             )
 
-            youtubeRepository.downloadVideo(url) { progress ->
+            mediaRepository.downloadVideo(url) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { videoInfo ->
@@ -152,7 +152,7 @@ class MainViewModel @Inject constructor(
                 splitChoicePrompt = null
             )
 
-            youtubeRepository.downloadVideo(url) { progress ->
+            mediaRepository.downloadVideo(url) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { videoInfo ->
@@ -298,7 +298,7 @@ class MainViewModel @Inject constructor(
             )
 
             // Get transcript
-            youtubeRepository.extractTranscript(url).fold(
+            mediaRepository.extractTranscript(url).fold(
                 onSuccess = { transcript ->
                     val defaultProviderId = settingsRepository.settings.first().defaultProviderId
                     val providerId = when {

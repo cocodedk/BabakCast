@@ -132,6 +132,8 @@ object ErrorHandler {
             else -> {
                 val msg = exception.message ?: "Unexpected error"
                 when {
+                    msg.contains("transcript", ignoreCase = true) ->
+                        AppError.TranscriptNotAvailable(msg)
                     msg.contains("not initialized", ignoreCase = true) ->
                         AppError.NotInitialized("Download engine is still starting.")
                     msg.contains("chapter split exceeds 16mb", ignoreCase = true) ||

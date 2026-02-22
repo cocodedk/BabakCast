@@ -332,9 +332,10 @@ fun MainScreen(
                 }
 
                 // Summarize Transcript Button - Secondary action (disabled for X/Twitter URLs)
+                val summarizeEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize
                 OutlinedButton(
                     onClick = viewModel::generateSummary,
-                    enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize,
+                    enabled = summarizeEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -343,9 +344,9 @@ fun MainScreen(
                         contentColor = MaterialTheme.colorScheme.onSurface,
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                     ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize).copy(
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = summarizeEnabled).copy(
                         brush = androidx.compose.ui.graphics.SolidColor(
-                            if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize)
+                            if (summarizeEnabled)
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                             else
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)

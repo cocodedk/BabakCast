@@ -15,7 +15,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
@@ -41,31 +40,17 @@ class MediaRepository @Inject constructor(
     }
 
     /**
-     * Extract video ID from YouTube URL
+     * Detect platform and extract media ID in a single pass.
      */
-    fun extractVideoId(url: String): String? {
-        return YouTubeUrlParser.extractVideoId(url)
-    }
-
-    /**
-     * Extract media ID from either YouTube or X URL based on platform
-     */
-    fun extractMediaId(url: String, platform: Platform): String? {
-        return when (platform) {
-            Platform.YOUTUBE -> YouTubeUrlParser.extractVideoId(url)
-            Platform.X -> XUrlParser.extractTweetId(url)
+    fun identifyMedia(url: String): MediaIdentifier? {
+        YouTubeUrlParser.extractVideoId(url)?.let {
+            return MediaIdentifier(Platform.YOUTUBE, it)
         }
-    }
-
-    /**
-     * Detect the platform of a URL
-     */
-    fun detectPlatform(url: String): Platform? {
-        return when {
-            YouTubeUrlParser.extractVideoId(url) != null -> Platform.YOUTUBE
-            XUrlExtractor.isXUrl(url) -> Platform.X
-            else -> null
+        if (XUrlExtractor.isXUrl(url)) {
+            val tweetId = XUrlParser.extractTweetId(url) ?: return null
+            return MediaIdentifier(Platform.X, tweetId)
         }
+        return null
     }
 
     /**
@@ -73,12 +58,8 @@ class MediaRepository @Inject constructor(
      */
     suspend fun getVideoInfo(url: String): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
-            val platform = detectPlatform(url)
+            val (platform, mediaId) = identifyMedia(url)
                 ?: return@withContext Result.failure(IllegalArgumentException("Unsupported URL"))
-            val mediaId = extractMediaId(url, platform)
-                ?: return@withContext Result.failure(IllegalArgumentException(
-                    if (platform == Platform.YOUTUBE) "Invalid YouTube URL" else "Invalid X URL"
-                ))
 
             val request = buildInfoRequest(url, platform)
 
@@ -117,12 +98,8 @@ class MediaRepository @Inject constructor(
         onProgress: (Float) -> Unit
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
-            val platform = detectPlatform(url)
+            val (platform, mediaId) = identifyMedia(url)
                 ?: return@withContext Result.failure(IllegalArgumentException("Unsupported URL"))
-            val mediaId = extractMediaId(url, platform)
-                ?: return@withContext Result.failure(IllegalArgumentException(
-                    if (platform == Platform.YOUTUBE) "Invalid YouTube URL" else "Invalid X URL"
-                ))
 
             val metadataResult = getVideoInfo(url)
             val metadata = metadataResult.getOrNull()
@@ -177,7 +154,7 @@ class MediaRepository @Inject constructor(
             // X/Twitter posts don't have transcripts
             if (XUrlExtractor.isXUrl(url)) {
                 return@withContext Result.failure(
-                    IOException("Transcript not available for X/Twitter posts")
+                    UnsupportedOperationException("Transcript not available for X/Twitter posts")
                 )
             }
             Log.d(tag, "Starting transcript extraction lang=$language url=$url")
@@ -354,3 +331,5 @@ class MediaRepository @Inject constructor(
         }
     }
 }
+
+data class MediaIdentifier(val platform: Platform, val mediaId: String)
