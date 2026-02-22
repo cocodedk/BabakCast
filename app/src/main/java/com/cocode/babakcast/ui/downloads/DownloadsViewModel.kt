@@ -3,7 +3,7 @@ package com.cocode.babakcast.ui.downloads
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SettingsRepository
-import com.cocode.babakcast.data.repository.YouTubeRepository
+import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.util.DownloadFileParser
 import com.cocode.babakcast.util.FileNameUtils
 import com.cocode.babakcast.util.ShareHelper
@@ -19,7 +19,7 @@ import java.util.Locale
 
 @HiltViewModel
 class DownloadsViewModel @Inject constructor(
-    private val youtubeRepository: YouTubeRepository,
+    private val mediaRepository: MediaRepository,
     private val shareHelper: ShareHelper,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
@@ -45,7 +45,7 @@ class DownloadsViewModel @Inject constructor(
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                runCatching { youtubeRepository.cleanupVideos() }
+                runCatching { mediaRepository.cleanupVideos() }
             }
 
             _uiState.value = _uiState.value.copy(
@@ -108,7 +108,7 @@ class DownloadsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoadingDownloads = true, downloadsError = null)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                runCatching { youtubeRepository.listDownloads() }
+                runCatching { mediaRepository.listDownloads() }
             }
             _uiState.value = _uiState.value.copy(
                 isLoadingDownloads = false,

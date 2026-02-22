@@ -7,7 +7,7 @@ import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
-import com.cocode.babakcast.data.repository.YouTubeRepository
+import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.audio.AudioExtractor
 import com.cocode.babakcast.domain.audio.AudioSplitter
@@ -15,6 +15,8 @@ import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
+import com.cocode.babakcast.util.Platform
+import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,7 +33,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val youtubeRepository: YouTubeRepository,
+    private val mediaRepository: MediaRepository,
     private val videoSplitter: VideoSplitter,
     private val audioExtractor: AudioExtractor,
     private val audioSplitter: AudioSplitter,
@@ -61,7 +63,10 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateUrl(url: String) {
-        _uiState.value = _uiState.value.copy(url = url)
+        _uiState.value = _uiState.value.copy(
+            url = url,
+            supportsSummarize = !XUrlExtractor.isXUrl(url)
+        )
     }
 
     fun downloadVideo() {
@@ -69,7 +74,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
             )
             return
         }
@@ -88,7 +93,7 @@ class MainViewModel @Inject constructor(
                 splitChoicePrompt = null
             )
 
-            youtubeRepository.downloadVideo(url) { progress ->
+            mediaRepository.downloadVideo(url) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { videoInfo ->
@@ -128,7 +133,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
             )
             return
         }
@@ -147,7 +152,7 @@ class MainViewModel @Inject constructor(
                 splitChoicePrompt = null
             )
 
-            youtubeRepository.downloadVideo(url) { progress ->
+            mediaRepository.downloadVideo(url) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { videoInfo ->
@@ -269,7 +274,13 @@ class MainViewModel @Inject constructor(
         val url = _uiState.value.url
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
+            )
+            return
+        }
+        if (XUrlExtractor.isXUrl(url)) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for X/Twitter posts")
             )
             return
         }
@@ -287,7 +298,7 @@ class MainViewModel @Inject constructor(
             )
 
             // Get transcript
-            youtubeRepository.extractTranscript(url).fold(
+            mediaRepository.extractTranscript(url).fold(
                 onSuccess = { transcript ->
                     val defaultProviderId = settingsRepository.settings.first().defaultProviderId
                     val providerId = when {
@@ -592,7 +603,8 @@ data class MainUiState(
     val downloadEngineError: String? = null,
     val loadingMessage: String? = null,
     val isProgressIndeterminate: Boolean = false,
-    val splitChoicePrompt: SplitChoicePrompt? = null
+    val splitChoicePrompt: SplitChoicePrompt? = null,
+    val supportsSummarize: Boolean = true
 )
 
 data class SplitChoicePrompt(

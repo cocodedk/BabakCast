@@ -4,6 +4,9 @@ import android.content.Context
 import android.util.Log
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.video.VideoSplitter
+import com.cocode.babakcast.util.Platform
+import com.cocode.babakcast.util.XUrlExtractor
+import com.cocode.babakcast.util.XUrlParser
 import com.cocode.babakcast.util.YouTubeMetadataParser
 import com.cocode.babakcast.util.YouTubeUrlParser
 import com.yausername.youtubedl_android.YoutubeDL
@@ -17,13 +20,14 @@ import javax.inject.Singleton
 import kotlin.math.roundToInt
 
 /**
- * Repository for YouTube operations: download and transcript extraction
+ * Repository for media operations: download and transcript extraction.
+ * Supports YouTube and X/Twitter platforms.
  */
 @Singleton
-class YouTubeRepository @Inject constructor(
+class MediaRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val tag = "YouTubeRepository"
+    private val tag = "MediaRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val progressPercentRegex = Regex("([0-9]+(?:\\.[0-9]+)?)%")
@@ -36,10 +40,17 @@ class YouTubeRepository @Inject constructor(
     }
 
     /**
-     * Extract video ID from YouTube URL
+     * Detect platform and extract media ID in a single pass.
      */
-    fun extractVideoId(url: String): String? {
-        return YouTubeUrlParser.extractVideoId(url)
+    fun identifyMedia(url: String): MediaIdentifier? {
+        YouTubeUrlParser.extractVideoId(url)?.let {
+            return MediaIdentifier(Platform.YOUTUBE, it)
+        }
+        if (XUrlExtractor.isXUrl(url)) {
+            val tweetId = XUrlParser.extractTweetId(url) ?: return null
+            return MediaIdentifier(Platform.X, tweetId)
+        }
+        return null
     }
 
     /**
@@ -47,27 +58,30 @@ class YouTubeRepository @Inject constructor(
      */
     suspend fun getVideoInfo(url: String): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
-            val videoId = extractVideoId(url)
-                ?: return@withContext Result.failure(IllegalArgumentException("Invalid YouTube URL"))
+            val (platform, mediaId) = identifyMedia(url)
+                ?: return@withContext Result.failure(IllegalArgumentException("Unsupported URL"))
 
-            val request = YoutubeDLRequest(url)
-            request.addOption("--skip-download")
-            request.addOption("--dump-json")
+            val request = buildInfoRequest(url, platform)
 
             val output = YoutubeDL.getInstance().execute(request, null)
             val jsonOutput = output.out
 
             val title = YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
-            val chapters = YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
+            // X posts don't have chapters
+            val chapters = if (platform == Platform.YOUTUBE) {
+                YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
+            } else {
+                emptyList()
+            }
 
             val videoInfo = VideoInfo(
-                videoId = videoId,
+                videoId = mediaId,
                 title = title,
                 url = url,
                 chapters = chapters
             )
 
-            Log.d(tag, "getVideoInfo success: videoId=$videoId title='$title' chapters=${chapters.size}")
+            Log.d(tag, "getVideoInfo success: platform=$platform mediaId=$mediaId title='$title' chapters=${chapters.size}")
 
             Result.success(videoInfo)
         } catch (e: Exception) {
@@ -84,8 +98,8 @@ class YouTubeRepository @Inject constructor(
         onProgress: (Float) -> Unit
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
-            val videoId = extractVideoId(url)
-                ?: return@withContext Result.failure(IllegalArgumentException("Invalid YouTube URL"))
+            val (platform, mediaId) = identifyMedia(url)
+                ?: return@withContext Result.failure(IllegalArgumentException("Unsupported URL"))
 
             val metadataResult = getVideoInfo(url)
             val metadata = metadataResult.getOrNull()
@@ -93,13 +107,11 @@ class YouTubeRepository @Inject constructor(
             val chapters = metadata?.chapters.orEmpty()
 
             val safeTitle = sanitizeFileBaseName(title)
-            val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$videoId" else videoId
+            val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$mediaId" else mediaId
             val outputFile = File(videosDir, "${baseName}.mp4")
 
             lastLoggedProgressBucket = -1
-            val request = YoutubeDLRequest(url)
-            request.addOption("-f", "best[ext=mp4]/best")
-            request.addOption("-o", outputFile.absolutePath)
+            val request = buildDownloadRequest(url, platform, outputFile.absolutePath)
 
             YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
                 val normalized = normalizeProgress(progress, line)
@@ -114,10 +126,10 @@ class YouTubeRepository @Inject constructor(
             val fileSize = outputFile.length()
             val needsSplitting = fileSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES
 
-            Log.d(tag, "Download complete: baseName=$baseName path=${outputFile.absolutePath} sizeBytes=$fileSize needsSplitting=$needsSplitting")
+            Log.d(tag, "Download complete: platform=$platform baseName=$baseName path=${outputFile.absolutePath} sizeBytes=$fileSize needsSplitting=$needsSplitting")
             Result.success(
                 VideoInfo(
-                    videoId = videoId,
+                    videoId = mediaId,
                     title = title.ifBlank {
                         outputFile.nameWithoutExtension.trim()
                     },
@@ -139,6 +151,12 @@ class YouTubeRepository @Inject constructor(
      */
     suspend fun extractTranscript(url: String, language: String = "en"): Result<String> = withContext(Dispatchers.IO) {
         try {
+            // X/Twitter posts don't have transcripts
+            if (XUrlExtractor.isXUrl(url)) {
+                return@withContext Result.failure(
+                    UnsupportedOperationException("Transcript not available for X/Twitter posts")
+                )
+            }
             Log.d(tag, "Starting transcript extraction lang=$language url=$url")
             val startTime = System.currentTimeMillis()
             val request = YoutubeDLRequest(url)
@@ -286,4 +304,32 @@ class YouTubeRepository @Inject constructor(
             ?.toList()
             ?: emptyList()
     }
+
+    companion object {
+        fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {
+            val request = YoutubeDLRequest(url)
+            request.addOption("--skip-download")
+            request.addOption("--dump-json")
+            request.addOption("--no-warnings")
+            if (platform == Platform.X) {
+                request.addOption("--extractor-args", "twitter:api=syndication")
+            }
+            return request
+        }
+
+        fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest {
+            val request = YoutubeDLRequest(url)
+            // Single-stream format to avoid ffmpeg merging
+            request.addOption("-f", "best[ext=mp4]/best")
+            request.addOption("--no-warnings")
+            if (platform == Platform.X) {
+                // Use syndication API — no authentication required for public tweets
+                request.addOption("--extractor-args", "twitter:api=syndication")
+            }
+            request.addOption("-o", outputPath)
+            return request
+        }
+    }
 }
+
+data class MediaIdentifier(val platform: Platform, val mediaId: String)
