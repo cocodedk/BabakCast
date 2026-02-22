@@ -154,7 +154,17 @@ class MediaRepository @Inject constructor(
     }
 
     /**
-     * Extract transcript from YouTube video
+     * Extract transcript from a supported video URL.
+     *
+     * Returns [Result.success] with the transcript text, or [Result.failure] on error.
+     * X/Twitter and Instagram URLs are rejected early with [UnsupportedOperationException]
+     * (via [XUrlExtractor.isXUrl] and [InstagramUrlExtractor.isInstagramUrl]) because
+     * those platforms do not provide caption data. Currently only YouTube URLs produce
+     * transcripts.
+     *
+     * @param url the video URL to extract a transcript from
+     * @param language BCP-47 subtitle language code (default "en")
+     * @return transcript text wrapped in a [Result]; runs on [Dispatchers.IO]
      */
     suspend fun extractTranscript(url: String, language: String = "en"): Result<String> = withContext(Dispatchers.IO) {
         try {
