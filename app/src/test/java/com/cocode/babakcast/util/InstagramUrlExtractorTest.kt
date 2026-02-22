@@ -115,6 +115,18 @@ class InstagramUrlExtractorTest {
     }
 
     @Test
+    fun extractsMobileInstagramUrlFromText() {
+        val url = InstagramUrlExtractor.extractInstagramUrlFromText("Check https://m.instagram.com/reel/ABC123/ out")
+        assertEquals("https://m.instagram.com/reel/ABC123/", url)
+    }
+
+    @Test
+    fun extractsLinkInstagramUrlFromText() {
+        val url = InstagramUrlExtractor.extractInstagramUrlFromText("See https://l.instagram.com/p/ABC123/ here")
+        assertEquals("https://l.instagram.com/p/ABC123/", url)
+    }
+
+    @Test
     fun stripsMultipleTrailingPunctuation() {
         assertEquals(
             "https://instagram.com/p/ABC123/",

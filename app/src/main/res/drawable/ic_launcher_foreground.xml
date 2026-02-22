@@ -47,7 +47,7 @@
 
     <!-- Broadcast wave 3 (outer) -->
     <path
-        android:pathData="M80,31 C88,42 88,66 80,77"
+        android:pathData="M80,34 C88,42 88,66 80,74"
         android:strokeWidth="2"
         android:strokeColor="#F4B860"
         android:fillColor="#00000000"
