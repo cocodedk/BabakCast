@@ -1,6 +1,6 @@
 # BabakCast
 
-A **local-first** Android app to download YouTube and X (Twitter) videos, summarize transcripts with your own AI provider, and share results instantly.
+A **local-first** Android app to download YouTube, X (Twitter), and Instagram videos, summarize transcripts with your own AI provider, and share results instantly.
 
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=flat&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat&logo=kotlin&logoColor=white)
@@ -17,7 +17,8 @@ A **local-first** Android app to download YouTube and X (Twitter) videos, summar
 
 - **YouTube video download** — Paste a URL, get shareable video files (auto-split at 16 MB for sharing limits).
 - **X (Twitter) video download** — Paste an X.com or Twitter.com post URL to download videos from public posts.
-- **Audio download** — Extract audio (MP3) from YouTube or X videos and share audio files (auto-split at 16 MB for sharing limits).
+- **Instagram video download** — Paste an Instagram post, reel, or IGTV URL to download videos.
+- **Audio download** — Extract audio (MP3) from YouTube, X, or Instagram videos and share audio files (auto-split at 16 MB for sharing limits).
 - **Transcript summarization** — Extract captions from YouTube videos and summarize with your chosen AI model (bullet points, paragraph, or TL;DR).
 - **Bring-your-own AI** — OpenAI, Azure OpenAI, Anthropic, Google Gemini, OpenRouter. Configure API key and model in Settings.
 - **No backend** — Everything runs on your device. No accounts, no analytics, no tracking.
@@ -67,8 +68,8 @@ A **local-first** Android app to download YouTube and X (Twitter) videos, summar
 
 ## Usage
 
-1. **Download video** — Paste a YouTube or X (Twitter) URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
-2. **Download audio** — Paste a YouTube or X URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
+1. **Download video** — Paste a YouTube, X (Twitter), or Instagram URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
+2. **Download audio** — Paste a YouTube, X, or Instagram URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
 3. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose. (Note: transcript summarization is available for YouTube only.)
 
 ---
@@ -128,7 +129,7 @@ Or run `./scripts/install-hooks.sh`. Commits will be blocked if `./gradlew test`
 
 - **Kotlin** + **Jetpack Compose**
 - **Hilt** for dependency injection
-- **youtubedl-android** for YouTube and X/Twitter download & transcript
+- **youtubedl-android** for YouTube, X/Twitter, and Instagram download & transcript
 - **FFmpegKit** for video splitting
 - **EncryptedSharedPreferences** for API key storage
 
