@@ -73,4 +73,11 @@ class MediaUrlExtractorTest {
         val result = MediaUrlExtractor.extractFromText("https://instagr.am/p/ABC123/")
         assertEquals(Platform.INSTAGRAM, result?.platform)
     }
+
+    @Test
+    fun prefersXOverInstagram() {
+        val text = "https://x.com/user/status/123 and https://instagram.com/reel/ABC123/"
+        val result = MediaUrlExtractor.extractFromText(text)
+        assertEquals(Platform.X, result?.platform)
+    }
 }

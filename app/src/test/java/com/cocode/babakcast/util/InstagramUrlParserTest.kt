@@ -74,4 +74,14 @@ class InstagramUrlParserTest {
         val id = InstagramUrlParser.extractShortcode("https://www.instagram.com/p/AB-CD_12/")
         assertEquals("AB-CD_12", id)
     }
+
+    @Test
+    fun returnsNullForEmptyString() {
+        assertNull(InstagramUrlParser.extractShortcode(""))
+    }
+
+    @Test
+    fun returnsNullForStoryUrl() {
+        assertNull(InstagramUrlParser.extractShortcode("https://www.instagram.com/stories/username/123456789/"))
+    }
 }

@@ -2,7 +2,7 @@ package com.cocode.babakcast.util
 
 object InstagramUrlParser {
     private val shortcodePattern = Regex(
-        "(?:instagram\\.com|instagr\\.am)/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)"
+        "(?:instagram\\.com|instagr\\.am)/(?:reels|reel|tv|p)/([A-Za-z0-9_-]+)"
     )
 
     fun extractShortcode(url: String): String? {

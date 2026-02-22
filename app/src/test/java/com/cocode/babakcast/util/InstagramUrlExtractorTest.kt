@@ -99,6 +99,16 @@ class InstagramUrlExtractorTest {
     }
 
     @Test
+    fun isInstagramUrlReturnsTrueForMobileInstagram() {
+        assertTrue(InstagramUrlExtractor.isInstagramUrl("https://m.instagram.com/reel/ABC123/"))
+    }
+
+    @Test
+    fun isInstagramUrlReturnsTrueForLinkInstagram() {
+        assertTrue(InstagramUrlExtractor.isInstagramUrl("https://l.instagram.com/p/ABC123/"))
+    }
+
+    @Test
     fun isInstagramUrlReturnsFalseForLookalikeDomain() {
         assertFalse(InstagramUrlExtractor.isInstagramUrl("https://notinstagram.com/p/ABC123/"))
         assertFalse(InstagramUrlExtractor.isInstagramUrl("https://fakeinstagr.am/p/ABC123/"))
