@@ -37,6 +37,12 @@ class XUrlParserTest {
     }
 
     @Test
+    fun extractsTweetIdFromXComIStatusUrl() {
+        val id = XUrlParser.extractTweetId("https://x.com/i/status/1234567890")
+        assertEquals("1234567890", id)
+    }
+
+    @Test
     fun returnsNullForUrlWithoutStatus() {
         assertNull(XUrlParser.extractTweetId("https://x.com/user"))
     }

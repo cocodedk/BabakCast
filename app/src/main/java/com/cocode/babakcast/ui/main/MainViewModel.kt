@@ -7,7 +7,7 @@ import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
-import com.cocode.babakcast.data.repository.YouTubeRepository
+import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.audio.AudioExtractor
 import com.cocode.babakcast.domain.audio.AudioSplitter
@@ -33,7 +33,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val youtubeRepository: YouTubeRepository,
+    private val youtubeRepository: MediaRepository,
     private val videoSplitter: VideoSplitter,
     private val audioExtractor: AudioExtractor,
     private val audioSplitter: AudioSplitter,
@@ -63,7 +63,10 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateUrl(url: String) {
-        _uiState.value = _uiState.value.copy(url = url)
+        _uiState.value = _uiState.value.copy(
+            url = url,
+            supportsSummarize = !XUrlExtractor.isXUrl(url)
+        )
     }
 
     fun downloadVideo() {
@@ -600,7 +603,8 @@ data class MainUiState(
     val downloadEngineError: String? = null,
     val loadingMessage: String? = null,
     val isProgressIndeterminate: Boolean = false,
-    val splitChoicePrompt: SplitChoicePrompt? = null
+    val splitChoicePrompt: SplitChoicePrompt? = null,
+    val supportsSummarize: Boolean = true
 )
 
 data class SplitChoicePrompt(

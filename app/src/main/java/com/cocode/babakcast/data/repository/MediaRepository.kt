@@ -21,13 +21,14 @@ import javax.inject.Singleton
 import kotlin.math.roundToInt
 
 /**
- * Repository for YouTube operations: download and transcript extraction
+ * Repository for media operations: download and transcript extraction.
+ * Supports YouTube and X/Twitter platforms.
  */
 @Singleton
-class YouTubeRepository @Inject constructor(
+class MediaRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val tag = "YouTubeRepository"
+    private val tag = "MediaRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val progressPercentRegex = Regex("([0-9]+(?:\\.[0-9]+)?)%")

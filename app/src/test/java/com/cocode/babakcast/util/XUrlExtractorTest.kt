@@ -1,7 +1,9 @@
 package com.cocode.babakcast.util
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class XUrlExtractorTest {
@@ -67,5 +69,46 @@ class XUrlExtractorTest {
     @Test
     fun returnsNullForNullText() {
         assertNull(XUrlExtractor.extractXUrlFromText(null))
+    }
+
+    // --- isXUrl direct tests ---
+
+    @Test
+    fun isXUrlReturnsTrueForXCom() {
+        assertTrue(XUrlExtractor.isXUrl("https://x.com/user/status/123"))
+    }
+
+    @Test
+    fun isXUrlReturnsTrueForTwitterCom() {
+        assertTrue(XUrlExtractor.isXUrl("https://twitter.com/user/status/123"))
+    }
+
+    @Test
+    fun isXUrlReturnsTrueForMobileTwitter() {
+        assertTrue(XUrlExtractor.isXUrl("https://mobile.twitter.com/user/status/123"))
+    }
+
+    @Test
+    fun isXUrlReturnsFalseForYouTube() {
+        assertFalse(XUrlExtractor.isXUrl("https://youtube.com/watch?v=abc"))
+    }
+
+    @Test
+    fun isXUrlReturnsFalseForEmpty() {
+        assertFalse(XUrlExtractor.isXUrl(""))
+    }
+
+    @Test
+    fun isXUrlReturnsFalseForLookalikeDomain() {
+        assertFalse(XUrlExtractor.isXUrl("https://notx.com/user/status/123"))
+        assertFalse(XUrlExtractor.isXUrl("https://faketwitter.com/user/status/123"))
+    }
+
+    @Test
+    fun stripsMultipleTrailingPunctuation() {
+        assertEquals(
+            "https://x.com/user/status/123",
+            XUrlExtractor.extractXUrlFromText("https://x.com/user/status/123).")
+        )
     }
 }

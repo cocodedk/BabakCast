@@ -40,7 +40,6 @@ import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ShareHelper
-import com.cocode.babakcast.util.XUrlExtractor
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -333,10 +332,9 @@ fun MainScreen(
                 }
 
                 // Summarize Transcript Button - Secondary action (disabled for X/Twitter URLs)
-                val isXUrl = XUrlExtractor.isXUrl(uiState.url)
                 OutlinedButton(
                     onClick = viewModel::generateSummary,
-                    enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && !isXUrl,
+                    enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -345,9 +343,9 @@ fun MainScreen(
                         contentColor = MaterialTheme.colorScheme.onSurface,
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                     ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && !isXUrl).copy(
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize).copy(
                         brush = androidx.compose.ui.graphics.SolidColor(
-                            if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && !isXUrl)
+                            if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && uiState.supportsSummarize)
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                             else
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
@@ -366,7 +364,7 @@ fun MainScreen(
                             )
                         }
                         Text(
-                            if (uiState.isSummarizing) "Summarizing…" else if (isXUrl) "Summarize (YouTube only)" else "Summarize Transcript",
+                            if (uiState.isSummarizing) "Summarizing…" else if (!uiState.supportsSummarize) "Summarize (YouTube only)" else "Summarize Transcript",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp

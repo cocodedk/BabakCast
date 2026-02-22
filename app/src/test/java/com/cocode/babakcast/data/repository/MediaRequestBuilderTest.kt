@@ -6,13 +6,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class XVideoDownloadTest {
+class MediaRequestBuilderTest {
 
     // --- Info request ---
 
     @Test
-    fun infoRequest_youTube_hasBasicOptions() {
-        val request = YouTubeRepository.buildInfoRequest(
+    fun infoRequestYouTubeHasBasicOptions() {
+        val request = MediaRepository.buildInfoRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE
         )
         assertTrue(request.hasOption("--skip-download"))
@@ -21,16 +21,16 @@ class XVideoDownloadTest {
     }
 
     @Test
-    fun infoRequest_youTube_noExtractorArgs() {
-        val request = YouTubeRepository.buildInfoRequest(
+    fun infoRequestYouTubeNoExtractorArgs() {
+        val request = MediaRepository.buildInfoRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE
         )
         assertFalse(request.hasOption("--extractor-args"))
     }
 
     @Test
-    fun infoRequest_x_usesSyndicationApi() {
-        val request = YouTubeRepository.buildInfoRequest(
+    fun infoRequestXUsesSyndicationApi() {
+        val request = MediaRepository.buildInfoRequest(
             "https://x.com/user/status/123", Platform.X
         )
         assertTrue(request.hasOption("--extractor-args"))
@@ -38,8 +38,8 @@ class XVideoDownloadTest {
     }
 
     @Test
-    fun infoRequest_x_hasBasicOptions() {
-        val request = YouTubeRepository.buildInfoRequest(
+    fun infoRequestXHasBasicOptions() {
+        val request = MediaRepository.buildInfoRequest(
             "https://x.com/user/status/123", Platform.X
         )
         assertTrue(request.hasOption("--skip-download"))
@@ -50,8 +50,8 @@ class XVideoDownloadTest {
     // --- Download request ---
 
     @Test
-    fun downloadRequest_youTube_hasMp4FormatSelector() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestYouTubeHasMp4FormatSelector() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("-f"))
@@ -59,32 +59,32 @@ class XVideoDownloadTest {
     }
 
     @Test
-    fun downloadRequest_youTube_noExtractorArgs() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestYouTubeNoExtractorArgs() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
         assertFalse(request.hasOption("--extractor-args"))
     }
 
     @Test
-    fun downloadRequest_youTube_setsOutputPath() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestYouTubeSetsOutputPath() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
         assertEquals("/tmp/out.mp4", request.getOption("-o"))
     }
 
     @Test
-    fun downloadRequest_youTube_suppressesWarnings() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestYouTubeSuppressesWarnings() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("--no-warnings"))
     }
 
     @Test
-    fun downloadRequest_x_usesSyndicationApi() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestXUsesSyndicationApi() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("--extractor-args"))
@@ -92,8 +92,8 @@ class XVideoDownloadTest {
     }
 
     @Test
-    fun downloadRequest_x_hasMp4FormatSelector() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestXHasMp4FormatSelector() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("-f"))
@@ -101,16 +101,16 @@ class XVideoDownloadTest {
     }
 
     @Test
-    fun downloadRequest_x_suppressesWarnings() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestXSuppressesWarnings() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("--no-warnings"))
     }
 
     @Test
-    fun downloadRequest_x_setsOutputPath() {
-        val request = YouTubeRepository.buildDownloadRequest(
+    fun downloadRequestXSetsOutputPath() {
+        val request = MediaRepository.buildDownloadRequest(
             "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
         )
         assertEquals("/tmp/out.mp4", request.getOption("-o"))
