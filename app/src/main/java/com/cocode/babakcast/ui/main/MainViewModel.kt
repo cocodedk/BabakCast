@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SettingsRepository
+import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
@@ -16,6 +17,7 @@ import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
+import com.cocode.babakcast.util.InstagramUrlExtractor
 import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,8 +67,12 @@ class MainViewModel @Inject constructor(
     fun updateUrl(url: String) {
         _uiState.value = _uiState.value.copy(
             url = url,
-            supportsSummarize = !XUrlExtractor.isXUrl(url)
+            supportsSummarize = !XUrlExtractor.isXUrl(url) && !InstagramUrlExtractor.isInstagramUrl(url)
         )
+    }
+
+    fun updateSummaryLength(length: SummaryLength) {
+        _uiState.value = _uiState.value.copy(summaryLength = length)
     }
 
     fun downloadVideo() {
@@ -74,7 +80,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
+                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
             )
             return
         }
@@ -133,7 +139,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
+                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
             )
             return
         }
@@ -274,13 +280,19 @@ class MainViewModel @Inject constructor(
         val url = _uiState.value.url
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
+                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
             )
             return
         }
         if (XUrlExtractor.isXUrl(url)) {
             _uiState.value = _uiState.value.copy(
                 error = AppError.TranscriptNotAvailable("Transcript summarization is not available for X/Twitter posts")
+            )
+            return
+        }
+        if (InstagramUrlExtractor.isInstagramUrl(url)) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for Instagram posts")
             )
             return
         }
@@ -327,16 +339,7 @@ class MainViewModel @Inject constructor(
                     // Generate summary
                     val settings = settingsRepository.settings.first()
                     val summaryLanguage = settings.defaultLanguage.ifBlank { "en" }
-                    val summaryLength = if (settings.adaptiveSummaryLength) {
-                        val wordCount = transcript.split(Regex("\\s+")).count { it.isNotBlank() }
-                        when {
-                            wordCount < 800 -> com.cocode.babakcast.data.model.SummaryLength.SHORT
-                            wordCount < 2500 -> com.cocode.babakcast.data.model.SummaryLength.MEDIUM
-                            else -> com.cocode.babakcast.data.model.SummaryLength.LONG
-                        }
-                    } else {
-                        settings.defaultSummaryLength
-                    }
+                    val summaryLength = _uiState.value.summaryLength
 
                     _uiState.value = _uiState.value.copy(
                         loadingMessage = "Generating summary...",
@@ -604,7 +607,8 @@ data class MainUiState(
     val loadingMessage: String? = null,
     val isProgressIndeterminate: Boolean = false,
     val splitChoicePrompt: SplitChoicePrompt? = null,
-    val supportsSummarize: Boolean = true
+    val supportsSummarize: Boolean = true,
+    val summaryLength: SummaryLength = SummaryLength.MEDIUM
 )
 
 data class SplitChoicePrompt(

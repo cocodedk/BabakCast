@@ -34,19 +34,21 @@ object PromptTemplates {
         }
 
         val lengthText = when (length) {
-            SummaryLength.SHORT -> "short"
-            SummaryLength.MEDIUM -> "medium"
-            SummaryLength.LONG -> "long"
+            SummaryLength.SHORT -> "short (5-10 bullet points or 1-2 paragraphs)"
+            SummaryLength.MEDIUM -> "medium (10-20 bullet points or 3-5 paragraphs)"
+            SummaryLength.LONG -> "long and detailed (20-30+ bullet points or 5-10 paragraphs, cover all major points)"
         }
 
         return """
             Summarize the following transcript.
-            
+
             Requirements:
             - Style: $styleText
             - Length: $lengthText
             - Language: $language
-            
+            - Cover all key topics, arguments, and conclusions
+            - Do not cut short — finish every point completely
+
             Transcript:
             $text
         """.trimIndent()

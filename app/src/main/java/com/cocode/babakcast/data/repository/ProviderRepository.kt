@@ -83,7 +83,7 @@ class ProviderRepository @Inject constructor(
                 ),
                 limits = LimitConfig(
                     max_context_tokens = 128000,
-                    max_output_tokens = 4096
+                    max_output_tokens = 16384
                 )
             ),
             Provider(
@@ -114,7 +114,7 @@ class ProviderRepository @Inject constructor(
                 ),
                 limits = LimitConfig(
                     max_context_tokens = 128000,
-                    max_output_tokens = 4096
+                    max_output_tokens = 16384
                 )
             ),
             Provider(
@@ -189,7 +189,7 @@ class ProviderRepository @Inject constructor(
                 ),
                 limits = LimitConfig(
                     max_context_tokens = 128000,
-                    max_output_tokens = 4096
+                    max_output_tokens = 16384
                 )
             )
         )

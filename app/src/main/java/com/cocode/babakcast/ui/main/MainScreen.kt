@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
+import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
@@ -200,12 +202,31 @@ fun MainScreen(
                 OutlinedTextField(
                     value = uiState.url,
                     onValueChange = viewModel::updateUrl,
-                    placeholder = { 
+                    placeholder = {
                         Text(
-                            "Paste YouTube or X video link",
+                            "Paste YouTube, X, or Instagram video link",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        ) 
+                        )
+                    },
+                    trailingIcon = {
+                        AnimatedVisibility(
+                            visible = uiState.url.isNotEmpty() && !uiState.isLoading,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            IconButton(
+                                onClick = { viewModel.updateUrl("") },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Close,
+                                    contentDescription = "Clear URL",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -328,6 +349,61 @@ fun MainScreen(
                                 fontSize = 14.sp
                             )
                         )
+                    }
+                }
+
+                // Summary length picker - only visible when summarize is available
+                AnimatedVisibility(
+                    visible = uiState.supportsSummarize,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "SUMMARY LENGTH",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            val lengths = SummaryLength.entries
+                            lengths.forEachIndexed { index, length ->
+                                SegmentedButton(
+                                    selected = uiState.summaryLength == length,
+                                    onClick = { viewModel.updateSummaryLength(length) },
+                                    shape = SegmentedButtonDefaults.itemShape(
+                                        index = index,
+                                        count = lengths.size
+                                    ),
+                                    enabled = !uiState.isLoading,
+                                    colors = SegmentedButtonDefaults.colors(
+                                        activeContainerColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.15f),
+                                        activeContentColor = BabakCastColors.PrimaryAccent,
+                                        inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        disabledActiveContainerColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.08f),
+                                        disabledActiveContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
+                                    )
+                                ) {
+                                    Text(
+                                        when (length) {
+                                            SummaryLength.SHORT -> "Short"
+                                            SummaryLength.MEDIUM -> "Medium"
+                                            SummaryLength.LONG -> "Long"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 

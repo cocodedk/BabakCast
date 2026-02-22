@@ -1,17 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BabakCast">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0f1730"/>
-      <stop offset="1" stop-color="#3b1e67"/>
-    </linearGradient>
-    <linearGradient id="cast" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#44bfff"/>
-      <stop offset="1" stop-color="#ff4edc"/>
+      <stop offset="0" stop-color="#161A22"/>
+      <stop offset="1" stop-color="#1E2430"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
-  <path d="M20 40v-4a16 16 0 0 1 16-16h4" fill="none" stroke="url(#cast)" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M20 32v-4a8 8 0 0 1 8-8h4" fill="none" stroke="#f7c164" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="22" cy="42" r="4" fill="url(#cast)"/>
-  <path d="M36 24l10 8-10 8z" fill="#f7c164" opacity=".9"/>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+
+  <!-- Letter B (even-odd: outer + two bowl cutouts) -->
+  <!-- Bottom bowl wider than top for proper proportions -->
+  <path fill-rule="evenodd" d="
+    M15,12 L28,12
+    C34,12 38,15.5 38,20.5
+    C38,25.5 34,28.5 29,28.5
+    C35,28.5 40,32 40,37.5
+    C40,43 35,46 29,46
+    L15,46 Z
+    M21,17 L27,17
+    C30.5,17 33,19 33,21.5
+    C33,24 30.5,26 27,26
+    L21,26 Z
+    M21,32 L28.5,32
+    C32.5,32 35,34.5 35,37.5
+    C35,40.5 32.5,43 28.5,43
+    L21,43 Z
+  " fill="#F4B860"/>
+
+  <!-- Broadcast wave 1 (inner) -->
+  <path d="M42,25 C47,29 47,35 42,39" fill="none" stroke="#F4B860" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Broadcast wave 2 (middle) -->
+  <path d="M46,20 C54,26 54,38 46,44" fill="none" stroke="#F4B860" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Broadcast wave 3 (outer) -->
+  <path d="M50,15 C60,23 60,41 50,49" fill="none" stroke="#F4B860" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
 </svg>
