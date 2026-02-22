@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SettingsRepository
+import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
@@ -68,6 +69,10 @@ class MainViewModel @Inject constructor(
             url = url,
             supportsSummarize = !XUrlExtractor.isXUrl(url) && !InstagramUrlExtractor.isInstagramUrl(url)
         )
+    }
+
+    fun updateSummaryLength(length: SummaryLength) {
+        _uiState.value = _uiState.value.copy(summaryLength = length)
     }
 
     fun downloadVideo() {
@@ -334,16 +339,7 @@ class MainViewModel @Inject constructor(
                     // Generate summary
                     val settings = settingsRepository.settings.first()
                     val summaryLanguage = settings.defaultLanguage.ifBlank { "en" }
-                    val summaryLength = if (settings.adaptiveSummaryLength) {
-                        val wordCount = transcript.split(Regex("\\s+")).count { it.isNotBlank() }
-                        when {
-                            wordCount < 800 -> com.cocode.babakcast.data.model.SummaryLength.SHORT
-                            wordCount < 2500 -> com.cocode.babakcast.data.model.SummaryLength.MEDIUM
-                            else -> com.cocode.babakcast.data.model.SummaryLength.LONG
-                        }
-                    } else {
-                        settings.defaultSummaryLength
-                    }
+                    val summaryLength = _uiState.value.summaryLength
 
                     _uiState.value = _uiState.value.copy(
                         loadingMessage = "Generating summary...",
@@ -611,7 +607,8 @@ data class MainUiState(
     val loadingMessage: String? = null,
     val isProgressIndeterminate: Boolean = false,
     val splitChoicePrompt: SplitChoicePrompt? = null,
-    val supportsSummarize: Boolean = true
+    val supportsSummarize: Boolean = true,
+    val summaryLength: SummaryLength = SummaryLength.MEDIUM
 )
 
 data class SplitChoicePrompt(
