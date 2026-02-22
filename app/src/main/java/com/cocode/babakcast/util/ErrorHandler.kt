@@ -18,6 +18,12 @@ sealed class AppError(
         fixHint = "Please check the URL and try again"
     )
 
+    data class InvalidUrl(override val message: String = "Unsupported URL") : AppError(
+        title = "Invalid Link",
+        message = message,
+        fixHint = "Please enter a YouTube or X (Twitter) URL"
+    )
+
     data class TranscriptNotAvailable(override val message: String = "Transcript not available") : AppError(
         title = "No Transcript",
         message = message,
@@ -99,8 +105,11 @@ object ErrorHandler {
         return when (exception) {
             is IllegalArgumentException -> {
                 when {
-                    exception.message?.contains("YouTube", ignoreCase = true) == true -> 
+                    exception.message?.contains("YouTube", ignoreCase = true) == true ->
                         AppError.InvalidYouTubeUrl(exception.message ?: "Invalid YouTube URL")
+                    exception.message?.contains("unsupported URL", ignoreCase = true) == true ||
+                    exception.message?.contains("Invalid URL", ignoreCase = true) == true ->
+                        AppError.InvalidUrl(exception.message ?: "Unsupported URL")
                     exception.message?.contains("provider", ignoreCase = true) == true ->
                         AppError.ProviderMisconfigured(exception.message ?: "Provider error")
                     exception.message?.contains("model", ignoreCase = true) == true ->

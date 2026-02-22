@@ -40,6 +40,7 @@ import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ShareHelper
+import com.cocode.babakcast.util.XUrlExtractor
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,7 +79,7 @@ fun MainScreen(
         }
     }
 
-    // Apply shared URL when user shares from YouTube (or other app) into BabakCast
+    // Apply shared URL when user shares from YouTube, X, or other app into BabakCast
     val activity = LocalActivity.current as? ComponentActivity
     val shareIntentViewModel = activity?.let { viewModel<ShareIntentViewModel>(viewModelStoreOwner = it) }
     LaunchedEffect(shareIntentViewModel) {
@@ -188,7 +189,7 @@ fun MainScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "YOUTUBE URL",
+                    text = "VIDEO URL",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -202,7 +203,7 @@ fun MainScreen(
                     onValueChange = viewModel::updateUrl,
                     placeholder = { 
                         Text(
-                            "Paste video link here",
+                            "Paste YouTube or X video link",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         ) 
@@ -331,10 +332,11 @@ fun MainScreen(
                     }
                 }
 
-                // Summarize Transcript Button - Secondary action
+                // Summarize Transcript Button - Secondary action (disabled for X/Twitter URLs)
+                val isXUrl = XUrlExtractor.isXUrl(uiState.url)
                 OutlinedButton(
                     onClick = viewModel::generateSummary,
-                    enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank(),
+                    enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && !isXUrl,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -343,9 +345,9 @@ fun MainScreen(
                         contentColor = MaterialTheme.colorScheme.onSurface,
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                     ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()).copy(
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && !isXUrl).copy(
                         brush = androidx.compose.ui.graphics.SolidColor(
-                            if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank())
+                            if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank() && !isXUrl)
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                             else
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
@@ -364,7 +366,7 @@ fun MainScreen(
                             )
                         }
                         Text(
-                            if (uiState.isSummarizing) "Summarizing…" else "Summarize Transcript",
+                            if (uiState.isSummarizing) "Summarizing…" else if (isXUrl) "Summarize (YouTube only)" else "Summarize Transcript",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp

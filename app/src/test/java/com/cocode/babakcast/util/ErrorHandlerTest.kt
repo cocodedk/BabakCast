@@ -39,6 +39,19 @@ class ErrorHandlerTest {
     }
 
     @Test
+    fun handleException_invalidUrl() {
+        val error = ErrorHandler.handleException(IllegalArgumentException("Unsupported URL"))
+        assertTrue(error is AppError.InvalidUrl)
+        assertEquals("Invalid Link", error.title)
+    }
+
+    @Test
+    fun handleException_invalidUrlGeneric() {
+        val error = ErrorHandler.handleException(IllegalArgumentException("Invalid URL format"))
+        assertTrue(error is AppError.InvalidUrl)
+    }
+
+    @Test
     fun fullErrorMessage_includesFixHint() {
         val error = AppError.NetworkError("Network error")
         val message = ErrorHandler.getFullErrorMessage(error)

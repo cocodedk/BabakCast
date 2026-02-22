@@ -15,6 +15,8 @@ import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
+import com.cocode.babakcast.util.Platform
+import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -69,7 +71,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
             )
             return
         }
@@ -128,7 +130,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
             )
             return
         }
@@ -269,7 +271,13 @@ class MainViewModel @Inject constructor(
         val url = _uiState.value.url
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidYouTubeUrl("Please enter a YouTube URL")
+                error = AppError.InvalidUrl("Please enter a YouTube or X URL")
+            )
+            return
+        }
+        if (XUrlExtractor.isXUrl(url)) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for X/Twitter posts")
             )
             return
         }

@@ -14,7 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cocode.babakcast.ui.main.ShareIntentViewModel
 import com.cocode.babakcast.ui.navigation.NavGraph
 import com.cocode.babakcast.ui.theme.BabakCastTheme
-import com.cocode.babakcast.util.YouTubeUrlExtractor
+import com.cocode.babakcast.util.MediaUrlExtractor
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -49,21 +49,21 @@ class MainActivity : ComponentActivity() {
     private fun handleShareIntent(intent: Intent?) {
         if (intent == null) return
         if (Intent.ACTION_SEND != intent.action) return
-        val url = extractYouTubeUrlFromIntent(intent)
+        val url = extractMediaUrlFromIntent(intent)
         if (url != null) {
             shareIntentViewModel.setPendingUrl(url)
         }
     }
 
     /**
-     * Extracts a YouTube URL from an ACTION_SEND intent (text/plain or shared link).
+     * Extracts a supported media URL (YouTube or X/Twitter) from an ACTION_SEND intent.
      */
-    private fun extractYouTubeUrlFromIntent(intent: Intent): String? {
+    private fun extractMediaUrlFromIntent(intent: Intent): String? {
         val text = when {
             intent.type == "text/plain" -> intent.getStringExtra(Intent.EXTRA_TEXT)
             intent.data != null -> intent.data?.toString()
             else -> null
         } ?: return null
-        return YouTubeUrlExtractor.extractYouTubeUrlFromText(text)
+        return MediaUrlExtractor.extractFromText(text)?.url
     }
 }
