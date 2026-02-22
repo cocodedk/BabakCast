@@ -47,4 +47,30 @@ class MediaUrlExtractorTest {
         val result = MediaUrlExtractor.extractFromText("https://twitter.com/user/status/456")
         assertEquals(Platform.X, result?.platform)
     }
+
+    @Test
+    fun returnsInstagramUrl() {
+        val result = MediaUrlExtractor.extractFromText("https://www.instagram.com/reel/ABC123/")
+        assertEquals(Platform.INSTAGRAM, result?.platform)
+        assertEquals("https://www.instagram.com/reel/ABC123/", result?.url)
+    }
+
+    @Test
+    fun prefersYouTubeOverInstagram() {
+        val text = "https://youtube.com/watch?v=abc123 and https://instagram.com/reel/ABC123/"
+        val result = MediaUrlExtractor.extractFromText(text)
+        assertEquals(Platform.YOUTUBE, result?.platform)
+    }
+
+    @Test
+    fun returnsInstagramWhenNoYouTubeOrX() {
+        val result = MediaUrlExtractor.extractFromText("https://instagram.com/p/ABC123/")
+        assertEquals(Platform.INSTAGRAM, result?.platform)
+    }
+
+    @Test
+    fun returnsInstagrAmUrl() {
+        val result = MediaUrlExtractor.extractFromText("https://instagr.am/p/ABC123/")
+        assertEquals(Platform.INSTAGRAM, result?.platform)
+    }
 }

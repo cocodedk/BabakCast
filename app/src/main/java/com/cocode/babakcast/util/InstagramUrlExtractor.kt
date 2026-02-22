@@ -1,0 +1,27 @@
+package com.cocode.babakcast.util
+
+import java.net.URI
+
+object InstagramUrlExtractor {
+    private val trailingPunctuation = charArrayOf(',', '.', ';', ':', '!', '?', ')', ']', '}', '"', '\'')
+
+    fun extractInstagramUrlFromText(text: String?): String? {
+        val trimmed = text?.trim().orEmpty()
+        if (trimmed.isBlank()) return null
+        val urlPattern = Regex("https?://\\S+")
+        for (match in urlPattern.findAll(trimmed)) {
+            val candidate = match.value.trimEnd(*trailingPunctuation)
+            if (isInstagramUrl(candidate)) return candidate
+        }
+        return null
+    }
+
+    fun isInstagramUrl(s: String): Boolean {
+        val host = try {
+            URI(s).host?.lowercase()
+        } catch (_: Exception) {
+            null
+        } ?: return false
+        return host == "instagram.com" || host == "www.instagram.com" || host == "instagr.am"
+    }
+}

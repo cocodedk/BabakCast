@@ -5,6 +5,8 @@ import android.util.Log
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
+import com.cocode.babakcast.util.InstagramUrlExtractor
+import com.cocode.babakcast.util.InstagramUrlParser
 import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.XUrlParser
 import com.cocode.babakcast.util.YouTubeMetadataParser
@@ -21,7 +23,7 @@ import kotlin.math.roundToInt
 
 /**
  * Repository for media operations: download and transcript extraction.
- * Supports YouTube and X/Twitter platforms.
+ * Supports YouTube, X/Twitter, and Instagram platforms.
  */
 @Singleton
 class MediaRepository @Inject constructor(
@@ -50,6 +52,10 @@ class MediaRepository @Inject constructor(
             val tweetId = XUrlParser.extractTweetId(url) ?: return null
             return MediaIdentifier(Platform.X, tweetId)
         }
+        if (InstagramUrlExtractor.isInstagramUrl(url)) {
+            val shortcode = InstagramUrlParser.extractShortcode(url) ?: return null
+            return MediaIdentifier(Platform.INSTAGRAM, shortcode)
+        }
         return null
     }
 
@@ -67,7 +73,7 @@ class MediaRepository @Inject constructor(
             val jsonOutput = output.out
 
             val title = YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
-            // X posts don't have chapters
+            // Only YouTube videos have chapters
             val chapters = if (platform == Platform.YOUTUBE) {
                 YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
             } else {
@@ -151,10 +157,15 @@ class MediaRepository @Inject constructor(
      */
     suspend fun extractTranscript(url: String, language: String = "en"): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // X/Twitter posts don't have transcripts
+            // X/Twitter and Instagram posts don't have transcripts
             if (XUrlExtractor.isXUrl(url)) {
                 return@withContext Result.failure(
                     UnsupportedOperationException("Transcript not available for X/Twitter posts")
+                )
+            }
+            if (InstagramUrlExtractor.isInstagramUrl(url)) {
+                return@withContext Result.failure(
+                    UnsupportedOperationException("Transcript not available for Instagram posts")
                 )
             }
             Log.d(tag, "Starting transcript extraction lang=$language url=$url")

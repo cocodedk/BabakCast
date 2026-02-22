@@ -115,4 +115,59 @@ class MediaRequestBuilderTest {
         )
         assertEquals("/tmp/out.mp4", request.getOption("-o"))
     }
+
+    // --- Instagram info request ---
+
+    @Test
+    fun infoRequestInstagramHasBasicOptions() {
+        val request = MediaRepository.buildInfoRequest(
+            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM
+        )
+        assertTrue(request.hasOption("--skip-download"))
+        assertTrue(request.hasOption("--dump-json"))
+        assertTrue(request.hasOption("--no-warnings"))
+    }
+
+    @Test
+    fun infoRequestInstagramNoExtractorArgs() {
+        val request = MediaRepository.buildInfoRequest(
+            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM
+        )
+        assertFalse(request.hasOption("--extractor-args"))
+    }
+
+    // --- Instagram download request ---
+
+    @Test
+    fun downloadRequestInstagramHasMp4FormatSelector() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
+        )
+        assertTrue(request.hasOption("-f"))
+        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
+    }
+
+    @Test
+    fun downloadRequestInstagramNoExtractorArgs() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
+        )
+        assertFalse(request.hasOption("--extractor-args"))
+    }
+
+    @Test
+    fun downloadRequestInstagramSetsOutputPath() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
+        )
+        assertEquals("/tmp/out.mp4", request.getOption("-o"))
+    }
+
+    @Test
+    fun downloadRequestInstagramSuppressesWarnings() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
+        )
+        assertTrue(request.hasOption("--no-warnings"))
+    }
 }
