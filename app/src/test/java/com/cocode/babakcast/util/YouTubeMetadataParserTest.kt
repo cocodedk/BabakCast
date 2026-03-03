@@ -45,4 +45,55 @@ class YouTubeMetadataParserTest {
 
         assertNull(title)
     }
+
+    // --- extractDescriptionFromJson tests ---
+
+    @Test
+    fun extractDescriptionFromJson_returnsFullText() {
+        val json = """{"title":"Truncated tweet...","description":"This is the full tweet text that was too long to fit in the title field"}"""
+
+        val description = YouTubeMetadataParser.extractDescriptionFromJson(json)
+
+        assertEquals("This is the full tweet text that was too long to fit in the title field", description)
+    }
+
+    @Test
+    fun extractDescriptionFromJson_returnsNullWhenMissing() {
+        val json = """{"title":"Some title","id":"abc123"}"""
+
+        val description = YouTubeMetadataParser.extractDescriptionFromJson(json)
+
+        assertNull(description)
+    }
+
+    @Test
+    fun extractDescriptionFromJson_returnsNullForBlank() {
+        val json = """{"title":"Some title","description":"   "}"""
+
+        val description = YouTubeMetadataParser.extractDescriptionFromJson(json)
+
+        assertNull(description)
+    }
+
+    @Test
+    fun extractDescriptionFromJson_decodesUnicodeEscapes() {
+        val json = """{"description":"Ali\u0027s full post \u2013 with unicode"}"""
+
+        val description = YouTubeMetadataParser.extractDescriptionFromJson(json)
+
+        assertEquals("Ali's full post – with unicode", description)
+    }
+
+    @Test
+    fun extractDescriptionFromJson_handlesLogWrappedOutput() {
+        val output = """
+            [twitter] 123456: Downloading webpage
+            {"id":"123456","title":"Short...","description":"The full tweet text here"}
+            [download] Destination: file.mp4
+        """.trimIndent()
+
+        val description = YouTubeMetadataParser.extractDescriptionFromJson(output)
+
+        assertEquals("The full tweet text here", description)
+    }
 }
