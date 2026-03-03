@@ -72,9 +72,15 @@ class MediaRepository @Inject constructor(
             val output = YoutubeDL.getInstance().execute(request, null)
             val jsonOutput = output.out
 
-            // extractTitleFromJson works for all platforms because yt-dlp always emits a "title" field.
+            // For X/Twitter, prefer the full "description" over the truncated "title".
             // extractChaptersFromJson is YouTube-only; other platforms don't provide chapter metadata.
-            val title = YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
+            val title = if (platform == Platform.X) {
+                YouTubeMetadataParser.extractDescriptionFromJson(jsonOutput)
+                    ?: YouTubeMetadataParser.extractTitleFromJson(jsonOutput)
+                    ?: "Video"
+            } else {
+                YouTubeMetadataParser.extractTitleFromJson(jsonOutput) ?: "Video"
+            }
             val chapters = if (platform == Platform.YOUTUBE) {
                 YouTubeMetadataParser.extractChaptersFromJson(jsonOutput)
             } else {

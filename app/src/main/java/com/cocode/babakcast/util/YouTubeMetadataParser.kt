@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * Parses yt-dlp metadata output and extracts a decoded video title.
+ * Parses yt-dlp metadata output and extracts decoded video metadata fields.
  */
 object YouTubeMetadataParser {
     private val json = Json {
@@ -18,22 +18,33 @@ object YouTubeMetadataParser {
         isLenient = true
     }
     private val titleRegex = Regex("\"title\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"")
+    private val descriptionRegex = Regex("\"description\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"")
 
-    fun extractTitleFromJson(jsonOutput: String): String? {
+    fun extractTitleFromJson(jsonOutput: String): String? =
+        extractFieldFromJson(jsonOutput, "title", titleRegex)
+
+    fun extractDescriptionFromJson(jsonOutput: String): String? =
+        extractFieldFromJson(jsonOutput, "description", descriptionRegex)
+
+    private fun extractFieldFromJson(
+        jsonOutput: String,
+        fieldName: String,
+        fallbackRegex: Regex
+    ): String? {
         if (jsonOutput.isBlank()) return null
         val trimmed = jsonOutput.trim()
 
-        parseJsonTitle(trimmed)?.let { return it }
+        parseJsonField(trimmed, fieldName)?.let { return it }
 
         trimmed.lineSequence()
             .map { it.trim() }
             .filter { it.startsWith("{") && it.endsWith("}") }
             .forEach { line ->
-                parseJsonTitle(line)?.let { return it }
+                parseJsonField(line, fieldName)?.let { return it }
             }
 
-        val escapedTitle = titleRegex.find(jsonOutput)?.groupValues?.get(1) ?: return null
-        return decodeEscapedJsonString(escapedTitle).takeIf { it.isNotBlank() }
+        val escaped = fallbackRegex.find(jsonOutput)?.groupValues?.get(1) ?: return null
+        return decodeEscapedJsonString(escaped).takeIf { it.isNotBlank() }
     }
 
     fun extractChaptersFromJson(jsonOutput: String): List<VideoChapter> {
@@ -55,10 +66,10 @@ object YouTubeMetadataParser {
         return emptyList()
     }
 
-    private fun parseJsonTitle(candidate: String): String? {
+    private fun parseJsonField(candidate: String, fieldName: String): String? {
         return runCatching {
             json.parseToJsonElement(candidate)
-                .jsonObject["title"]
+                .jsonObject[fieldName]
                 ?.jsonPrimitive
                 ?.contentOrNull
                 ?.takeIf { it.isNotBlank() }
