@@ -2,7 +2,10 @@ package com.cocode.babakcast.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.cocode.babakcast.data.model.TweetDownloadResult
 import com.cocode.babakcast.data.model.VideoInfo
+import com.cocode.babakcast.data.remote.TweetMedia
+import com.cocode.babakcast.data.remote.XSyndicationClient
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.InstagramUrlExtractor
@@ -27,16 +30,19 @@ import kotlin.math.roundToInt
  */
 @Singleton
 class MediaRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val xSyndicationClient: XSyndicationClient
 ) {
     private val tag = "MediaRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
+    private val imagesDir = File(context.getExternalFilesDir(null), "images")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val progressPercentRegex = Regex("([0-9]+(?:\\.[0-9]+)?)%")
     @Volatile private var lastLoggedProgressBucket = -1
 
     init {
         videosDir.mkdirs()
+        imagesDir.mkdirs()
         transcriptsDir.mkdirs()
         // YoutubeDL is initialized in BabakCastApplication.onCreate() so it's ready before first use
     }
@@ -158,6 +164,102 @@ class MediaRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    /**
+     * Download all media (photos + videos + GIFs) from an X/Twitter tweet.
+     * Uses the syndication API to discover media, then downloads images directly
+     * and videos via yt-dlp.
+     */
+    suspend fun downloadAllXMedia(
+        url: String,
+        onProgress: (Float) -> Unit
+    ): Result<TweetDownloadResult> = withContext(Dispatchers.IO) {
+        try {
+            val tweetId = XUrlParser.extractTweetId(url)
+                ?: return@withContext Result.failure(IllegalArgumentException("Cannot extract tweet ID from URL"))
+
+            Log.d(tag, "downloadAllXMedia: fetching media details for tweet $tweetId")
+            onProgress(0.05f)
+
+            val mediaResult = xSyndicationClient.fetchTweetMedia(tweetId).getOrElse { e ->
+                return@withContext Result.failure(e)
+            }
+
+            if (mediaResult.media.isEmpty()) {
+                return@withContext Result.failure(Exception("No media found in tweet"))
+            }
+
+            val (photos, videos) = categorizeTweetMedia(mediaResult.media)
+
+            val totalItems = photos.size + videos.size
+            var completedItems = 0
+
+            Log.d(tag, "downloadAllXMedia: ${photos.size} photos, ${videos.size} videos/GIFs")
+
+            // Download photos via direct HTTP
+            val imageFiles = mutableListOf<File>()
+            for ((index, photo) in photos.withIndex()) {
+                val extension = guessImageExtension(photo.originalUrl)
+                val outputFile = File(imagesDir, "tweet_${tweetId}_img${index + 1}.$extension")
+                xSyndicationClient.downloadImage(photo.url, outputFile).fold(
+                    onSuccess = { file ->
+                        imageFiles.add(file)
+                        completedItems++
+                        onProgress(completedItems.toFloat() / totalItems)
+                    },
+                    onFailure = { e ->
+                        Log.w(tag, "Failed to download photo ${index + 1}: ${e.message}")
+                        completedItems++
+                        onProgress(completedItems.toFloat() / totalItems)
+                    }
+                )
+            }
+
+            // Download videos/GIFs via yt-dlp
+            val videoFiles = mutableListOf<File>()
+            if (videos.isNotEmpty()) {
+                val safeTitle = sanitizeFileBaseName(mediaResult.text)
+                val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$tweetId" else tweetId
+                val outputFile = File(videosDir, "${baseName}.mp4")
+
+                lastLoggedProgressBucket = -1
+                val request = buildDownloadRequest(url, Platform.X, outputFile.absolutePath)
+
+                YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
+                    val videoProgress = normalizeProgress(progress, line)
+                    val baseProgress = completedItems.toFloat() / totalItems
+                    val videoWeight = videos.size.toFloat() / totalItems
+                    onProgress(baseProgress + videoProgress * videoWeight)
+                }
+
+                if (outputFile.exists()) {
+                    videoFiles.add(outputFile)
+                }
+                completedItems += videos.size
+                onProgress(1f)
+            }
+
+            if (imageFiles.isEmpty() && videoFiles.isEmpty()) {
+                return@withContext Result.failure(Exception("Failed to download any media from tweet"))
+            }
+
+            Log.d(tag, "downloadAllXMedia complete: ${imageFiles.size} images, ${videoFiles.size} videos")
+            Result.success(
+                TweetDownloadResult(
+                    tweetId = tweetId,
+                    text = mediaResult.text,
+                    imageFiles = imageFiles,
+                    videoFiles = videoFiles
+                )
+            )
+        } catch (e: Exception) {
+            Log.e(tag, "downloadAllXMedia failed", e)
+            Result.failure(e)
+        }
+    }
+
+    // Delegated to companion for testability
+    private fun guessImageExtension(url: String): String = Companion.guessImageExtension(url)
 
     /**
      * Extract transcript from a supported video URL.
@@ -318,6 +420,7 @@ class MediaRepository @Inject constructor(
      */
     suspend fun cleanupVideos() = withContext(Dispatchers.IO) {
         videosDir.listFiles()?.forEach { it.delete() }
+        imagesDir.listFiles()?.forEach { it.delete() }
     }
 
     /**
@@ -334,6 +437,25 @@ class MediaRepository @Inject constructor(
     }
 
     companion object {
+        fun guessImageExtension(url: String): String {
+            val path = url.substringBefore('?').substringAfterLast('/')
+            return when {
+                path.endsWith(".png", ignoreCase = true) -> "png"
+                path.endsWith(".webp", ignoreCase = true) -> "webp"
+                else -> "jpg"
+            }
+        }
+
+        /**
+         * Categorize [TweetMedia] items into photos and videos/GIFs.
+         * Returns a pair of (photos, videos+GIFs).
+         */
+        fun categorizeTweetMedia(media: List<TweetMedia>): Pair<List<TweetMedia.Photo>, List<TweetMedia>> {
+            val photos = media.filterIsInstance<TweetMedia.Photo>()
+            val videos = media.filter { it is TweetMedia.Video || it is TweetMedia.AnimatedGif }
+            return photos to videos
+        }
+
         fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)
             request.addOption("--skip-download")

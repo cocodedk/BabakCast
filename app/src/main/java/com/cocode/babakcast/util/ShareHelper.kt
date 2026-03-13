@@ -82,6 +82,54 @@ class ShareHelper @Inject constructor(
     }
 
     /**
+     * Share mixed media (images + videos) from a tweet in one go.
+     */
+    fun shareMixedMedia(
+        files: List<File>,
+        caption: String? = null
+    ) {
+        if (files.isEmpty()) {
+            Log.w(tag, "No files to share")
+            return
+        }
+
+        val mimeType = resolveMimeType(files)
+
+        val chooser = buildShareFilesChooser(
+            files = files,
+            mimeType = mimeType,
+            title = "Share media",
+            text = caption
+        )
+        if (chooser != null) {
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        }
+    }
+
+    companion object {
+        fun isImageFile(file: File): Boolean {
+            val ext = file.extension.lowercase()
+            return ext in listOf("jpg", "jpeg", "png", "webp", "gif")
+        }
+
+        fun isVideoFile(file: File): Boolean {
+            val ext = file.extension.lowercase()
+            return ext in listOf("mp4", "mkv", "webm", "mov")
+        }
+
+        /**
+         * Determine the MIME type for sharing a mixed set of files.
+         */
+        fun resolveMimeType(files: List<File>): String = when {
+            files.isEmpty() -> "*/*"
+            files.all { isImageFile(it) } -> "image/*"
+            files.all { isVideoFile(it) } -> "video/*"
+            else -> "*/*"
+        }
+    }
+
+    /**
      * Share multiple files
      */
     fun shareFiles(

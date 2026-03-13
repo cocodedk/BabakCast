@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
+import com.cocode.babakcast.data.model.TweetDownloadResult
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.data.repository.ProviderRepository
 import com.cocode.babakcast.data.repository.MediaRepository
@@ -126,6 +127,55 @@ class MainViewModel @Inject constructor(
                         error = ErrorHandler.handleException(error),
                         isDownloading = false,
                         isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
+                    )
+                }
+            )
+        }
+    }
+
+    fun downloadAllXMedia() {
+        val url = _uiState.value.url
+        if (!_uiState.value.downloadEngineReady) return
+        if (url.isBlank() || !XUrlExtractor.isXUrl(url)) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.InvalidUrl("Please enter an X/Twitter URL")
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                error = null,
+                progress = 0f,
+                isDownloading = true,
+                isSummarizing = false,
+                isDownloadingAudio = false,
+                loadingMessage = "Downloading all media...",
+                isProgressIndeterminate = false,
+                splitChoicePrompt = null
+            )
+
+            mediaRepository.downloadAllXMedia(url) { progress ->
+                _uiState.value = _uiState.value.copy(progress = progress)
+            }.fold(
+                onSuccess = { result ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isDownloading = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
+                    )
+                    val caption = result.text.ifBlank { null }
+                    shareHelper.shareMixedMedia(result.allFiles, caption)
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = ErrorHandler.handleException(error),
+                        isDownloading = false,
                         loadingMessage = null,
                         isProgressIndeterminate = false
                     )
