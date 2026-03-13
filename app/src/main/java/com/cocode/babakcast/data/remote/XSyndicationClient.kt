@@ -25,7 +25,6 @@ class XSyndicationClient @Inject constructor(
     private val okHttpClient: OkHttpClient
 ) {
     private val tag = "XSyndicationClient"
-    private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Fetch all media details for a tweet.
@@ -46,46 +45,9 @@ class XSyndicationClient @Inject constructor(
             val body = response.body?.string()
                 ?: return@withContext Result.failure(IOException("Empty response body"))
 
-            val root = json.parseToJsonElement(body).jsonObject
-            val text = root["text"]?.jsonPrimitive?.content ?: ""
-            val mediaDetails = root["mediaDetails"]?.jsonArray ?: run {
-                Log.d(tag, "No mediaDetails in response for tweet $tweetId")
-                return@withContext Result.success(TweetMediaResult(text, emptyList()))
-            }
-
-            val mediaList = mediaDetails.mapNotNull { element ->
-                val obj = element.jsonObject
-                val type = obj["type"]?.jsonPrimitive?.content ?: return@mapNotNull null
-                val mediaUrl = obj["media_url_https"]?.jsonPrimitive?.content
-
-                when (type) {
-                    "photo" -> {
-                        if (mediaUrl == null) return@mapNotNull null
-                        TweetMedia.Photo(url = "${mediaUrl}?name=large", originalUrl = mediaUrl)
-                    }
-                    "video" -> {
-                        val bestVideoUrl = extractBestVideoUrl(obj)
-                        TweetMedia.Video(
-                            url = bestVideoUrl,
-                            thumbnailUrl = mediaUrl
-                        )
-                    }
-                    "animated_gif" -> {
-                        val bestVideoUrl = extractBestVideoUrl(obj)
-                        TweetMedia.AnimatedGif(
-                            url = bestVideoUrl,
-                            thumbnailUrl = mediaUrl
-                        )
-                    }
-                    else -> {
-                        Log.w(tag, "Unknown media type: $type")
-                        null
-                    }
-                }
-            }
-
-            Log.d(tag, "Fetched ${mediaList.size} media items for tweet $tweetId: ${mediaList.map { it::class.simpleName }}")
-            Result.success(TweetMediaResult(text, mediaList))
+            val result = parseMediaDetails(body)
+            Log.d(tag, "Fetched ${result.media.size} media items for tweet $tweetId: ${result.media.map { it::class.simpleName }}")
+            Result.success(result)
         } catch (e: Exception) {
             Log.e(tag, "Failed to fetch tweet media for $tweetId", e)
             Result.failure(e)
@@ -118,15 +80,57 @@ class XSyndicationClient @Inject constructor(
         }
     }
 
-    private fun extractBestVideoUrl(mediaObj: JsonObject): String? {
-        val videoInfo = mediaObj["video_info"]?.jsonObject ?: return null
-        val variants = videoInfo["variants"]?.jsonArray ?: return null
+    companion object {
+        private val json = Json { ignoreUnknownKeys = true }
 
-        return variants
-            .mapNotNull { it.jsonObject }
-            .filter { it["content_type"]?.jsonPrimitive?.content == "video/mp4" }
-            .maxByOrNull { it["bitrate"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L }
-            ?.get("url")?.jsonPrimitive?.content
+        /**
+         * Parse a syndication API JSON response into a [TweetMediaResult].
+         * Exposed for testability.
+         */
+        fun parseMediaDetails(jsonString: String): TweetMediaResult {
+            val root = json.parseToJsonElement(jsonString).jsonObject
+            val text = root["text"]?.jsonPrimitive?.content ?: ""
+            val mediaDetails = root["mediaDetails"]?.jsonArray
+                ?: return TweetMediaResult(text, emptyList())
+
+            val mediaList = mediaDetails.mapNotNull { element ->
+                val obj = element.jsonObject
+                val type = obj["type"]?.jsonPrimitive?.content ?: return@mapNotNull null
+                val mediaUrl = obj["media_url_https"]?.jsonPrimitive?.content
+
+                when (type) {
+                    "photo" -> {
+                        if (mediaUrl == null) return@mapNotNull null
+                        TweetMedia.Photo(url = "${mediaUrl}?name=large", originalUrl = mediaUrl)
+                    }
+                    "video" -> {
+                        val bestVideoUrl = extractBestVideoUrl(obj)
+                        TweetMedia.Video(url = bestVideoUrl, thumbnailUrl = mediaUrl)
+                    }
+                    "animated_gif" -> {
+                        val bestVideoUrl = extractBestVideoUrl(obj)
+                        TweetMedia.AnimatedGif(url = bestVideoUrl, thumbnailUrl = mediaUrl)
+                    }
+                    else -> null
+                }
+            }
+
+            return TweetMediaResult(text, mediaList)
+        }
+
+        /**
+         * Select the highest-bitrate MP4 variant from a media object's video_info.
+         */
+        fun extractBestVideoUrl(mediaObj: JsonObject): String? {
+            val videoInfo = mediaObj["video_info"]?.jsonObject ?: return null
+            val variants = videoInfo["variants"]?.jsonArray ?: return null
+
+            return variants
+                .mapNotNull { it.jsonObject }
+                .filter { it["content_type"]?.jsonPrimitive?.content == "video/mp4" }
+                .maxByOrNull { it["bitrate"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L }
+                ?.get("url")?.jsonPrimitive?.content
+        }
     }
 }
 

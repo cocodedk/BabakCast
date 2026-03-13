@@ -72,7 +72,7 @@ A **local-first** Android app to download YouTube, X (Twitter), and Instagram vi
 1. **Download video** — Paste a YouTube, X (Twitter), or Instagram URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
 2. **Download all media (X/Twitter)** — Paste an X/Twitter URL, tap *Download All Media*. The app fetches all photos, videos, and GIFs from the post and opens the share sheet with everything in one go.
 3. **Download audio** — Paste a YouTube, X, or Instagram URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
-3. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose. (Note: transcript summarization is available for YouTube only.)
+4. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose. (Note: transcript summarization is available for YouTube only.)
 
 ---
 

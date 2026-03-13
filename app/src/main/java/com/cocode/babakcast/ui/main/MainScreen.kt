@@ -318,9 +318,10 @@ fun MainScreen(
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
+                    val isAllMediaEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
                     OutlinedButton(
                         onClick = viewModel::downloadAllXMedia,
-                        enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank(),
+                        enabled = isAllMediaEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
@@ -329,9 +330,9 @@ fun MainScreen(
                             contentColor = BabakCastColors.PrimaryAccent,
                             disabledContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.3f)
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()).copy(
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = isAllMediaEnabled).copy(
                             brush = androidx.compose.ui.graphics.SolidColor(
-                                if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank())
+                                if (isAllMediaEnabled)
                                     BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
                                 else
                                     BabakCastColors.PrimaryAccent.copy(alpha = 0.2f)

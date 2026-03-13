@@ -1,66 +1,15 @@
 package com.cocode.babakcast.data.remote
 
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for parsing the X/Twitter syndication API response into [TweetMedia] items.
- * These tests verify the JSON parsing logic without making network calls.
+ * Tests for [XSyndicationClient.parseMediaDetails] and [XSyndicationClient.extractBestVideoUrl].
+ * Exercises the production parsing code directly without network calls.
  */
 class XSyndicationClientParseTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    /**
-     * Mirrors the parsing logic in [XSyndicationClient.fetchTweetMedia].
-     */
-    private fun parseMediaDetails(jsonString: String): TweetMediaResult {
-        val root = json.parseToJsonElement(jsonString).jsonObject
-        val text = root["text"]?.jsonPrimitive?.content ?: ""
-        val mediaDetails = root["mediaDetails"]?.jsonArray ?: return TweetMediaResult(text, emptyList())
-
-        val mediaList = mediaDetails.mapNotNull { element ->
-            val obj = element.jsonObject
-            val type = obj["type"]?.jsonPrimitive?.content ?: return@mapNotNull null
-            val mediaUrl = obj["media_url_https"]?.jsonPrimitive?.content
-
-            when (type) {
-                "photo" -> {
-                    if (mediaUrl == null) return@mapNotNull null
-                    TweetMedia.Photo(url = "${mediaUrl}?name=large", originalUrl = mediaUrl)
-                }
-                "video" -> {
-                    val bestVideoUrl = extractBestVideoUrl(obj)
-                    TweetMedia.Video(url = bestVideoUrl, thumbnailUrl = mediaUrl)
-                }
-                "animated_gif" -> {
-                    val bestVideoUrl = extractBestVideoUrl(obj)
-                    TweetMedia.AnimatedGif(url = bestVideoUrl, thumbnailUrl = mediaUrl)
-                }
-                else -> null
-            }
-        }
-
-        return TweetMediaResult(text, mediaList)
-    }
-
-    private fun extractBestVideoUrl(mediaObj: kotlinx.serialization.json.JsonObject): String? {
-        val videoInfo = mediaObj["video_info"]?.jsonObject ?: return null
-        val variants = videoInfo["variants"]?.jsonArray ?: return null
-
-        return variants
-            .mapNotNull { it.jsonObject }
-            .filter { it["content_type"]?.jsonPrimitive?.content == "video/mp4" }
-            .maxByOrNull { it["bitrate"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L }
-            ?.get("url")?.jsonPrimitive?.content
-    }
 
     @Test
     fun parseSinglePhoto() {
@@ -76,7 +25,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals("Check out this photo!", result.text)
         assertEquals(1, result.media.size)
@@ -99,7 +48,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(4, result.media.size)
         assertTrue(result.media.all { it is TweetMedia.Photo })
@@ -128,7 +77,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(1, result.media.size)
         val video = result.media[0] as TweetMedia.Video
@@ -156,7 +105,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(1, result.media.size)
         val gif = result.media[0] as TweetMedia.AnimatedGif
@@ -167,7 +116,7 @@ class XSyndicationClientParseTest {
     fun parseNoMediaDetails() {
         val response = """{"text": "Just a text tweet"}"""
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals("Just a text tweet", result.text)
         assertTrue(result.media.isEmpty())
@@ -177,7 +126,7 @@ class XSyndicationClientParseTest {
     fun parseEmptyMediaDetails() {
         val response = """{"text": "Nothing here", "mediaDetails": []}"""
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertTrue(result.media.isEmpty())
     }
@@ -194,7 +143,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(1, result.media.size)
         assertTrue(result.media[0] is TweetMedia.Photo)
@@ -212,7 +161,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(1, result.media.size)
         val photo = result.media[0] as TweetMedia.Photo
@@ -233,7 +182,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(1, result.media.size)
         val video = result.media[0] as TweetMedia.Video
@@ -260,7 +209,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         val video = result.media[0] as TweetMedia.Video
         assertNull(video.url)
@@ -286,7 +235,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(2, result.media.size)
         assertTrue(result.media[0] is TweetMedia.Photo)
@@ -305,7 +254,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(1, result.media.size)
         assertTrue(result.media[0] is TweetMedia.Photo)
@@ -321,7 +270,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals("", result.text)
         assertEquals(1, result.media.size)
@@ -345,7 +294,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         val video = result.media[0] as TweetMedia.Video
         assertEquals("https://video.twimg.com/vid.mp4", video.url)
@@ -370,7 +319,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         val gif = result.media[0] as TweetMedia.AnimatedGif
         assertEquals("https://video.twimg.com/gif.mp4", gif.url)
@@ -394,7 +343,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         val video = result.media[0] as TweetMedia.Video
         assertNull(video.url)
@@ -415,7 +364,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         val video = result.media[0] as TweetMedia.Video
         assertNull(video.url)
@@ -446,7 +395,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
 
         assertEquals(3, result.media.size)
         assertTrue(result.media[0] is TweetMedia.Photo)
@@ -475,7 +424,7 @@ class XSyndicationClientParseTest {
         }
         """.trimIndent()
 
-        val result = parseMediaDetails(response)
+        val result = XSyndicationClient.parseMediaDetails(response)
         val video = result.media[0] as TweetMedia.Video
 
         assertEquals("https://video.twimg.com/high.mp4", video.url)
