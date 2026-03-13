@@ -35,12 +35,14 @@ class MediaRepository @Inject constructor(
 ) {
     private val tag = "MediaRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
+    private val imagesDir = File(context.getExternalFilesDir(null), "images")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val progressPercentRegex = Regex("([0-9]+(?:\\.[0-9]+)?)%")
     @Volatile private var lastLoggedProgressBucket = -1
 
     init {
         videosDir.mkdirs()
+        imagesDir.mkdirs()
         transcriptsDir.mkdirs()
         // YoutubeDL is initialized in BabakCastApplication.onCreate() so it's ready before first use
     }
@@ -198,7 +200,7 @@ class MediaRepository @Inject constructor(
             val imageFiles = mutableListOf<File>()
             for ((index, photo) in photos.withIndex()) {
                 val extension = guessImageExtension(photo.originalUrl)
-                val outputFile = File(videosDir, "tweet_${tweetId}_img${index + 1}.$extension")
+                val outputFile = File(imagesDir, "tweet_${tweetId}_img${index + 1}.$extension")
                 xSyndicationClient.downloadImage(photo.url, outputFile).fold(
                     onSuccess = { file ->
                         imageFiles.add(file)
@@ -418,6 +420,7 @@ class MediaRepository @Inject constructor(
      */
     suspend fun cleanupVideos() = withContext(Dispatchers.IO) {
         videosDir.listFiles()?.forEach { it.delete() }
+        imagesDir.listFiles()?.forEach { it.delete() }
     }
 
     /**
