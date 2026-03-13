@@ -17,6 +17,7 @@ A **local-first** Android app to download YouTube, X (Twitter), and Instagram vi
 
 - **YouTube video download** — Paste a URL, get shareable video files (auto-split at 16 MB for sharing limits).
 - **X (Twitter) video download** — Paste an X.com or Twitter.com post URL to download videos from public posts.
+- **X (Twitter) all-media download** — Download all photos, videos, and GIFs from an X/Twitter post in one tap and share them together. Supports multi-image tweets (up to 4), mixed media, and animated GIFs.
 - **Instagram video download** — Paste an Instagram post, reel, or IGTV URL to download videos.
 - **Audio download** — Extract audio (MP3) from YouTube, X, or Instagram videos and share audio files (auto-split at 16 MB for sharing limits).
 - **Transcript summarization** — Extract captions from YouTube videos and summarize with your chosen AI model (bullet points, paragraph, or TL;DR).
@@ -69,7 +70,8 @@ A **local-first** Android app to download YouTube, X (Twitter), and Instagram vi
 ## Usage
 
 1. **Download video** — Paste a YouTube, X (Twitter), or Instagram URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
-2. **Download audio** — Paste a YouTube, X, or Instagram URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
+2. **Download all media (X/Twitter)** — Paste an X/Twitter URL, tap *Download All Media*. The app fetches all photos, videos, and GIFs from the post and opens the share sheet with everything in one go.
+3. **Download audio** — Paste a YouTube, X, or Instagram URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
 3. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose. (Note: transcript summarization is available for YouTube only.)
 
 ---

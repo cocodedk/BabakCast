@@ -1,0 +1,483 @@
+package com.cocode.babakcast.data.remote
+
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * Tests for parsing the X/Twitter syndication API response into [TweetMedia] items.
+ * These tests verify the JSON parsing logic without making network calls.
+ */
+class XSyndicationClientParseTest {
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    /**
+     * Mirrors the parsing logic in [XSyndicationClient.fetchTweetMedia].
+     */
+    private fun parseMediaDetails(jsonString: String): TweetMediaResult {
+        val root = json.parseToJsonElement(jsonString).jsonObject
+        val text = root["text"]?.jsonPrimitive?.content ?: ""
+        val mediaDetails = root["mediaDetails"]?.jsonArray ?: return TweetMediaResult(text, emptyList())
+
+        val mediaList = mediaDetails.mapNotNull { element ->
+            val obj = element.jsonObject
+            val type = obj["type"]?.jsonPrimitive?.content ?: return@mapNotNull null
+            val mediaUrl = obj["media_url_https"]?.jsonPrimitive?.content
+
+            when (type) {
+                "photo" -> {
+                    if (mediaUrl == null) return@mapNotNull null
+                    TweetMedia.Photo(url = "${mediaUrl}?name=large", originalUrl = mediaUrl)
+                }
+                "video" -> {
+                    val bestVideoUrl = extractBestVideoUrl(obj)
+                    TweetMedia.Video(url = bestVideoUrl, thumbnailUrl = mediaUrl)
+                }
+                "animated_gif" -> {
+                    val bestVideoUrl = extractBestVideoUrl(obj)
+                    TweetMedia.AnimatedGif(url = bestVideoUrl, thumbnailUrl = mediaUrl)
+                }
+                else -> null
+            }
+        }
+
+        return TweetMediaResult(text, mediaList)
+    }
+
+    private fun extractBestVideoUrl(mediaObj: kotlinx.serialization.json.JsonObject): String? {
+        val videoInfo = mediaObj["video_info"]?.jsonObject ?: return null
+        val variants = videoInfo["variants"]?.jsonArray ?: return null
+
+        return variants
+            .mapNotNull { it.jsonObject }
+            .filter { it["content_type"]?.jsonPrimitive?.content == "video/mp4" }
+            .maxByOrNull { it["bitrate"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L }
+            ?.get("url")?.jsonPrimitive?.content
+    }
+
+    @Test
+    fun parseSinglePhoto() {
+        val response = """
+        {
+            "text": "Check out this photo!",
+            "mediaDetails": [
+                {
+                    "type": "photo",
+                    "media_url_https": "https://pbs.twimg.com/media/ABC123.jpg"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals("Check out this photo!", result.text)
+        assertEquals(1, result.media.size)
+        val photo = result.media[0] as TweetMedia.Photo
+        assertEquals("https://pbs.twimg.com/media/ABC123.jpg?name=large", photo.url)
+        assertEquals("https://pbs.twimg.com/media/ABC123.jpg", photo.originalUrl)
+    }
+
+    @Test
+    fun parseMultiplePhotos() {
+        val response = """
+        {
+            "text": "Photo thread",
+            "mediaDetails": [
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG1.jpg"},
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG2.png"},
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG3.jpg"},
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG4.webp"}
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(4, result.media.size)
+        assertTrue(result.media.all { it is TweetMedia.Photo })
+    }
+
+    @Test
+    fun parseSingleVideo() {
+        val response = """
+        {
+            "text": "Watch this video",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg",
+                    "video_info": {
+                        "aspect_ratio": [16, 9],
+                        "duration_millis": 30000,
+                        "variants": [
+                            {"bitrate": "256000", "content_type": "video/mp4", "url": "https://video.twimg.com/ext_tw_video/123/pu/vid/480x270/low.mp4"},
+                            {"bitrate": "2176000", "content_type": "video/mp4", "url": "https://video.twimg.com/ext_tw_video/123/pu/vid/1280x720/high.mp4"},
+                            {"content_type": "application/x-mpegURL", "url": "https://video.twimg.com/ext_tw_video/123/pu/pl/master.m3u8"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(1, result.media.size)
+        val video = result.media[0] as TweetMedia.Video
+        assertEquals("https://video.twimg.com/ext_tw_video/123/pu/vid/1280x720/high.mp4", video.url)
+        assertEquals("https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg", video.thumbnailUrl)
+    }
+
+    @Test
+    fun parseAnimatedGif() {
+        val response = """
+        {
+            "text": "Funny GIF",
+            "mediaDetails": [
+                {
+                    "type": "animated_gif",
+                    "media_url_https": "https://pbs.twimg.com/tweet_video_thumb/GIF123.jpg",
+                    "video_info": {
+                        "aspect_ratio": [1, 1],
+                        "variants": [
+                            {"bitrate": "0", "content_type": "video/mp4", "url": "https://video.twimg.com/tweet_video/GIF123.mp4"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(1, result.media.size)
+        val gif = result.media[0] as TweetMedia.AnimatedGif
+        assertEquals("https://video.twimg.com/tweet_video/GIF123.mp4", gif.url)
+    }
+
+    @Test
+    fun parseNoMediaDetails() {
+        val response = """{"text": "Just a text tweet"}"""
+
+        val result = parseMediaDetails(response)
+
+        assertEquals("Just a text tweet", result.text)
+        assertTrue(result.media.isEmpty())
+    }
+
+    @Test
+    fun parseEmptyMediaDetails() {
+        val response = """{"text": "Nothing here", "mediaDetails": []}"""
+
+        val result = parseMediaDetails(response)
+
+        assertTrue(result.media.isEmpty())
+    }
+
+    @Test
+    fun parseUnknownMediaTypeIsSkipped() {
+        val response = """
+        {
+            "text": "Unknown media",
+            "mediaDetails": [
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG.jpg"},
+                {"type": "poll", "media_url_https": "https://example.com/poll"}
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(1, result.media.size)
+        assertTrue(result.media[0] is TweetMedia.Photo)
+    }
+
+    @Test
+    fun parsePhotoWithNullMediaUrl_isSkipped() {
+        val response = """
+        {
+            "text": "Null URL photo",
+            "mediaDetails": [
+                {"type": "photo"},
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/VALID.jpg"}
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(1, result.media.size)
+        val photo = result.media[0] as TweetMedia.Photo
+        assertEquals("https://pbs.twimg.com/media/VALID.jpg", photo.originalUrl)
+    }
+
+    @Test
+    fun parseVideoWithNoVideoInfo_urlIsNull() {
+        val response = """
+        {
+            "text": "Video without video_info",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/thumb.jpg"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(1, result.media.size)
+        val video = result.media[0] as TweetMedia.Video
+        assertNull(video.url)
+        assertEquals("https://pbs.twimg.com/thumb.jpg", video.thumbnailUrl)
+    }
+
+    @Test
+    fun parseVideoWithOnlyHlsVariants_urlIsNull() {
+        val response = """
+        {
+            "text": "HLS only video",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/thumb.jpg",
+                    "video_info": {
+                        "variants": [
+                            {"content_type": "application/x-mpegURL", "url": "https://video.twimg.com/master.m3u8"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        val video = result.media[0] as TweetMedia.Video
+        assertNull(video.url)
+    }
+
+    @Test
+    fun parseMixedPhotoAndVideo() {
+        val response = """
+        {
+            "text": "Photo and video together",
+            "mediaDetails": [
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG.jpg"},
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/thumb.jpg",
+                    "video_info": {
+                        "variants": [
+                            {"bitrate": "2176000", "content_type": "video/mp4", "url": "https://video.twimg.com/vid.mp4"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(2, result.media.size)
+        assertTrue(result.media[0] is TweetMedia.Photo)
+        assertTrue(result.media[1] is TweetMedia.Video)
+    }
+
+    @Test
+    fun parseMediaEntryMissingType_isSkipped() {
+        val response = """
+        {
+            "text": "Missing type",
+            "mediaDetails": [
+                {"media_url_https": "https://pbs.twimg.com/media/IMG.jpg"},
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/VALID.jpg"}
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(1, result.media.size)
+        assertTrue(result.media[0] is TweetMedia.Photo)
+    }
+
+    @Test
+    fun parseRootMissingTextField_defaultsToEmpty() {
+        val response = """
+        {
+            "mediaDetails": [
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG.jpg"}
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals("", result.text)
+        assertEquals(1, result.media.size)
+    }
+
+    @Test
+    fun parseVideoWithNullMediaUrl_thumbnailIsNull() {
+        val response = """
+        {
+            "text": "Video no thumb",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "video_info": {
+                        "variants": [
+                            {"bitrate": "2176000", "content_type": "video/mp4", "url": "https://video.twimg.com/vid.mp4"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        val video = result.media[0] as TweetMedia.Video
+        assertEquals("https://video.twimg.com/vid.mp4", video.url)
+        assertNull(video.thumbnailUrl)
+    }
+
+    @Test
+    fun parseAnimatedGifWithNullMediaUrl_thumbnailIsNull() {
+        val response = """
+        {
+            "text": "GIF no thumb",
+            "mediaDetails": [
+                {
+                    "type": "animated_gif",
+                    "video_info": {
+                        "variants": [
+                            {"bitrate": "0", "content_type": "video/mp4", "url": "https://video.twimg.com/gif.mp4"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        val gif = result.media[0] as TweetMedia.AnimatedGif
+        assertEquals("https://video.twimg.com/gif.mp4", gif.url)
+        assertNull(gif.thumbnailUrl)
+    }
+
+    @Test
+    fun parseVideoWithEmptyVariants_urlIsNull() {
+        val response = """
+        {
+            "text": "Empty variants",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/thumb.jpg",
+                    "video_info": {
+                        "variants": []
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        val video = result.media[0] as TweetMedia.Video
+        assertNull(video.url)
+    }
+
+    @Test
+    fun parseVideoWithMissingVariantsField_urlIsNull() {
+        val response = """
+        {
+            "text": "No variants",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/thumb.jpg",
+                    "video_info": {}
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        val video = result.media[0] as TweetMedia.Video
+        assertNull(video.url)
+    }
+
+    @Test
+    fun parseMixedPhotoVideoGif_allThreeTypes() {
+        val response = """
+        {
+            "text": "All three types",
+            "mediaDetails": [
+                {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/IMG.jpg"},
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/vthumb.jpg",
+                    "video_info": {
+                        "variants": [{"bitrate": "1000000", "content_type": "video/mp4", "url": "https://video.twimg.com/vid.mp4"}]
+                    }
+                },
+                {
+                    "type": "animated_gif",
+                    "media_url_https": "https://pbs.twimg.com/gthumb.jpg",
+                    "video_info": {
+                        "variants": [{"bitrate": "0", "content_type": "video/mp4", "url": "https://video.twimg.com/gif.mp4"}]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+
+        assertEquals(3, result.media.size)
+        assertTrue(result.media[0] is TweetMedia.Photo)
+        assertTrue(result.media[1] is TweetMedia.Video)
+        assertTrue(result.media[2] is TweetMedia.AnimatedGif)
+    }
+
+    @Test
+    fun videoSelectsHighestBitrate() {
+        val response = """
+        {
+            "text": "Video",
+            "mediaDetails": [
+                {
+                    "type": "video",
+                    "media_url_https": "https://pbs.twimg.com/thumb.jpg",
+                    "video_info": {
+                        "variants": [
+                            {"bitrate": "832000", "content_type": "video/mp4", "url": "https://video.twimg.com/medium.mp4"},
+                            {"bitrate": "2176000", "content_type": "video/mp4", "url": "https://video.twimg.com/high.mp4"},
+                            {"bitrate": "256000", "content_type": "video/mp4", "url": "https://video.twimg.com/low.mp4"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = parseMediaDetails(response)
+        val video = result.media[0] as TweetMedia.Video
+
+        assertEquals("https://video.twimg.com/high.mp4", video.url)
+    }
+}

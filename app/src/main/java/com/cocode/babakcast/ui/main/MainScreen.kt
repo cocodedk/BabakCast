@@ -42,6 +42,7 @@ import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ShareHelper
+import com.cocode.babakcast.util.XUrlExtractor
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -308,6 +309,43 @@ fun MainScreen(
                             fontSize = 14.sp
                         )
                     )
+                }
+
+                // Download All Media Button - X/Twitter only
+                val isXUrl = XUrlExtractor.isXUrl(uiState.url)
+                AnimatedVisibility(
+                    visible = isXUrl,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    OutlinedButton(
+                        onClick = viewModel::downloadAllXMedia,
+                        enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = BabakCastColors.PrimaryAccent,
+                            disabledContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.3f)
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()).copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(
+                                if (uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank())
+                                    BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
+                                else
+                                    BabakCastColors.PrimaryAccent.copy(alpha = 0.2f)
+                            )
+                        )
+                    ) {
+                        Text(
+                            "Download All Media",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
                 }
 
                 // Download Audio Button - Secondary action
