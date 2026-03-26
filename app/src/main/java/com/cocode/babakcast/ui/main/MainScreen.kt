@@ -413,13 +413,21 @@ fun MainScreen(
                                     disabledContentColor = BabakCastColors.SecondaryAccent.copy(alpha = 0.3f)
                                 )
                             ) {
-                                Text(
-                                    "Share Text →",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 13.sp
+                                if (uiState.isFetchingTweetText) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        strokeWidth = 2.dp,
+                                        color = BabakCastColors.SecondaryAccent
                                     )
-                                )
+                                } else {
+                                    Text(
+                                        "Share Text →",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 13.sp
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
@@ -847,7 +855,7 @@ internal fun SplitChoiceDialog(
 private suspend fun androidx.compose.ui.platform.Clipboard.setPlainText(text: String) {
     setClipEntry(
         ClipEntry(
-            ClipData.newPlainText("summary", text)
+            ClipData.newPlainText("text", text)
         )
     )
 }
