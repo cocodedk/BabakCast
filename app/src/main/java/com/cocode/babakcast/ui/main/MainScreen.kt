@@ -120,6 +120,24 @@ fun MainScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.tweetTextEvents.collect { event ->
+            when (event) {
+                is TweetTextEvent.Copied -> {
+                    clipboardManager.setPlainText(event.text)
+                    snackbarHostState.showSnackbar(
+                        message = "Tweet text copied",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                is TweetTextEvent.Share -> {
+                    val intent = shareHelper.buildShareTextChooser(event.text, "Share Tweet Text")
+                    textShareLauncher.launch(intent)
+                }
+            }
+        }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -318,34 +336,92 @@ fun MainScreen(
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
-                    val isAllMediaEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
-                    OutlinedButton(
-                        onClick = viewModel::downloadAllXMedia,
-                        enabled = isAllMediaEnabled,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = BabakCastColors.PrimaryAccent,
-                            disabledContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.3f)
-                        ),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = isAllMediaEnabled).copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(
-                                if (isAllMediaEnabled)
-                                    BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
-                                else
-                                    BabakCastColors.PrimaryAccent.copy(alpha = 0.2f)
+                    val isXActionEnabled = !uiState.isLoading && uiState.url.isNotBlank()
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val isAllMediaEnabled = uiState.downloadEngineReady && isXActionEnabled
+                        OutlinedButton(
+                            onClick = viewModel::downloadAllXMedia,
+                            enabled = isAllMediaEnabled,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = BabakCastColors.PrimaryAccent,
+                                disabledContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.3f)
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = isAllMediaEnabled).copy(
+                                brush = androidx.compose.ui.graphics.SolidColor(
+                                    if (isAllMediaEnabled)
+                                        BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
+                                    else
+                                        BabakCastColors.PrimaryAccent.copy(alpha = 0.2f)
+                                )
                             )
-                        )
-                    ) {
-                        Text(
-                            "Download All Media",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
+                        ) {
+                            Text(
+                                "Download All Media",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
                             )
-                        )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = viewModel::fetchAndCopyTweetText,
+                                enabled = isXActionEnabled && !uiState.isFetchingTweetText,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = MaterialTheme.shapes.medium,
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                if (uiState.isFetchingTweetText) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        strokeWidth = 2.dp,
+                                        color = BabakCastColors.PrimaryAccent
+                                    )
+                                } else {
+                                    Text(
+                                        "Copy Text",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 13.sp
+                                        )
+                                    )
+                                }
+                            }
+
+                            OutlinedButton(
+                                onClick = viewModel::fetchAndShareTweetText,
+                                enabled = isXActionEnabled && !uiState.isFetchingTweetText,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = MaterialTheme.shapes.medium,
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = BabakCastColors.SecondaryAccent,
+                                    disabledContentColor = BabakCastColors.SecondaryAccent.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Text(
+                                    "Share Text →",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 13.sp
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
 
