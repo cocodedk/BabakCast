@@ -205,7 +205,7 @@ fun MainScreen(
                     onValueChange = viewModel::updateUrl,
                     placeholder = {
                         Text(
-                            "Paste YouTube, X, or Instagram video link",
+                            "Paste YouTube, X, Instagram, or LinkedIn video link",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )

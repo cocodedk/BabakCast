@@ -19,6 +19,7 @@ import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.InstagramUrlExtractor
+import com.cocode.babakcast.util.LinkedInUrlExtractor
 import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -68,7 +69,9 @@ class MainViewModel @Inject constructor(
     fun updateUrl(url: String) {
         _uiState.value = _uiState.value.copy(
             url = url,
-            supportsSummarize = !XUrlExtractor.isXUrl(url) && !InstagramUrlExtractor.isInstagramUrl(url)
+            supportsSummarize = !XUrlExtractor.isXUrl(url) &&
+                !InstagramUrlExtractor.isInstagramUrl(url) &&
+                !LinkedInUrlExtractor.isLinkedInUrl(url)
         )
     }
 
@@ -343,6 +346,12 @@ class MainViewModel @Inject constructor(
         if (InstagramUrlExtractor.isInstagramUrl(url)) {
             _uiState.value = _uiState.value.copy(
                 error = AppError.TranscriptNotAvailable("Transcript summarization is not available for Instagram posts")
+            )
+            return
+        }
+        if (LinkedInUrlExtractor.isLinkedInUrl(url)) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for LinkedIn posts")
             )
             return
         }

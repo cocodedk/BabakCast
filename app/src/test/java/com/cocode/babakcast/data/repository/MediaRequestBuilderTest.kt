@@ -170,4 +170,59 @@ class MediaRequestBuilderTest {
         )
         assertTrue(request.hasOption("--no-warnings"))
     }
+
+    // --- LinkedIn info request ---
+
+    @Test
+    fun infoRequestLinkedInHasBasicOptions() {
+        val request = MediaRepository.buildInfoRequest(
+            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN
+        )
+        assertTrue(request.hasOption("--skip-download"))
+        assertTrue(request.hasOption("--dump-json"))
+        assertTrue(request.hasOption("--no-warnings"))
+    }
+
+    @Test
+    fun infoRequestLinkedInNoExtractorArgs() {
+        val request = MediaRepository.buildInfoRequest(
+            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN
+        )
+        assertFalse(request.hasOption("--extractor-args"))
+    }
+
+    // --- LinkedIn download request ---
+
+    @Test
+    fun downloadRequestLinkedInHasMp4FormatSelector() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
+        )
+        assertTrue(request.hasOption("-f"))
+        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
+    }
+
+    @Test
+    fun downloadRequestLinkedInNoExtractorArgs() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
+        )
+        assertFalse(request.hasOption("--extractor-args"))
+    }
+
+    @Test
+    fun downloadRequestLinkedInSetsOutputPath() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
+        )
+        assertEquals("/tmp/out.mp4", request.getOption("-o"))
+    }
+
+    @Test
+    fun downloadRequestLinkedInSuppressesWarnings() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
+        )
+        assertTrue(request.hasOption("--no-warnings"))
+    }
 }

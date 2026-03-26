@@ -1,6 +1,6 @@
 package com.cocode.babakcast.util
 
-enum class Platform { YOUTUBE, X, INSTAGRAM }
+enum class Platform { YOUTUBE, X, INSTAGRAM, LINKEDIN }
 
 data class ExtractedUrl(val url: String, val platform: Platform)
 
@@ -15,6 +15,9 @@ object MediaUrlExtractor {
 
         val instagramUrl = InstagramUrlExtractor.extractInstagramUrlFromText(text)
         if (instagramUrl != null) return ExtractedUrl(instagramUrl, Platform.INSTAGRAM)
+
+        val linkedInUrl = LinkedInUrlExtractor.extractLinkedInUrlFromText(text)
+        if (linkedInUrl != null) return ExtractedUrl(linkedInUrl, Platform.LINKEDIN)
 
         return null
     }

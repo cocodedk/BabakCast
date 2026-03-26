@@ -10,6 +10,8 @@ import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.InstagramUrlExtractor
 import com.cocode.babakcast.util.InstagramUrlParser
+import com.cocode.babakcast.util.LinkedInUrlExtractor
+import com.cocode.babakcast.util.LinkedInUrlParser
 import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.XUrlParser
 import com.cocode.babakcast.util.YouTubeMetadataParser
@@ -26,7 +28,7 @@ import kotlin.math.roundToInt
 
 /**
  * Repository for media operations: download and transcript extraction.
- * Supports YouTube, X/Twitter, and Instagram platforms.
+ * Supports YouTube, X/Twitter, Instagram, and LinkedIn platforms.
  */
 @Singleton
 class MediaRepository @Inject constructor(
@@ -62,6 +64,10 @@ class MediaRepository @Inject constructor(
             val shortcode = InstagramUrlParser.extractShortcode(url) ?: return null
             return MediaIdentifier(Platform.INSTAGRAM, shortcode)
         }
+        if (LinkedInUrlExtractor.isLinkedInUrl(url)) {
+            val postId = LinkedInUrlParser.extractPostId(url) ?: return null
+            return MediaIdentifier(Platform.LINKEDIN, postId)
+        }
         return null
     }
 
@@ -78,9 +84,9 @@ class MediaRepository @Inject constructor(
             val output = YoutubeDL.getInstance().execute(request, null)
             val jsonOutput = output.out
 
-            // For X/Twitter, prefer the full "description" over the truncated "title".
+            // For X/Twitter and LinkedIn, prefer the full "description" over the truncated "title".
             // extractChaptersFromJson is YouTube-only; other platforms don't provide chapter metadata.
-            val title = if (platform == Platform.X) {
+            val title = if (platform == Platform.X || platform == Platform.LINKEDIN) {
                 YouTubeMetadataParser.extractDescriptionFromJson(jsonOutput)
                     ?: YouTubeMetadataParser.extractTitleFromJson(jsonOutput)
                     ?: "Video"
@@ -276,7 +282,7 @@ class MediaRepository @Inject constructor(
      */
     suspend fun extractTranscript(url: String, language: String = "en"): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // X/Twitter and Instagram posts don't have transcripts
+            // X/Twitter, Instagram, and LinkedIn posts don't have transcripts
             if (XUrlExtractor.isXUrl(url)) {
                 return@withContext Result.failure(
                     UnsupportedOperationException("Transcript not available for X/Twitter posts")
@@ -285,6 +291,11 @@ class MediaRepository @Inject constructor(
             if (InstagramUrlExtractor.isInstagramUrl(url)) {
                 return@withContext Result.failure(
                     UnsupportedOperationException("Transcript not available for Instagram posts")
+                )
+            }
+            if (LinkedInUrlExtractor.isLinkedInUrl(url)) {
+                return@withContext Result.failure(
+                    UnsupportedOperationException("Transcript not available for LinkedIn posts")
                 )
             }
             Log.d(tag, "Starting transcript extraction lang=$language url=$url")
