@@ -194,4 +194,60 @@ class XDirectDownloaderTest {
         )
         org.junit.Assert.assertEquals("jpg", ext)
     }
+
+    // --- end-to-end: parse JSON → categorize → download all → allFiles has 2 entries ---
+
+    @Test
+    fun twoPhotoTweet_parseCategorizeThenDownload_allFilesHasTwoImages() {
+        // This test mirrors the full happy path of MediaRepository.downloadAllXMedia
+        // for a tweet with exactly 2 photos (e.g. tweet 2037106757810393340).
+        val syndicationJson = """
+        {
+            "text": "Bahonar street, Isfahan",
+            "mediaDetails": [
+                {
+                    "type": "photo",
+                    "media_url_https": "${server.url("/media/HEVBvNbXAAAXz99.jpg")}"
+                },
+                {
+                    "type": "photo",
+                    "media_url_https": "${server.url("/media/HEVBvyNboAAc3Hk.jpg")}"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        // Serve fake image bytes for each download
+        val img1 = byteArrayOf(1, 2, 3)
+        val img2 = byteArrayOf(4, 5, 6)
+        server.enqueue(MockResponse().setBody(Buffer().write(img1)).setResponseCode(200))
+        server.enqueue(MockResponse().setBody(Buffer().write(img2)).setResponseCode(200))
+
+        // Step 1: parse syndication JSON
+        val mediaResult = com.cocode.babakcast.data.remote.XSyndicationClient.parseMediaDetails(syndicationJson)
+        org.junit.Assert.assertEquals(2, mediaResult.media.size)
+
+        // Step 2: categorize — must be 2 photos, 0 videos
+        val (photos, videos) = MediaRepository.categorizeTweetMedia(mediaResult.media)
+        org.junit.Assert.assertEquals(2, photos.size)
+        assertTrue(videos.isEmpty())
+
+        // Step 3: download each photo
+        val imageFiles = mutableListOf<java.io.File>()
+        photos.forEachIndexed { index, photo ->
+            val ext = MediaRepository.guessImageExtension(photo.originalUrl)
+            val output = File(tempDir, "tweet_test_img${index + 1}.$ext")
+            downloader.downloadPhoto(photo, output).onSuccess { imageFiles.add(it) }
+        }
+
+        // Step 4: verify both files were downloaded
+        org.junit.Assert.assertEquals(
+            "both photos must be downloaded: allFiles size should be 2",
+            2, imageFiles.size
+        )
+        assertTrue("first image file must exist", imageFiles[0].exists())
+        assertTrue("second image file must exist", imageFiles[1].exists())
+        assertArrayEquals(img1, imageFiles[0].readBytes())
+        assertArrayEquals(img2, imageFiles[1].readBytes())
+    }
 }
