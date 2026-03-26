@@ -11,19 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,22 +23,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.ui.player.PlaybackItem
 import com.cocode.babakcast.ui.player.VideoPlayerDialog
+import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.DownloadFileParser
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 
 @Composable
 fun DownloadsTab(
@@ -156,83 +144,29 @@ fun DownloadsTab(
                         )
                     }
 
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                    DownloadItemCard(
+                        item = item,
                         shape = shape,
-                        color = MaterialTheme.colorScheme.surface
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(
-                                    text = item.displayName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                val partsLabel = if (item.partCount > 1) {
-                                    " • ${item.partCount} parts"
-                                } else {
-                                    ""
-                                }
-                                Text(
-                                    text = "${formatFileSize(item.sizeBytes)} • ${formatDate(item.lastModified)} • ${item.mediaType.label}$partsLabel",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(onClick = {
-                                if (item.files.size <= 1) {
-                                    val file = item.files.firstOrNull()
-                                    if (file != null) {
-                                        openPlayback(
-                                            file = file,
-                                            downloads = uiState.downloads
-                                        ) { items, startIndex ->
-                                            activePlaybackItems = items
-                                            activePlaybackStartIndex = startIndex
-                                        }
+                        onPlay = {
+                            if (item.files.size <= 1) {
+                                val file = item.files.firstOrNull()
+                                if (file != null) {
+                                    openPlayback(
+                                        file = file,
+                                        downloads = uiState.downloads
+                                    ) { items, startIndex ->
+                                        activePlaybackItems = items
+                                        activePlaybackStartIndex = startIndex
                                     }
-                                } else {
-                                    pendingPartSelection = item
                                 }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.PlayArrow,
-                                    contentDescription = "Play download",
-                                    tint = BabakCastColors.PrimaryAccent
-                                )
+                            } else {
+                                pendingPartSelection = item
                             }
-                            IconButton(onClick = { viewModel.shareDownload(item) }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Share,
-                                    contentDescription = "Share download",
-                                    tint = BabakCastColors.SecondaryAccent
-                                )
-                            }
-                            IconButton(onClick = { viewModel.shareTitle(item) }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Create,
-                                    contentDescription = "Share title",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(onClick = { pendingDeleteSelection = item }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Delete,
-                                    contentDescription = "Delete download",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
-                    }
+                        },
+                        onShareDownload = { viewModel.shareDownload(item) },
+                        onShareTitle = { viewModel.shareTitle(item) },
+                        onDelete = { pendingDeleteSelection = item }
+                    )
                 }
             }
         }
@@ -338,28 +272,6 @@ fun DownloadsTab(
             }
         )
     }
-}
-
-private fun formatFileSize(bytes: Long): String {
-    if (bytes <= 0) return "0 B"
-    val units = arrayOf("B", "KB", "MB", "GB")
-    var size = bytes.toDouble()
-    var unitIndex = 0
-    while (size >= 1024 && unitIndex < units.lastIndex) {
-        size /= 1024
-        unitIndex++
-    }
-    val formatted = if (size >= 100 || unitIndex == 0) {
-        size.toInt().toString()
-    } else {
-        String.format(Locale.getDefault(), "%.1f", size)
-    }
-    return "$formatted ${units[unitIndex]}"
-}
-
-private fun formatDate(timestamp: Long): String {
-    val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-    return formatter.format(Date(timestamp))
 }
 
 private fun partLabel(file: File, index: Int): String {
