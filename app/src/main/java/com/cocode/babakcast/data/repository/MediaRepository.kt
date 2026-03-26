@@ -171,6 +171,12 @@ class MediaRepository @Inject constructor(
         }
     }
 
+    suspend fun fetchTweetText(url: String): Result<String> = withContext(Dispatchers.IO) {
+        val tweetId = guardTweetTextFetch(url)
+            ?: return@withContext Result.failure(IllegalArgumentException("No tweet ID found in URL"))
+        xSyndicationClient.fetchTweetMedia(tweetId).map { it.text }
+    }
+
     /**
      * Download all media (photos + videos + GIFs) from an X/Twitter tweet.
      * Uses the syndication API to discover media, then downloads images directly

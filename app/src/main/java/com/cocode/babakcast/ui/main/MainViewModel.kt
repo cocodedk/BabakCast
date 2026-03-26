@@ -53,6 +53,10 @@ class MainViewModel @Inject constructor(
 
     private val _shareRequests = MutableSharedFlow<ShareRequest>(extraBufferCapacity = 1)
     val shareRequests: SharedFlow<ShareRequest> = _shareRequests.asSharedFlow()
+
+    private val _tweetTextEvents = MutableSharedFlow<TweetTextEvent>(extraBufferCapacity = 1)
+    val tweetTextEvents: SharedFlow<TweetTextEvent> = _tweetTextEvents.asSharedFlow()
+
     private var pendingSplitRequest: PendingSplitRequest? = null
 
     init {
@@ -69,6 +73,7 @@ class MainViewModel @Inject constructor(
     fun updateUrl(url: String) {
         _uiState.value = _uiState.value.copy(
             url = url,
+            tweetText = null,
             supportsSummarize = !XUrlExtractor.isXUrl(url) &&
                 !InstagramUrlExtractor.isInstagramUrl(url) &&
                 !LinkedInUrlExtractor.isLinkedInUrl(url)
@@ -186,6 +191,37 @@ class MainViewModel @Inject constructor(
             )
         }
     }
+
+    private fun fetchTweetTextAndEmit(event: (String) -> TweetTextEvent, blankMessage: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isFetchingTweetText = true, error = null)
+            mediaRepository.fetchTweetText(_uiState.value.url).fold(
+                onSuccess = { text ->
+                    if (text.isBlank()) {
+                        _uiState.value = _uiState.value.copy(
+                            isFetchingTweetText = false,
+                            error = AppError.InvalidUrl(blankMessage)
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(isFetchingTweetText = false, tweetText = text)
+                        _tweetTextEvents.emit(event(text))
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isFetchingTweetText = false,
+                        error = ErrorHandler.handleException(error)
+                    )
+                }
+            )
+        }
+    }
+
+    fun fetchAndCopyTweetText() =
+        fetchTweetTextAndEmit(TweetTextEvent::Copied, "This tweet has no text to copy")
+
+    fun fetchAndShareTweetText() =
+        fetchTweetTextAndEmit(TweetTextEvent::Share, "This tweet has no text to share")
 
     fun downloadAudio() {
         val url = _uiState.value.url
@@ -698,4 +734,9 @@ private sealed class PendingSplitRequest {
         val videoFile: File,
         val audioFile: File
     ) : PendingSplitRequest()
+}
+
+sealed class TweetTextEvent {
+    data class Copied(val text: String) : TweetTextEvent()
+    data class Share(val text: String) : TweetTextEvent()
 }
