@@ -1,4 +1,4 @@
-package com.cocode.babakcast.util
+package com.cocode.babakcast.util.urlparsing
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

@@ -1,4 +1,4 @@
-package com.cocode.babakcast.util
+package com.cocode.babakcast.util.urlparsing
 
 object LinkedInUrlParser {
     // Matches the numeric suffix (10+ digits) of a /posts/ slug
