@@ -14,7 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cocode.babakcast.ui.main.ShareIntentViewModel
 import com.cocode.babakcast.ui.navigation.NavGraph
 import com.cocode.babakcast.ui.theme.BabakCastTheme
-import com.cocode.babakcast.util.MediaUrlExtractor
+import com.cocode.babakcast.util.urlparsing.MediaUrlExtractor
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

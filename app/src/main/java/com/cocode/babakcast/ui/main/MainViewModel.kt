@@ -18,10 +18,10 @@ import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
-import com.cocode.babakcast.util.InstagramUrlExtractor
-import com.cocode.babakcast.util.LinkedInUrlExtractor
-import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.ShareHelper
+import com.cocode.babakcast.util.urlparsing.InstagramUrlExtractor
+import com.cocode.babakcast.util.urlparsing.LinkedInUrlExtractor
+import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

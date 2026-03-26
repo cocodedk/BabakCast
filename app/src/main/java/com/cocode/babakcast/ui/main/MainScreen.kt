@@ -42,7 +42,7 @@ import com.cocode.babakcast.ui.downloads.DownloadsTab
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ShareHelper
-import com.cocode.babakcast.util.XUrlExtractor
+import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
