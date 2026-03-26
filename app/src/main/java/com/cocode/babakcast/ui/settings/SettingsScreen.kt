@@ -2,37 +2,27 @@ package com.cocode.babakcast.ui.settings
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.ui.theme.BabakCastColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,7 +78,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 uiState.providers.forEachIndexed { index, providerState ->
-                    ProviderRow(
+                    ProviderCard(
                         providerState = providerState,
                         onClick = { viewModel.selectProvider(providerState.provider) },
                         isFirst = index == 0,
@@ -99,104 +89,16 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Defaults Section
-            SectionHeader(title = "Defaults")
-            
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "SUMMARY / TRANSLATION LANGUAGE",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 1.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    OutlinedTextField(
-                        value = uiState.defaultLanguage,
-                        onValueChange = viewModel::updateDefaultLanguage,
-                        placeholder = {
-                            Text(
-                                "e.g. en, es, fa, German",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BabakCastColors.PrimaryAccent,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            cursorColor = BabakCastColors.PrimaryAccent
-                        ),
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                        shape = MaterialTheme.shapes.medium
-                    )
-                }
-
-                SummaryLengthRow(
-                    adaptiveEnabled = uiState.adaptiveSummaryLength,
-                    length = uiState.defaultSummaryLength,
-                    onAdaptiveChange = viewModel::updateAdaptiveSummaryLength,
-                    onLengthChange = viewModel::updateDefaultSummaryLength
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Playback Section
-            SectionHeader(title = "Playback")
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "Auto-play next video",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Text(
-                                text = "Automatically play the next download after a video ends.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = uiState.autoPlayNext,
-                            onCheckedChange = viewModel::updateAutoPlayNext
-                        )
-                    }
-                }
-            }
+            GeneralSettingsSection(
+                defaultLanguage = uiState.defaultLanguage,
+                adaptiveSummaryLength = uiState.adaptiveSummaryLength,
+                defaultSummaryLength = uiState.defaultSummaryLength,
+                autoPlayNext = uiState.autoPlayNext,
+                onLanguageChange = viewModel::updateDefaultLanguage,
+                onAdaptiveLengthChange = viewModel::updateAdaptiveSummaryLength,
+                onSummaryLengthChange = viewModel::updateDefaultSummaryLength,
+                onAutoPlayChange = viewModel::updateAutoPlayNext
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -282,241 +184,6 @@ fun SettingsScreen(
     }
 }
 
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title.uppercase(),
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.sp
-        ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 8.dp, top = 4.dp)
-    )
-}
-
-@Composable
-private fun ProviderRow(
-    providerState: ProviderState,
-    onClick: () -> Unit,
-    isFirst: Boolean,
-    isLast: Boolean
-) {
-    val shape = when {
-        isFirst && isLast -> MaterialTheme.shapes.medium
-        isFirst -> MaterialTheme.shapes.medium.copy(
-            bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-        )
-        isLast -> MaterialTheme.shapes.medium.copy(
-            topStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            topEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-        )
-        else -> MaterialTheme.shapes.medium.copy(
-            topStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            topEnd = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-        )
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = shape,
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = providerState.provider.display_name,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 14.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = if (providerState.hasApiKey) {
-                        "${providerState.selectedModel} · ${providerState.maskedApiKey}"
-                    } else {
-                        "Not configured"
-                    },
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = if (providerState.hasApiKey) 
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    else 
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            
-            // Status indicator
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (providerState.hasApiKey) 
-                            BabakCastColors.Success
-                        else 
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsRow(
-    label: String,
-    value: String,
-    onClick: () -> Unit,
-    isFirst: Boolean,
-    isLast: Boolean
-) {
-    val shape = when {
-        isFirst && isLast -> MaterialTheme.shapes.medium
-        isFirst -> MaterialTheme.shapes.medium.copy(
-            bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-        )
-        isLast -> MaterialTheme.shapes.medium.copy(
-            topStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            topEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-        )
-        else -> MaterialTheme.shapes.medium.copy(
-            topStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            topEnd = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-        )
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = shape,
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun SummaryLengthRow(
-    adaptiveEnabled: Boolean,
-    length: SummaryLength,
-    onAdaptiveChange: (Boolean) -> Unit,
-    onLengthChange: (SummaryLength) -> Unit
-) {
-    var showDialog by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Adaptive length",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Automatically adjust summary length",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = adaptiveEnabled,
-                    onCheckedChange = onAdaptiveChange
-                )
-            }
-        }
-
-        SettingsRow(
-            label = "Summary length",
-            value = if (adaptiveEnabled) "Automatic" else length.name.lowercase().replaceFirstChar { it.uppercase() },
-            onClick = { if (!adaptiveEnabled) showDialog = true },
-            isFirst = true,
-            isLast = true
-        )
-    }
-
-    if (showDialog && !adaptiveEnabled) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Summary length") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SummaryLength.values().forEach { option ->
-                        TextButton(
-                            onClick = {
-                                onLengthChange(option)
-                                showDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(option.name.lowercase().replaceFirstChar { it.uppercase() })
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Close")
-                }
-            }
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProviderConfigDialog(
@@ -558,7 +225,6 @@ private fun ProviderConfigDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Header
                 Text(
                     text = provider.display_name,
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -568,102 +234,17 @@ private fun ProviderConfigDialog(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Model Selection
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "Model",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    if (modelsLoading) {
-                        LinearProgressIndicator(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = BabakCastColors.PrimaryAccent
-                        )
-                    }
-                    if (modelsError != null) {
-                        Text(
-                            text = modelsError,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    ExposedDropdownMenuBox(
-                        expanded = showModelDropdown,
-                        onExpandedChange = { onToggleModelDropdown() }
-                    ) {
-                        OutlinedTextField(
-                            value = selectedModel,
-                            onValueChange = onModelChange,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                            readOnly = false,
-                            singleLine = true,
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.KeyboardArrowDown,
-                                    contentDescription = "Select model",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = BabakCastColors.PrimaryAccent,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                                cursorColor = BabakCastColors.PrimaryAccent
-                            ),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                            shape = MaterialTheme.shapes.small,
-                            placeholder = {
-                                Text(
-                                    "Select or enter model",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp)
-                                )
-                            }
-                        )
-                        
-                        if (modelsToShow.isNotEmpty()) {
-                            ExposedDropdownMenu(
-                                expanded = showModelDropdown,
-                                onDismissRequest = onDismissModelDropdown,
-                                containerColor = MaterialTheme.colorScheme.surface
-                            ) {
-                                modelsToShow.forEach { model ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                text = model,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontSize = 14.sp
-                                                ),
-                                                color = if (model == selectedModel)
-                                                    BabakCastColors.PrimaryAccent
-                                                else
-                                                    MaterialTheme.colorScheme.onSurface
-                                            )
-                                        },
-                                        onClick = { onModelChange(model) },
-                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    
-                    Text(
-                        text = "Select from list or type a custom model name",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
+                ModelSelectorSection(
+                    modelsToShow = modelsToShow,
+                    modelsLoading = modelsLoading,
+                    modelsError = modelsError,
+                    selectedModel = selectedModel,
+                    showModelDropdown = showModelDropdown,
+                    onModelChange = onModelChange,
+                    onToggleDropdown = onToggleModelDropdown,
+                    onDismissDropdown = onDismissModelDropdown
+                )
 
-                // API Key field
                 Column(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -698,7 +279,6 @@ private fun ProviderConfigDialog(
                     )
                 }
 
-                // API URL field (only for Azure OpenAI)
                 if (showUrlField) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -739,7 +319,6 @@ private fun ProviderConfigDialog(
                     }
                 }
 
-                // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -778,7 +357,6 @@ private fun ProviderConfigDialog(
                     }
                 }
 
-                // Delete option
                 if (hasExistingKey) {
                     TextButton(
                         onClick = onDelete,
