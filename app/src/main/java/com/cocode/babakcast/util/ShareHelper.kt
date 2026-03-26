@@ -204,6 +204,7 @@ class ShareHelper @Inject constructor(
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             Intent.createChooser(shareIntent, title)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
 
@@ -253,5 +254,6 @@ class ShareHelper @Inject constructor(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         return Intent.createChooser(shareIntent, title)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 }
