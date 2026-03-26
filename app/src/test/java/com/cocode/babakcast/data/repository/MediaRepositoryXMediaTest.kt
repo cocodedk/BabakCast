@@ -2,6 +2,7 @@ package com.cocode.babakcast.data.repository
 
 import com.cocode.babakcast.data.remote.TweetMedia
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -224,5 +225,59 @@ class MediaRepositoryXMediaTest {
 
         assertEquals(3, photos.size)
         assertEquals(1, videos.size)
+    }
+
+    // --- videoFileName ---
+
+    @Test
+    fun videoFileName_firstVideo() {
+        assertEquals("tweet_123_vid1.mp4", MediaRepository.videoFileName("123", 0))
+    }
+
+    @Test
+    fun videoFileName_secondVideo() {
+        assertEquals("tweet_123_vid2.mp4", MediaRepository.videoFileName("123", 1))
+    }
+
+    @Test
+    fun videoFileName_tenthVideo() {
+        assertEquals("tweet_abc_vid10.mp4", MediaRepository.videoFileName("abc", 9))
+    }
+
+    @Test
+    fun videoFileName_preservesTweetId() {
+        assertEquals("tweet_1234567890_vid1.mp4", MediaRepository.videoFileName("1234567890", 0))
+    }
+
+    // --- extractDirectVideoUrl ---
+
+    @Test
+    fun extractDirectVideoUrl_fromVideo_returnsUrl() {
+        val media = TweetMedia.Video(url = "https://video.twimg.com/vid.mp4", thumbnailUrl = null)
+        assertEquals("https://video.twimg.com/vid.mp4", MediaRepository.extractDirectVideoUrl(media))
+    }
+
+    @Test
+    fun extractDirectVideoUrl_fromGif_returnsUrl() {
+        val media = TweetMedia.AnimatedGif(url = "https://video.twimg.com/gif.mp4", thumbnailUrl = null)
+        assertEquals("https://video.twimg.com/gif.mp4", MediaRepository.extractDirectVideoUrl(media))
+    }
+
+    @Test
+    fun extractDirectVideoUrl_fromPhoto_returnsNull() {
+        val media = TweetMedia.Photo(url = "https://img.jpg?name=large", originalUrl = "https://img.jpg")
+        assertNull(MediaRepository.extractDirectVideoUrl(media))
+    }
+
+    @Test
+    fun extractDirectVideoUrl_fromVideo_nullUrl_returnsNull() {
+        val media = TweetMedia.Video(url = null, thumbnailUrl = null)
+        assertNull(MediaRepository.extractDirectVideoUrl(media))
+    }
+
+    @Test
+    fun extractDirectVideoUrl_fromGif_nullUrl_returnsNull() {
+        val media = TweetMedia.AnimatedGif(url = null, thumbnailUrl = null)
+        assertNull(MediaRepository.extractDirectVideoUrl(media))
     }
 }

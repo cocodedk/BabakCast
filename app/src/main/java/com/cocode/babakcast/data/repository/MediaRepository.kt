@@ -227,29 +227,44 @@ class MediaRepository @Inject constructor(
                 )
             }
 
-            // Download videos/GIFs via yt-dlp
+            // Download videos/GIFs: use the direct MP4 URL from the syndication API when available,
+            // fall back to yt-dlp for videos whose URL could not be extracted (e.g. HLS-only).
             val videoFiles = mutableListOf<File>()
-            if (videos.isNotEmpty()) {
-                val safeTitle = sanitizeFileBaseName(mediaResult.text)
-                val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$tweetId" else tweetId
-                val outputFile = File(videosDir, "${baseName}.mp4")
+            for ((index, videoMedia) in videos.withIndex()) {
+                val directUrl = extractDirectVideoUrl(videoMedia)
+                val outputFile = File(videosDir, videoFileName(tweetId, index))
 
-                lastLoggedProgressBucket = -1
-                val request = buildDownloadRequest(url, Platform.X, outputFile.absolutePath)
-
-                YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
-                    val videoProgress = normalizeProgress(progress, line)
-                    val baseProgress = completedItems.toFloat() / totalItems
-                    val videoWeight = videos.size.toFloat() / totalItems
-                    onProgress(baseProgress + videoProgress * videoWeight)
+                if (directUrl != null) {
+                    xSyndicationClient.downloadImage(directUrl, outputFile).fold(
+                        onSuccess = { file ->
+                            videoFiles.add(file)
+                            completedItems++
+                            onProgress(completedItems.toFloat() / totalItems)
+                        },
+                        onFailure = { e ->
+                            Log.w(tag, "Failed to download video ${index + 1}: ${e.message}")
+                            completedItems++
+                            onProgress(completedItems.toFloat() / totalItems)
+                        }
+                    )
+                } else {
+                    // No direct URL — fall back to yt-dlp with the original tweet URL
+                    lastLoggedProgressBucket = -1
+                    val request = buildDownloadRequest(url, Platform.X, outputFile.absolutePath)
+                    YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
+                        val videoProgress = normalizeProgress(progress, line)
+                        val baseProgress = completedItems.toFloat() / totalItems
+                        val videoWeight = 1.0f / totalItems
+                        onProgress(baseProgress + videoProgress * videoWeight)
+                    }
+                    if (outputFile.exists()) {
+                        videoFiles.add(outputFile)
+                    }
+                    completedItems++
+                    onProgress(completedItems.toFloat() / totalItems)
                 }
-
-                if (outputFile.exists()) {
-                    videoFiles.add(outputFile)
-                }
-                completedItems += videos.size
-                onProgress(1f)
             }
+            if (videos.isNotEmpty()) onProgress(1f)
 
             if (imageFiles.isEmpty() && videoFiles.isEmpty()) {
                 return@withContext Result.failure(Exception("Failed to download any media from tweet"))
@@ -480,6 +495,14 @@ class MediaRepository @Inject constructor(
             val photos = media.filterIsInstance<TweetMedia.Photo>()
             val videos = media.filter { it is TweetMedia.Video || it is TweetMedia.AnimatedGif }
             return photos to videos
+        }
+
+        fun videoFileName(tweetId: String, index: Int): String = "tweet_${tweetId}_vid${index + 1}.mp4"
+
+        fun extractDirectVideoUrl(media: TweetMedia): String? = when (media) {
+            is TweetMedia.Video -> media.url
+            is TweetMedia.AnimatedGif -> media.url
+            is TweetMedia.Photo -> null
         }
 
         fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {

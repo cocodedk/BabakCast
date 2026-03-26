@@ -6,6 +6,7 @@ import com.cocode.babakcast.data.remote.TweetMediaResult
 import com.cocode.babakcast.util.ShareHelper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -271,6 +272,71 @@ class XMediaDownloadFlowTest {
 
         assertFalse(result.hasVideos)
         assertTrue(result.allFiles.isEmpty())
+    }
+
+    // --- Multi-video file naming ---
+
+    @Test
+    fun multipleVideos_eachGetsOwnNumberedFile() {
+        val tweetId = "456"
+        val videos = listOf(
+            TweetMedia.Video(url = "https://video.twimg.com/vid1.mp4", thumbnailUrl = null),
+            TweetMedia.Video(url = "https://video.twimg.com/vid2.mp4", thumbnailUrl = null)
+        )
+
+        val expectedNames = videos.mapIndexed { index, _ -> MediaRepository.videoFileName(tweetId, index) }
+
+        assertEquals("tweet_456_vid1.mp4", expectedNames[0])
+        assertEquals("tweet_456_vid2.mp4", expectedNames[1])
+    }
+
+    @Test
+    fun gifMedia_getsVideoFileName() {
+        val tweetId = "789"
+        val gif = TweetMedia.AnimatedGif(url = "https://video.twimg.com/gif.mp4", thumbnailUrl = null)
+
+        assertEquals("tweet_789_vid1.mp4", MediaRepository.videoFileName(tweetId, 0))
+        assertEquals("https://video.twimg.com/gif.mp4", MediaRepository.extractDirectVideoUrl(gif))
+    }
+
+    @Test
+    fun videoWithDirectUrl_urlIsExtracted() {
+        val video = TweetMedia.Video(url = "https://video.twimg.com/direct.mp4", thumbnailUrl = null)
+        assertEquals("https://video.twimg.com/direct.mp4", MediaRepository.extractDirectVideoUrl(video))
+    }
+
+    @Test
+    fun videoWithNullUrl_extractReturnsNull_signalsFallback() {
+        val video = TweetMedia.Video(url = null, thumbnailUrl = null)
+        // Null signals the download loop to fall back to yt-dlp
+        assertNull(MediaRepository.extractDirectVideoUrl(video))
+    }
+
+    @Test
+    fun twoVideos_resultHasTwoVideoFiles() {
+        val result = TweetDownloadResult(
+            tweetId = "456",
+            text = "Two videos",
+            imageFiles = emptyList(),
+            videoFiles = listOf(File("tweet_456_vid1.mp4"), File("tweet_456_vid2.mp4"))
+        )
+
+        assertEquals(2, result.videoFiles.size)
+        assertEquals(2, result.allFiles.size)
+        assertEquals("video/*", ShareHelper.resolveMimeType(result.allFiles))
+    }
+
+    @Test
+    fun videoAndGif_bothGetSeparateFiles() {
+        val result = TweetDownloadResult(
+            tweetId = "999",
+            text = "Video and GIF",
+            imageFiles = emptyList(),
+            videoFiles = listOf(File("tweet_999_vid1.mp4"), File("tweet_999_vid2.mp4"))
+        )
+
+        assertEquals(2, result.allFiles.size)
+        assertEquals("video/*", ShareHelper.resolveMimeType(result.allFiles))
     }
 
     // --- Four photos (Twitter max) ---
