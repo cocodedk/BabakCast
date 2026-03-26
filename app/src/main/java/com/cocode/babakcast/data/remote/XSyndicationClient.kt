@@ -1,6 +1,8 @@
 package com.cocode.babakcast.data.remote
 
 import android.util.Log
+import com.cocode.babakcast.data.model.TweetMedia
+import com.cocode.babakcast.data.model.TweetMediaResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -134,13 +136,5 @@ class XSyndicationClient @Inject constructor(
     }
 }
 
-data class TweetMediaResult(
-    val text: String,
-    val media: List<TweetMedia>
-)
-
-sealed class TweetMedia {
-    data class Photo(val url: String, val originalUrl: String) : TweetMedia()
-    data class Video(val url: String?, val thumbnailUrl: String?) : TweetMedia()
-    data class AnimatedGif(val url: String?, val thumbnailUrl: String?) : TweetMedia()
-}
+typealias TweetMediaResult = com.cocode.babakcast.data.model.TweetMediaResult
+typealias TweetMedia = com.cocode.babakcast.data.model.TweetMedia
