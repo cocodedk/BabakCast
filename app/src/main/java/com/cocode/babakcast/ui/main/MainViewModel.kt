@@ -667,7 +667,9 @@ data class MainUiState(
     val isProgressIndeterminate: Boolean = false,
     val splitChoicePrompt: SplitChoicePrompt? = null,
     val supportsSummarize: Boolean = true,
-    val summaryLength: SummaryLength = SummaryLength.MEDIUM
+    val summaryLength: SummaryLength = SummaryLength.MEDIUM,
+    val tweetText: String? = null,
+    val isFetchingTweetText: Boolean = false
 )
 
 data class SplitChoicePrompt(

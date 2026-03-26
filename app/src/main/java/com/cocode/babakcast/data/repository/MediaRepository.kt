@@ -458,6 +458,15 @@ class MediaRepository @Inject constructor(
         }
 
         /**
+         * Returns the tweet ID if [url] is a valid X/Twitter status URL,
+         * or null if the URL is not an X URL or has no status path.
+         */
+        fun guardTweetTextFetch(url: String): String? {
+            if (!XUrlExtractor.isXUrl(url)) return null
+            return XUrlParser.extractTweetId(url)
+        }
+
+        /**
          * Categorize [TweetMedia] items into photos and videos/GIFs.
          * Returns a pair of (photos, videos+GIFs).
          */
