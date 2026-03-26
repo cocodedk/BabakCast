@@ -75,6 +75,7 @@ android {
         compose = true
     }
     testOptions {
+        unitTests.isReturnDefaultValues = true
         unitTests.all {
             it.extensions.configure(JacocoTaskExtension::class.java) {
                 isIncludeNoLocationClasses = true
@@ -190,6 +191,7 @@ dependencies {
     
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
