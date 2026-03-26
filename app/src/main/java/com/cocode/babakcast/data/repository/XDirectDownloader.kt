@@ -1,7 +1,7 @@
 package com.cocode.babakcast.data.repository
 
 import android.util.Log
-import com.cocode.babakcast.data.remote.TweetMedia
+import com.cocode.babakcast.data.model.TweetMedia
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File

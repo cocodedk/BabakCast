@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.cocode.babakcast.data.model.TweetDownloadResult
 import com.cocode.babakcast.data.model.VideoInfo
-import com.cocode.babakcast.data.remote.TweetMedia
+import com.cocode.babakcast.data.model.TweetMedia
 import com.cocode.babakcast.data.remote.XSyndicationClient
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
