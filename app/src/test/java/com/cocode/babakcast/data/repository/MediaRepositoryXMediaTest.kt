@@ -227,6 +227,58 @@ class MediaRepositoryXMediaTest {
         assertEquals(1, videos.size)
     }
 
+    // --- resolveVideosToDownload ---
+
+    @Test
+    fun resolveVideosToDownload_photosOnly_videosUnchanged() {
+        val photos = listOf(TweetMedia.Photo(url = "https://img.jpg?name=large", originalUrl = "https://img.jpg"))
+        val videos = emptyList<TweetMedia>()
+        val result = MediaRepository.resolveVideosToDownload(photos, videos)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun resolveVideosToDownload_videosOnly_videosUnchanged() {
+        val photos = emptyList<TweetMedia.Photo>()
+        val videos = listOf(TweetMedia.Video(url = "https://video.mp4", thumbnailUrl = null))
+        val result = MediaRepository.resolveVideosToDownload(photos, videos)
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun resolveVideosToDownload_mixedMedia_videosSkipped() {
+        // When photos AND videos are both present, videos must be skipped so that
+        // the image-only share works reliably in WhatsApp and other apps.
+        val photos = listOf(TweetMedia.Photo(url = "https://img.jpg?name=large", originalUrl = "https://img.jpg"))
+        val videos = listOf(TweetMedia.Video(url = "https://video.mp4", thumbnailUrl = null))
+        val result = MediaRepository.resolveVideosToDownload(photos, videos)
+        assertTrue("videos must be skipped in mixed media tweets", result.isEmpty())
+    }
+
+    @Test
+    fun resolveVideosToDownload_threePhotosOneVideo_videosSkipped() {
+        val photos = (1..3).map {
+            TweetMedia.Photo(url = "https://img$it.jpg?name=large", originalUrl = "https://img$it.jpg")
+        }
+        val videos = listOf(TweetMedia.Video(url = "https://video.mp4", thumbnailUrl = null))
+        val result = MediaRepository.resolveVideosToDownload(photos, videos)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun resolveVideosToDownload_photoAndGif_gifSkipped() {
+        val photos = listOf(TweetMedia.Photo(url = "https://img.jpg?name=large", originalUrl = "https://img.jpg"))
+        val videos = listOf(TweetMedia.AnimatedGif(url = "https://gif.mp4", thumbnailUrl = null))
+        val result = MediaRepository.resolveVideosToDownload(photos, videos)
+        assertTrue("GIF must also be skipped when photos are present", result.isEmpty())
+    }
+
+    @Test
+    fun resolveVideosToDownload_emptyBoth_returnsEmpty() {
+        val result = MediaRepository.resolveVideosToDownload(emptyList(), emptyList())
+        assertTrue(result.isEmpty())
+    }
+
     // --- videoFileName ---
 
     @Test

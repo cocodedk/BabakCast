@@ -193,7 +193,11 @@ class MediaRepository @Inject constructor(
                 return@withContext Result.failure(Exception("No media found in tweet"))
             }
 
-            val (photos, videos) = categorizeTweetMedia(mediaResult.media)
+            val (photos, rawVideos) = categorizeTweetMedia(mediaResult.media)
+            val videos = resolveVideosToDownload(photos, rawVideos)
+            if (videos.isEmpty() && rawVideos.isNotEmpty()) {
+                Log.d(tag, "downloadAllXMedia: mixed media tweet — skipping ${rawVideos.size} video(s)")
+            }
 
             val totalItems = photos.size + videos.size
             var completedItems = 0
@@ -370,6 +374,16 @@ class MediaRepository @Inject constructor(
         }
 
         fun videoFileName(tweetId: String, index: Int): String = "tweet_${tweetId}_vid${index + 1}.mp4"
+
+        /**
+         * Returns the videos to actually download for a tweet.
+         * When a tweet has both photos and videos, videos are skipped: apps like WhatsApp
+         * cannot reliably receive mixed image+video FileProvider shares.
+         */
+        fun resolveVideosToDownload(
+            photos: List<TweetMedia.Photo>,
+            videos: List<TweetMedia>
+        ): List<TweetMedia> = if (photos.isNotEmpty() && videos.isNotEmpty()) emptyList() else videos
 
         fun extractDirectVideoUrl(media: TweetMedia): String? = when (media) {
             is TweetMedia.Video -> media.url
