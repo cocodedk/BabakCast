@@ -4,6 +4,7 @@ import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.cocode.babakcast.data.model.VideoChapter
 import com.cocode.babakcast.data.model.VideoInfo
+import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.util.DownloadFileParser
@@ -96,13 +97,12 @@ class VideoSplitter @Inject constructor() {
 
                 while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
                     // FFmpeg command: extract segment using copy codec for speed
-                    val command = "-ss ${formatSeconds(currentTime)} " +
-                        "-i \"${videoFile.absolutePath}\" " +
-                        "-t ${formatSeconds(segmentDuration)} " +
-                        "-c copy " +
-                        "-avoid_negative_ts make_zero " +
-                        "-y " +
-                        "\"${outputFile.absolutePath}\""
+                    val command = FfmpegCommands.buildCopySegmentCommand(
+                        inputFile = videoFile,
+                        outputFile = outputFile,
+                        startSeconds = currentTime,
+                        durationSeconds = segmentDuration
+                    )
 
                     val session = FFmpegKit.execute(command)
                     
@@ -200,13 +200,12 @@ class VideoSplitter @Inject constructor() {
                 extension = "mp4"
             )
             val segmentDuration = estimated.chapter.endTimeSeconds - estimated.chapter.startTimeSeconds
-            val command = "-ss ${formatSeconds(estimated.chapter.startTimeSeconds)} " +
-                "-i \"${videoFile.absolutePath}\" " +
-                "-t ${formatSeconds(segmentDuration)} " +
-                "-c copy " +
-                "-avoid_negative_ts make_zero " +
-                "-y " +
-                "\"${outputFile.absolutePath}\""
+            val command = FfmpegCommands.buildCopySegmentCommand(
+                inputFile = videoFile,
+                outputFile = outputFile,
+                startSeconds = estimated.chapter.startTimeSeconds,
+                durationSeconds = segmentDuration
+            )
 
             val session = FFmpegKit.execute(command)
             if (!ReturnCode.isSuccess(session.returnCode)) {
@@ -252,23 +251,12 @@ class VideoSplitter @Inject constructor() {
     private fun getVideoDuration(videoFile: File): Double? {
         try {
             // Use FFmpeg to get duration
-            val command = "-i \"${videoFile.absolutePath}\""
+            val command = FfmpegCommands.buildProbeCommand(videoFile)
             
             val session = FFmpegKit.execute(command)
             val output = session.output ?: session.allLogsAsString
             
-            // Parse duration from output: Duration: HH:MM:SS.mmm
-            val durationRegex = Regex("Duration: (\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{2})")
-            val match = durationRegex.find(output)
-            
-            if (match != null) {
-                val hours = match.groupValues[1].toInt()
-                val minutes = match.groupValues[2].toInt()
-                val seconds = match.groupValues[3].toInt()
-                val centiseconds = match.groupValues[4].toInt()
-                
-                return hours * 3600.0 + minutes * 60.0 + seconds + centiseconds / 100.0
-            }
+            FfmpegCommands.parseDurationSeconds(output)?.let { return it }
             
             // Fallback: estimate from file size (rough approximation)
             // Average bitrate assumption: ~2 Mbps for 720p
@@ -278,10 +266,6 @@ class VideoSplitter @Inject constructor() {
         } catch (e: Exception) {
             return null
         }
-    }
-
-    private fun formatSeconds(value: Double): String {
-        return String.format(java.util.Locale.US, "%.3f", value)
     }
 
     private fun buildOutputFile(

@@ -4,6 +4,7 @@ import android.util.Log
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.cocode.babakcast.data.model.VideoChapter
+import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.util.DownloadFileParser
@@ -86,7 +87,7 @@ class AudioSplitter @Inject constructor() {
 
             Log.d(
                 TAG,
-                "splitAudioIfNeeded planning durationSec=${formatSeconds(duration)} bytesPerSec=${"%.2f".format(java.util.Locale.US, bytesPerSecond)} targetChunkSec=${formatSeconds(chunkDuration)} estimatedParts=$estimatedParts"
+                "splitAudioIfNeeded planning durationSec=${FfmpegCommands.formatSeconds(duration)} bytesPerSec=${"%.2f".format(java.util.Locale.US, bytesPerSecond)} targetChunkSec=${FfmpegCommands.formatSeconds(chunkDuration)} estimatedParts=$estimatedParts"
             )
 
             var currentTime = 0.0
@@ -106,15 +107,14 @@ class AudioSplitter @Inject constructor() {
                 while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
                     Log.d(
                         TAG,
-                        "splitAudioIfNeeded chunk=${chunkIndex + 1} attempt=${attempt + 1} startSec=${formatSeconds(currentTime)} durationSec=${formatSeconds(segmentDuration)}"
+                        "splitAudioIfNeeded chunk=${chunkIndex + 1} attempt=${attempt + 1} startSec=${FfmpegCommands.formatSeconds(currentTime)} durationSec=${FfmpegCommands.formatSeconds(segmentDuration)}"
                     )
-                    val command = "-ss ${formatSeconds(currentTime)} " +
-                        "-i \"${audioFile.absolutePath}\" " +
-                        "-t ${formatSeconds(segmentDuration)} " +
-                        "-c copy " +
-                        "-avoid_negative_ts make_zero " +
-                        "-y " +
-                        "\"${outputFile.absolutePath}\""
+                    val command = FfmpegCommands.buildCopySegmentCommand(
+                        inputFile = audioFile,
+                        outputFile = outputFile,
+                        startSeconds = currentTime,
+                        durationSeconds = segmentDuration
+                    )
 
                     val session = FFmpegKit.execute(command)
 
@@ -223,13 +223,12 @@ class AudioSplitter @Inject constructor() {
                 totalParts = totalParts
             )
             val segmentDuration = estimated.chapter.endTimeSeconds - estimated.chapter.startTimeSeconds
-            val command = "-ss ${formatSeconds(estimated.chapter.startTimeSeconds)} " +
-                "-i \"${audioFile.absolutePath}\" " +
-                "-t ${formatSeconds(segmentDuration)} " +
-                "-c copy " +
-                "-avoid_negative_ts make_zero " +
-                "-y " +
-                "\"${outputFile.absolutePath}\""
+            val command = FfmpegCommands.buildCopySegmentCommand(
+                inputFile = audioFile,
+                outputFile = outputFile,
+                startSeconds = estimated.chapter.startTimeSeconds,
+                durationSeconds = segmentDuration
+            )
 
             val session = FFmpegKit.execute(command)
             if (!ReturnCode.isSuccess(session.returnCode)) {
@@ -267,20 +266,11 @@ class AudioSplitter @Inject constructor() {
 
     private fun getMediaDuration(mediaFile: File): Double? {
         return try {
-            val command = "-i \"${mediaFile.absolutePath}\""
+            val command = FfmpegCommands.buildProbeCommand(mediaFile)
             val session = FFmpegKit.execute(command)
             val output = session.output ?: session.allLogsAsString
 
-            val durationRegex = Regex("Duration: (\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{2})")
-            val match = durationRegex.find(output)
-
-            if (match != null) {
-                val hours = match.groupValues[1].toInt()
-                val minutes = match.groupValues[2].toInt()
-                val seconds = match.groupValues[3].toInt()
-                val centiseconds = match.groupValues[4].toInt()
-                hours * 3600.0 + minutes * 60.0 + seconds + centiseconds / 100.0
-            } else {
+            FfmpegCommands.parseDurationSeconds(output) ?: run {
                 val estimatedBitrate = 128_000.0
                 val fileSizeBits = mediaFile.length() * 8.0
                 fileSizeBits / estimatedBitrate
@@ -288,10 +278,6 @@ class AudioSplitter @Inject constructor() {
         } catch (e: Exception) {
             null
         }
-    }
-
-    private fun formatSeconds(value: Double): String {
-        return String.format(java.util.Locale.US, "%.3f", value)
     }
 
     private fun buildOutputFile(
