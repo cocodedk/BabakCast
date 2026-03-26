@@ -1,5 +1,6 @@
 package com.cocode.babakcast.data.remote
 
+import com.cocode.babakcast.data.model.TweetMedia
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -428,5 +429,69 @@ class XSyndicationClientParseTest {
         val video = result.media[0] as TweetMedia.Video
 
         assertEquals("https://video.twimg.com/high.mp4", video.url)
+    }
+
+    @Test
+    fun parseTwoPhotoTweet_exactlyTwoPhotosWithNameLargeUrls() {
+        // Matches the JSON structure returned by the syndication API for
+        // https://x.com/hey_itsmyturn/status/2037106757810393340
+        val response = """
+        {
+            "text": "Check out these two photos!",
+            "mediaDetails": [
+                {
+                    "type": "photo",
+                    "media_url_https": "https://pbs.twimg.com/media/HEVBvNbXAAAXz99.jpg"
+                },
+                {
+                    "type": "photo",
+                    "media_url_https": "https://pbs.twimg.com/media/HEVBvyNboAAc3Hk.jpg"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val result = XSyndicationClient.parseMediaDetails(response)
+
+        assertEquals("Check out these two photos!", result.text)
+        assertEquals(2, result.media.size)
+        assertTrue(result.media.all { it is TweetMedia.Photo })
+
+        val photo1 = result.media[0] as TweetMedia.Photo
+        assertEquals("https://pbs.twimg.com/media/HEVBvNbXAAAXz99.jpg?name=large", photo1.url)
+        assertEquals("https://pbs.twimg.com/media/HEVBvNbXAAAXz99.jpg", photo1.originalUrl)
+
+        val photo2 = result.media[1] as TweetMedia.Photo
+        assertEquals("https://pbs.twimg.com/media/HEVBvyNboAAc3Hk.jpg?name=large", photo2.url)
+        assertEquals("https://pbs.twimg.com/media/HEVBvyNboAAc3Hk.jpg", photo2.originalUrl)
+    }
+
+    @Test
+    fun parseTwoPhotoTweet_categorizedAsTwoPhotosZeroVideos() {
+        // Verify that parseMediaDetails + categorizeTweetMedia return 2 photos and 0 videos.
+        // This integration path covers the full pipeline before any HTTP downloads.
+        val response = """
+        {
+            "text": "Two photos",
+            "mediaDetails": [
+                {
+                    "type": "photo",
+                    "media_url_https": "https://pbs.twimg.com/media/HEVBvNbXAAAXz99.jpg"
+                },
+                {
+                    "type": "photo",
+                    "media_url_https": "https://pbs.twimg.com/media/HEVBvyNboAAc3Hk.jpg"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val parsed = XSyndicationClient.parseMediaDetails(response)
+        val (photos, videos) = com.cocode.babakcast.data.repository.MediaRepository.categorizeTweetMedia(parsed.media)
+
+        assertEquals(2, photos.size)
+        assertTrue(videos.isEmpty())
+        assertEquals("https://pbs.twimg.com/media/HEVBvNbXAAAXz99.jpg", photos[0].originalUrl)
+        assertEquals("https://pbs.twimg.com/media/HEVBvyNboAAc3Hk.jpg", photos[1].originalUrl)
     }
 }

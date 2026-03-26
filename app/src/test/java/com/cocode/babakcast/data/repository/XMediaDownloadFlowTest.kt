@@ -1,8 +1,8 @@
 package com.cocode.babakcast.data.repository
 
 import com.cocode.babakcast.data.model.TweetDownloadResult
-import com.cocode.babakcast.data.remote.TweetMedia
-import com.cocode.babakcast.data.remote.TweetMediaResult
+import com.cocode.babakcast.data.model.TweetMedia
+import com.cocode.babakcast.data.model.TweetMediaResult
 import com.cocode.babakcast.util.ShareHelper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

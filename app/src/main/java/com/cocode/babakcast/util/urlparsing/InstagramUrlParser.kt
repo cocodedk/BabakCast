@@ -1,4 +1,4 @@
-package com.cocode.babakcast.util
+package com.cocode.babakcast.util.urlparsing
 
 object InstagramUrlParser {
     private val shortcodePattern = Regex(

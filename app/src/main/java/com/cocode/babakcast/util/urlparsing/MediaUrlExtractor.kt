@@ -1,8 +1,7 @@
-package com.cocode.babakcast.util
+package com.cocode.babakcast.util.urlparsing
 
-enum class Platform { YOUTUBE, X, INSTAGRAM, LINKEDIN }
-
-data class ExtractedUrl(val url: String, val platform: Platform)
+import com.cocode.babakcast.util.ExtractedUrl
+import com.cocode.babakcast.util.Platform
 
 object MediaUrlExtractor {
     fun extractFromText(text: String?): ExtractedUrl? {

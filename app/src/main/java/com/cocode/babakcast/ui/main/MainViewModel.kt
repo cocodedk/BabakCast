@@ -18,10 +18,10 @@ import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
-import com.cocode.babakcast.util.InstagramUrlExtractor
-import com.cocode.babakcast.util.LinkedInUrlExtractor
-import com.cocode.babakcast.util.XUrlExtractor
 import com.cocode.babakcast.util.ShareHelper
+import com.cocode.babakcast.util.urlparsing.InstagramUrlExtractor
+import com.cocode.babakcast.util.urlparsing.LinkedInUrlExtractor
+import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -685,58 +685,4 @@ class MainViewModel @Inject constructor(
         return message.contains("chapter split exceeds 16mb", ignoreCase = true) ||
             message.contains("chapter split produced chunk larger than 16mb", ignoreCase = true)
     }
-}
-
-data class MainUiState(
-    val url: String = "",
-    val isLoading: Boolean = false,
-    val progress: Float = 0f,
-    val videoInfo: VideoInfo? = null,
-    val summary: String? = null,
-    val error: AppError? = null,
-    val isDownloading: Boolean = false,
-    val isSummarizing: Boolean = false,
-    val isDownloadingAudio: Boolean = false,
-    val downloadEngineReady: Boolean = false,
-    val downloadEngineError: String? = null,
-    val loadingMessage: String? = null,
-    val isProgressIndeterminate: Boolean = false,
-    val splitChoicePrompt: SplitChoicePrompt? = null,
-    val supportsSummarize: Boolean = true,
-    val summaryLength: SummaryLength = SummaryLength.MEDIUM,
-    val tweetText: String? = null,
-    val isFetchingTweetText: Boolean = false
-)
-
-data class SplitChoicePrompt(
-    val mediaType: SplitChoiceMediaType,
-    val chapterCount: Int
-)
-
-enum class SplitChoiceMediaType {
-    VIDEO,
-    AUDIO
-}
-
-sealed class ShareRequest {
-    data class AudioTwoStep(
-        val caption: String,
-        val files: List<File>,
-        val mimeType: String,
-        val title: String
-    ) : ShareRequest()
-}
-
-private sealed class PendingSplitRequest {
-    data class Video(val videoInfo: VideoInfo) : PendingSplitRequest()
-    data class Audio(
-        val videoInfo: VideoInfo,
-        val videoFile: File,
-        val audioFile: File
-    ) : PendingSplitRequest()
-}
-
-sealed class TweetTextEvent {
-    data class Copied(val text: String) : TweetTextEvent()
-    data class Share(val text: String) : TweetTextEvent()
 }

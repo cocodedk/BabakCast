@@ -1,4 +1,4 @@
-package com.cocode.babakcast.util
+package com.cocode.babakcast.util.urlparsing
 
 object YouTubeUrlExtractor {
     fun extractYouTubeUrlFromText(text: String?): String? {

@@ -4,17 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.local.SecureStorage
 import com.cocode.babakcast.data.local.SettingsRepository
-import com.cocode.babakcast.data.model.Provider
 import com.cocode.babakcast.data.model.SummaryLength
+import com.cocode.babakcast.data.model.Provider
 import com.cocode.babakcast.data.repository.ProviderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
 @HiltViewModel
@@ -229,28 +229,3 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(providers = providers)
     }
 }
-
-data class SettingsUiState(
-    val providers: List<ProviderState> = emptyList(),
-    val selectedProvider: Provider? = null,
-    val editingApiKey: String = "",
-    val editingApiUrl: String = "",
-    val editingModel: String = "",
-    val showModelDropdown: Boolean = false,
-    val showProviderDialog: Boolean = false,
-    val fetchedModels: List<String> = emptyList(),
-    val fetchedModelsProviderId: String? = null,
-    val modelsLoading: Boolean = false,
-    val modelsError: String? = null,
-    val defaultLanguage: String = "en",
-    val adaptiveSummaryLength: Boolean = true,
-    val defaultSummaryLength: SummaryLength = SummaryLength.MEDIUM,
-    val autoPlayNext: Boolean = false
-)
-
-data class ProviderState(
-    val provider: Provider,
-    val hasApiKey: Boolean,
-    val maskedApiKey: String,
-    val selectedModel: String
-)

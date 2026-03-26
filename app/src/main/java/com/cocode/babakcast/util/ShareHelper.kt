@@ -1,5 +1,6 @@
 package com.cocode.babakcast.util
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -195,9 +196,15 @@ class ShareHelper @Inject constructor(
                 if (!text.isNullOrBlank()) {
                     putExtra(Intent.EXTRA_TEXT, text)
                 }
+                // ClipData is required so URI read permissions propagate through
+                // createChooser to the app the user picks (e.g. WhatsApp, Telegram).
+                val clip = ClipData.newUri(context.contentResolver, "share", uris.first())
+                uris.drop(1).forEach { clip.addItem(ClipData.Item(it)) }
+                clipData = clip
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             Intent.createChooser(shareIntent, title)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
 
@@ -241,8 +248,12 @@ class ShareHelper @Inject constructor(
             if (!text.isNullOrBlank()) {
                 putExtra(Intent.EXTRA_TEXT, text)
             }
+            // ClipData is required so URI read permissions propagate through
+            // createChooser to the app the user picks (e.g. WhatsApp, Telegram).
+            clipData = ClipData.newUri(context.contentResolver, "share", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         return Intent.createChooser(shareIntent, title)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 }

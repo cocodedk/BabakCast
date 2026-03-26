@@ -4,27 +4,26 @@ import android.content.Context
 import android.util.Log
 import com.cocode.babakcast.data.model.TweetDownloadResult
 import com.cocode.babakcast.data.model.VideoInfo
-import com.cocode.babakcast.data.remote.TweetMedia
+import com.cocode.babakcast.data.model.TweetMedia
 import com.cocode.babakcast.data.remote.XSyndicationClient
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
-import com.cocode.babakcast.util.InstagramUrlExtractor
-import com.cocode.babakcast.util.InstagramUrlParser
-import com.cocode.babakcast.util.LinkedInUrlExtractor
-import com.cocode.babakcast.util.LinkedInUrlParser
-import com.cocode.babakcast.util.XUrlExtractor
-import com.cocode.babakcast.util.XUrlParser
 import com.cocode.babakcast.util.YouTubeMetadataParser
-import com.cocode.babakcast.util.YouTubeUrlParser
-import com.yausername.youtubedl_android.YoutubeDL
+import com.cocode.babakcast.util.urlparsing.InstagramUrlExtractor
+import com.cocode.babakcast.util.urlparsing.InstagramUrlParser
+import com.cocode.babakcast.util.urlparsing.LinkedInUrlExtractor
+import com.cocode.babakcast.util.urlparsing.LinkedInUrlParser
+import com.cocode.babakcast.util.urlparsing.XUrlExtractor
+import com.cocode.babakcast.util.urlparsing.XUrlParser
+import com.cocode.babakcast.util.urlparsing.YouTubeUrlParser
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.roundToInt
 
 /**
  * Repository for media operations: download and transcript extraction.
@@ -33,14 +32,15 @@ import kotlin.math.roundToInt
 @Singleton
 class MediaRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val xSyndicationClient: XSyndicationClient
+    private val xSyndicationClient: XSyndicationClient,
+    private val okHttpClient: OkHttpClient
 ) {
     private val tag = "MediaRepository"
     private val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val imagesDir = File(context.getExternalFilesDir(null), "images")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
-    private val progressPercentRegex = Regex("([0-9]+(?:\\.[0-9]+)?)%")
-    @Volatile private var lastLoggedProgressBucket = -1
+    private val ytDl = YoutubeDlWrapper(tag)
+    private val xDownloader = XDirectDownloader(okHttpClient, tag)
 
     init {
         videosDir.mkdirs()
@@ -80,9 +80,7 @@ class MediaRepository @Inject constructor(
                 ?: return@withContext Result.failure(IllegalArgumentException("Unsupported URL"))
 
             val request = buildInfoRequest(url, platform)
-
-            val output = YoutubeDL.getInstance().execute(request, null)
-            val jsonOutput = output.out
+            val jsonOutput = ytDl.fetchInfo(request)
 
             // For X/Twitter and LinkedIn, prefer the full "description" over the truncated "title".
             // extractChaptersFromJson is YouTube-only; other platforms don't provide chapter metadata.
@@ -135,14 +133,8 @@ class MediaRepository @Inject constructor(
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$mediaId" else mediaId
             val outputFile = File(videosDir, "${baseName}.mp4")
 
-            lastLoggedProgressBucket = -1
             val request = buildDownloadRequest(url, platform, outputFile.absolutePath)
-
-            YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
-                val normalized = normalizeProgress(progress, line)
-                logProgressIfNeeded(normalized, progress, line)
-                onProgress(normalized)
-            }
+            ytDl.executeDownload(request, onProgress)
 
             if (!outputFile.exists()) {
                 return@withContext Result.failure(Exception("Download failed: file not created"))
@@ -201,7 +193,11 @@ class MediaRepository @Inject constructor(
                 return@withContext Result.failure(Exception("No media found in tweet"))
             }
 
-            val (photos, videos) = categorizeTweetMedia(mediaResult.media)
+            val (photos, rawVideos) = categorizeTweetMedia(mediaResult.media)
+            val videos = resolveVideosToDownload(photos, rawVideos)
+            if (videos.isEmpty() && rawVideos.isNotEmpty()) {
+                Log.d(tag, "downloadAllXMedia: mixed media tweet — skipping ${rawVideos.size} video(s)")
+            }
 
             val totalItems = photos.size + videos.size
             var completedItems = 0
@@ -213,7 +209,7 @@ class MediaRepository @Inject constructor(
             for ((index, photo) in photos.withIndex()) {
                 val extension = guessImageExtension(photo.originalUrl)
                 val outputFile = File(imagesDir, "tweet_${tweetId}_img${index + 1}.$extension")
-                xSyndicationClient.downloadImage(photo.url, outputFile).fold(
+                xDownloader.downloadPhoto(photo, outputFile).fold(
                     onSuccess = { file ->
                         imageFiles.add(file)
                         completedItems++
@@ -235,7 +231,7 @@ class MediaRepository @Inject constructor(
                 val outputFile = File(videosDir, videoFileName(tweetId, index))
 
                 if (directUrl != null) {
-                    xSyndicationClient.downloadImage(directUrl, outputFile).fold(
+                    xDownloader.downloadVideo(directUrl, outputFile).fold(
                         onSuccess = { file ->
                             videoFiles.add(file)
                             completedItems++
@@ -249,10 +245,8 @@ class MediaRepository @Inject constructor(
                     )
                 } else {
                     // No direct URL — fall back to yt-dlp with the original tweet URL
-                    lastLoggedProgressBucket = -1
                     val request = buildDownloadRequest(url, Platform.X, outputFile.absolutePath)
-                    YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
-                        val videoProgress = normalizeProgress(progress, line)
+                    ytDl.executeDownload(request) { videoProgress ->
                         val baseProgress = completedItems.toFloat() / totalItems
                         val videoWeight = 1.0f / totalItems
                         onProgress(baseProgress + videoProgress * videoWeight)
@@ -319,121 +313,10 @@ class MediaRepository @Inject constructor(
                     UnsupportedOperationException("Transcript not available for LinkedIn posts")
                 )
             }
-            Log.d(tag, "Starting transcript extraction lang=$language url=$url")
-            val startTime = System.currentTimeMillis()
-            val request = YoutubeDLRequest(url)
-            request.addOption("--skip-download")
-            request.addOption("--write-auto-sub")
-            request.addOption("--sub-lang", language)
-            request.addOption("--sub-format", "vtt")
-            request.addOption("-o", File(transcriptsDir, "%(title)s.%(ext)s").absolutePath)
-
-            val output = YoutubeDL.getInstance().execute(request, null)
-            
-            // Parse transcript from output or subtitle file
-            // Note: youtubedl-android may handle this differently
-            // This is a simplified implementation
-            val newVtt = transcriptsDir
-                .listFiles()
-                ?.filter { it.isFile && it.extension.equals("vtt", ignoreCase = true) }
-                ?.filter { it.lastModified() >= startTime - 1000 }
-                ?.maxByOrNull { it.lastModified() }
-
-            val transcript = when {
-                newVtt != null -> parseTranscriptFromVtt(newVtt)
-                else -> parseTranscriptFromOutput(output.out)
-                    ?.takeUnless { looksLikeYtdlpLog(it) }
-            } ?: run {
-                Log.e(tag, "Transcript not available. Output snippet=${output.out.take(400)}")
-                return@withContext Result.failure(Exception("Transcript not available"))
-            }
-
-            Log.d(tag, "Transcript extraction complete length=${transcript.length}")
-            Result.success(transcript)
+            Result.success(ytDl.extractTranscript(url, transcriptsDir, language))
         } catch (e: Exception) {
             Log.e(tag, "Transcript extraction failed", e)
             Result.failure(e)
-        }
-    }
-
-    /**
-     * Parse transcript from output (simplified - actual implementation depends on youtubedl-android output format)
-     */
-    private fun parseTranscriptFromOutput(output: String): String? {
-        // Remove timestamps and format
-        // Format: [00:00:00.000 --> 00:00:05.000] Text
-        val lines = output.lines()
-        val transcriptLines = mutableListOf<String>()
-        
-        for (line in lines) {
-            // Skip timestamp lines
-            if (line.matches(Regex("\\d{2}:\\d{2}:\\d{2},\\d{3}\\s*-->\\s*\\d{2}:\\d{2}:\\d{2},\\d{3}"))) {
-                continue
-            }
-            // Skip empty lines and sequence numbers
-            if (line.isBlank() || line.matches(Regex("^\\d+$"))) {
-                continue
-            }
-            transcriptLines.add(line.trim())
-        }
-        
-        return transcriptLines.joinToString(" ").takeIf { it.isNotBlank() }
-    }
-
-    private fun parseTranscriptFromVtt(file: File): String? {
-        val lines = file.readLines()
-        val transcriptLines = mutableListOf<String>()
-        val timestampRegex = Regex("\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s*-->\\s*\\d{2}:\\d{2}:\\d{2}\\.\\d{3}")
-
-        for (line in lines) {
-            val trimmed = line.trim()
-            if (trimmed.isBlank()) continue
-            if (trimmed.equals("WEBVTT", ignoreCase = true)) continue
-            if (trimmed.startsWith("NOTE", ignoreCase = true)) continue
-            if (trimmed.matches(timestampRegex)) continue
-            if (trimmed.matches(Regex("^\\d+$"))) continue
-
-            val cleaned = trimmed.replace(Regex("<[^>]+>"), "").trim()
-            if (cleaned.isNotBlank()) {
-                transcriptLines.add(cleaned)
-            }
-        }
-
-        return transcriptLines.joinToString(" ").takeIf { it.isNotBlank() }
-    }
-
-    private fun looksLikeYtdlpLog(text: String): Boolean {
-        val lowered = text.lowercase()
-        return lowered.contains("[youtube]") ||
-            lowered.contains("downloading") ||
-            lowered.contains("extracting url") ||
-            lowered.contains("writing video subtitles")
-    }
-
-    private fun normalizeProgress(progress: Float, line: String?): Float {
-        val percentFromLine = line?.let {
-            progressPercentRegex.find(it)?.groupValues?.get(1)?.toFloatOrNull()
-        }
-        val raw = percentFromLine ?: progress
-        if (!raw.isFinite()) return 0f
-        if (raw <= 0f) return 0f
-        val normalized = if (percentFromLine != null) {
-            raw / 100f
-        } else if (raw > 1f) {
-            raw / 100f
-        } else {
-            raw
-        }
-        return normalized.coerceIn(0f, 1f)
-    }
-
-    private fun logProgressIfNeeded(normalized: Float, raw: Float, line: String?) {
-        val percentInt = (normalized * 100).roundToInt().coerceIn(0, 100)
-        val bucket = percentInt / 10
-        if (bucket != lastLoggedProgressBucket) {
-            lastLoggedProgressBucket = bucket
-            val snippet = line?.replace(Regex("\\s+"), " ")?.take(200)
-            Log.d(tag, "Download progress: $percentInt% (raw=$raw line=${snippet ?: "n/a"})")
         }
     }
 
@@ -469,14 +352,7 @@ class MediaRepository @Inject constructor(
     }
 
     companion object {
-        fun guessImageExtension(url: String): String {
-            val path = url.substringBefore('?').substringAfterLast('/')
-            return when {
-                path.endsWith(".png", ignoreCase = true) -> "png"
-                path.endsWith(".webp", ignoreCase = true) -> "webp"
-                else -> "jpg"
-            }
-        }
+        fun guessImageExtension(url: String): String = XDirectDownloader.guessImageExtension(url)
 
         /**
          * Returns the tweet ID if [url] is a valid X/Twitter status URL,
@@ -499,35 +375,27 @@ class MediaRepository @Inject constructor(
 
         fun videoFileName(tweetId: String, index: Int): String = "tweet_${tweetId}_vid${index + 1}.mp4"
 
+        /**
+         * Returns the videos to actually download for a tweet.
+         * When a tweet has both photos and videos, videos are skipped: apps like WhatsApp
+         * cannot reliably receive mixed image+video FileProvider shares.
+         */
+        fun resolveVideosToDownload(
+            photos: List<TweetMedia.Photo>,
+            videos: List<TweetMedia>
+        ): List<TweetMedia> = if (photos.isNotEmpty() && videos.isNotEmpty()) emptyList() else videos
+
         fun extractDirectVideoUrl(media: TweetMedia): String? = when (media) {
             is TweetMedia.Video -> media.url
             is TweetMedia.AnimatedGif -> media.url
             is TweetMedia.Photo -> null
         }
 
-        fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {
-            val request = YoutubeDLRequest(url)
-            request.addOption("--skip-download")
-            request.addOption("--dump-json")
-            request.addOption("--no-warnings")
-            if (platform == Platform.X) {
-                request.addOption("--extractor-args", "twitter:api=syndication")
-            }
-            return request
-        }
+        fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest =
+            YoutubeDlWrapper.buildInfoRequest(url, platform)
 
-        fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest {
-            val request = YoutubeDLRequest(url)
-            // Single-stream format to avoid ffmpeg merging
-            request.addOption("-f", "best[ext=mp4]/best")
-            request.addOption("--no-warnings")
-            if (platform == Platform.X) {
-                // Use syndication API — no authentication required for public tweets
-                request.addOption("--extractor-args", "twitter:api=syndication")
-            }
-            request.addOption("-o", outputPath)
-            return request
-        }
+        fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest =
+            YoutubeDlWrapper.buildDownloadRequest(url, platform, outputPath)
     }
 }
 
