@@ -140,8 +140,10 @@ Or run `./scripts/install-hooks.sh`. Commits will be blocked if `./gradlew test`
 
 ---
 
+## Author
+
+**Babak Bandpey** — [cocode.dk](https://cocode.dk) | [LinkedIn](https://linkedin.com/in/babakbandpey) | [GitHub](https://github.com/cocodedk)
+
 ## License
 
-[Apache License 2.0](LICENSE). Use it, modify it, share it.
-
-© 2026 [Cocode](https://cocode.dk) | BabakCast
+Apache-2.0 | © 2026 [Cocode](https://cocode.dk) | Created by [Babak Bandpey](https://linkedin.com/in/babakbandpey)

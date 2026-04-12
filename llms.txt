@@ -1,0 +1,30 @@
+# BabakCast
+
+> An Android podcast player application built with Kotlin and Jetpack Compose.
+
+## Overview
+
+BabakCast is a modern Android podcast player with clean UI, podcast discovery, episode management, and seamless playback. Built with Clean Architecture and MVVM pattern.
+
+## Links
+
+- GitHub: https://github.com/cocodedk/BabakCast
+- Website (EN): https://cocodedk.github.io/BabakCast/
+- Website (FA): https://cocodedk.github.io/BabakCast/fa/
+- Author: https://cocode.dk
+- LinkedIn: https://linkedin.com/in/babakbandpey
+
+## Technical Details
+
+- Language: Kotlin
+- Framework: Jetpack Compose, Android SDK
+- Architecture: Clean Architecture + MVVM
+- Build: Gradle (Kotlin DSL)
+- License: Apache-2.0
+
+## Key Files
+
+- `app/src/main/java/` — Application source code
+- `build.gradle.kts` — Build configuration
+- `version.txt` — Semantic version
+- `CLAUDE.md` — AI session instructions
