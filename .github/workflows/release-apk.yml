@@ -63,7 +63,7 @@ jobs:
         run: cp app/build/outputs/apk/release/app-release.apk BabakCast.apk
 
       - name: Create GitHub Release and upload APK
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ env.VERSION_NAME }}
           name: Release ${{ env.VERSION_NAME }}
