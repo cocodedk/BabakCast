@@ -523,7 +523,7 @@ class MainViewModel @Inject constructor(
         splitMode: SplitMode
     ) {
         val chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
-        val fileSize = videoInfo.file?.length() ?: videoInfo.fileSizeBytes
+        val fileSize = videoInfo.fileSizeBytes.takeIf { it > 0L } ?: videoInfo.file?.length() ?: 0L
         if (SplitDecision.skipFor(splitMode, fileSize, chunkSizeBytes)) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
