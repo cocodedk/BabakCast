@@ -613,7 +613,8 @@ class MainViewModel @Inject constructor(
         audioSplitter.splitAudioIfNeeded(
             audioFile = audioFile,
             chapterHints = videoInfo.chapters,
-            splitMode = splitMode
+            splitMode = splitMode,
+            chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
         ) { currentPart, totalParts ->
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
@@ -684,8 +685,8 @@ class MainViewModel @Inject constructor(
 
     private fun isChapterTooLargeError(error: Throwable): Boolean {
         val message = error.message.orEmpty()
-        return message.contains("chapter split exceeds 16mb", ignoreCase = true) ||
-            message.contains("chapter split produced chunk larger than 16mb", ignoreCase = true)
+        return message.contains("chapter split exceeds", ignoreCase = true) ||
+            message.contains("chapter split produced chunk over", ignoreCase = true)
     }
 }
 

@@ -176,11 +176,12 @@ class VideoSplitter @Inject constructor() {
         if (oversized != null) {
             val label = oversized.chapter.title.ifBlank { "Unnamed chapter" }
             val sizeMb = oversized.estimatedBytes.toDouble() / (1024.0 * 1024.0)
+            val capMb = MAX_CHUNK_SIZE_BYTES / (1024 * 1024)
             return Result.failure(
                 Exception(
-                    "Chapter split exceeds 16MB for \"$label\" (estimated ${
+                    "Chapter split exceeds $capMb MB cap for \"$label\" (estimated ${
                         String.format(java.util.Locale.US, "%.1f", sizeMb)
-                    } MB). Choose 16 MB split."
+                    } MB). Switch to size-based splitting."
                 )
             )
         }
@@ -219,11 +220,12 @@ class VideoSplitter @Inject constructor() {
                 cleanupFiles(splitFiles + outputFile)
                 val label = estimated.chapter.title.ifBlank { "Unnamed chapter" }
                 val sizeMb = outputFile.length().toDouble() / (1024.0 * 1024.0)
+                val capMb = MAX_CHUNK_SIZE_BYTES / (1024 * 1024)
                 return Result.failure(
                     Exception(
-                        "Chapter split produced chunk larger than 16MB for \"$label\" (${
+                        "Chapter split produced chunk over $capMb MB cap for \"$label\" (${
                             String.format(java.util.Locale.US, "%.1f", sizeMb)
-                        } MB). Choose 16 MB split."
+                        } MB). Switch to size-based splitting."
                     )
                 )
             }

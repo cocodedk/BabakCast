@@ -7,10 +7,10 @@ import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.Provider
 import com.cocode.babakcast.data.repository.ProviderRepository
-import com.cocode.babakcast.data.repository.UpdateRepository
 import com.cocode.babakcast.domain.network.NetworkType
 import com.cocode.babakcast.domain.network.NetworkTypeProvider
 import com.cocode.babakcast.domain.update.UpdateAvailability
+import com.cocode.babakcast.domain.update.UpdateChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,7 +29,7 @@ class SettingsViewModel @Inject constructor(
     private val providerRepository: ProviderRepository,
     private val secureStorage: SecureStorage,
     private val settingsRepository: SettingsRepository,
-    private val updateRepository: UpdateRepository,
+    private val updateChecker: UpdateChecker,
     private val networkTypeProvider: NetworkTypeProvider
 ) : ViewModel() {
 
@@ -233,7 +233,7 @@ class SettingsViewModel @Inject constructor(
         if (_uiState.value.updateState is UpdateUiState.Checking) return
         _uiState.value = _uiState.value.copy(updateState = UpdateUiState.Checking)
         viewModelScope.launch {
-            val newState = when (val result = updateRepository.checkForUpdate()) {
+            val newState = when (val result = updateChecker.checkForUpdate()) {
                 is UpdateAvailability.UpToDate -> UpdateUiState.UpToDate(result.installed)
                 is UpdateAvailability.CheckFailed -> UpdateUiState.Failed(result.reason)
                 is UpdateAvailability.UpdateAvailable -> {

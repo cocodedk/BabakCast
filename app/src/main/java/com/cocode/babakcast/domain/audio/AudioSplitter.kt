@@ -32,6 +32,7 @@ class AudioSplitter @Inject constructor() {
         audioFile: File,
         chapterHints: List<VideoChapter> = emptyList(),
         splitMode: SplitMode = SplitMode.BY_SIZE,
+        chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
@@ -43,10 +44,10 @@ class AudioSplitter @Inject constructor() {
             val sourceSize = audioFile.length()
             Log.d(
                 TAG,
-                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES splitMode=$splitMode chapterHints=${chapterHints.size}"
+                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$chunkSizeBytes splitMode=$splitMode chapterHints=${chapterHints.size}"
             )
 
-            if (SplitDecision.skipFor(splitMode, sourceSize, MAX_CHUNK_SIZE_BYTES)) {
+            if (SplitDecision.skipFor(splitMode, sourceSize, chunkSizeBytes)) {
                 Log.d(TAG, "splitAudioIfNeeded skip: size within limit, returning original file")
                 return@withContext Result.success(listOf(audioFile))
             }
@@ -88,6 +89,7 @@ class AudioSplitter @Inject constructor() {
                     sourceSize = sourceSize,
                     duration = duration,
                     bytesPerSecond = bytesPerSecond,
+                    chunkSizeBytes = chunkSizeBytes,
                     onProgress = onProgress
                 )
             }
@@ -105,9 +107,11 @@ class AudioSplitter @Inject constructor() {
         sourceSize: Long,
         duration: Double,
         bytesPerSecond: Double,
+        chunkSizeBytes: Long,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
     ): Result<List<File>> {
-        val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
+        val targetChunkBytes = (chunkSizeBytes * 15) / 16
+        val chunkDuration = targetChunkBytes.toDouble() / bytesPerSecond
         val splitFiles = mutableListOf<File>()
         val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
 
@@ -150,7 +154,7 @@ class AudioSplitter @Inject constructor() {
                 if (producedBytes <= 0) {
                     return Result.failure(Exception("Split file was not created"))
                 }
-                if (producedBytes <= MAX_CHUNK_SIZE_BYTES) {
+                if (producedBytes <= chunkSizeBytes) {
                     Log.d(TAG, "splitAudioIfNeeded chunk=${chunkIndex + 1} success path=${outputFile.name} sizeBytes=$producedBytes")
                     splitFiles.add(outputFile)
                     splitSuccess = true

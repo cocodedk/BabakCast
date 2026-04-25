@@ -4,6 +4,7 @@ import com.cocode.babakcast.data.remote.GitHubReleaseClient
 import com.cocode.babakcast.data.remote.LatestRelease
 import com.cocode.babakcast.domain.update.AppVersion
 import com.cocode.babakcast.domain.update.UpdateAvailability
+import com.cocode.babakcast.domain.update.UpdateChecker
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -12,9 +13,9 @@ import javax.inject.Singleton
 class UpdateRepository @Inject constructor(
     @Named("installedVersionName") private val installedVersionName: String,
     private val fetchLatest: suspend () -> Result<LatestRelease>
-) {
+) : UpdateChecker {
 
-    suspend fun checkForUpdate(): UpdateAvailability {
+    override suspend fun checkForUpdate(): UpdateAvailability {
         val installed = AppVersion.parse(installedVersionName)
             ?: return UpdateAvailability.CheckFailed("Could not read installed version: $installedVersionName")
 

@@ -8,6 +8,7 @@ import com.cocode.babakcast.data.network.AndroidNetworkTypeProvider
 import com.cocode.babakcast.data.remote.GitHubReleaseClient
 import com.cocode.babakcast.data.repository.UpdateRepository
 import com.cocode.babakcast.domain.network.NetworkTypeProvider
+import com.cocode.babakcast.domain.update.UpdateChecker
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,8 +56,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideUpdateRepository(
+    fun provideUpdateChecker(
         client: GitHubReleaseClient,
         @Named("installedVersionName") installedVersionName: String
-    ): UpdateRepository = UpdateRepository.fromClient(installedVersionName, client)
+    ): UpdateChecker = UpdateRepository.fromClient(installedVersionName, client)
 }

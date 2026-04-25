@@ -1,6 +1,7 @@
 package com.cocode.babakcast.util
 
 import java.util.Locale
+import kotlin.math.roundToLong
 
 object ByteFormatter {
     private val UNITS = arrayOf("B", "KB", "MB", "GB")
@@ -14,9 +15,9 @@ object ByteFormatter {
             unitIndex++
         }
         val formatted = if (size >= 100 || unitIndex == 0) {
-            size.toInt().toString()
+            size.roundToLong().toString()
         } else {
-            String.format(Locale.getDefault(), "%.1f", size)
+            String.format(Locale.US, "%.1f", size)
         }
         return "$formatted ${UNITS[unitIndex]}"
     }
