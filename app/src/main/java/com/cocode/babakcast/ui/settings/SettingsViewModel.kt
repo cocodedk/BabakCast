@@ -7,10 +7,17 @@ import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.Provider
 import com.cocode.babakcast.data.repository.ProviderRepository
+import com.cocode.babakcast.domain.network.NetworkType
+import com.cocode.babakcast.domain.network.NetworkTypeProvider
+import com.cocode.babakcast.domain.update.UpdateAvailability
+import com.cocode.babakcast.domain.update.UpdateChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -21,11 +28,16 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val providerRepository: ProviderRepository,
     private val secureStorage: SecureStorage,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val updateChecker: UpdateChecker,
+    private val networkTypeProvider: NetworkTypeProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    private val _downloadEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val downloadEvents: SharedFlow<String> = _downloadEvents.asSharedFlow()
 
     init {
         loadProviders()
@@ -215,6 +227,54 @@ class SettingsViewModel @Inject constructor(
             refreshProviderStates()
             dismissProviderDialog()
         }
+    }
+
+    fun checkForUpdate() {
+        if (_uiState.value.updateState is UpdateUiState.Checking) return
+        _uiState.value = _uiState.value.copy(updateState = UpdateUiState.Checking)
+        viewModelScope.launch {
+            val newState = when (val result = updateChecker.checkForUpdate()) {
+                is UpdateAvailability.UpToDate -> UpdateUiState.UpToDate(result.installed)
+                is UpdateAvailability.CheckFailed -> UpdateUiState.Failed(result.reason)
+                is UpdateAvailability.UpdateAvailable -> UpdateUiState.Available(
+                    installed = result.installed,
+                    latest = result.latest,
+                    apkDownloadUrl = result.apkDownloadUrl,
+                    apkSizeBytes = result.apkSizeBytes,
+                    networkType = networkTypeProvider.current(),
+                    cellularConfirmed = false
+                )
+            }
+            _uiState.value = _uiState.value.copy(updateState = newState)
+        }
+    }
+
+    fun requestDownload() {
+        val state = _uiState.value.updateState as? UpdateUiState.Available ?: return
+        val current = networkTypeProvider.current()
+        if (current == NetworkType.CELLULAR && !state.cellularConfirmed) {
+            // Refresh the displayed network type so the UI shows the warning,
+            // even if the check happened earlier on Wi-Fi.
+            if (current != state.networkType) {
+                _uiState.value = _uiState.value.copy(updateState = state.copy(networkType = current))
+            }
+            return
+        }
+        _uiState.value = _uiState.value.copy(updateState = state.copy(networkType = current))
+        _downloadEvents.tryEmit(state.apkDownloadUrl)
+    }
+
+    fun confirmCellularDownload() {
+        val state = _uiState.value.updateState as? UpdateUiState.Available ?: return
+        val current = networkTypeProvider.current()
+        _uiState.value = _uiState.value.copy(
+            updateState = state.copy(cellularConfirmed = true, networkType = current)
+        )
+        _downloadEvents.tryEmit(state.apkDownloadUrl)
+    }
+
+    fun dismissUpdatePrompt() {
+        _uiState.value = _uiState.value.copy(updateState = UpdateUiState.Idle)
     }
 
     private fun refreshProviderStates() {

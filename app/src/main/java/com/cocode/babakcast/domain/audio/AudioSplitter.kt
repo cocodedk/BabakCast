@@ -6,7 +6,10 @@ import com.arthenica.ffmpegkit.ReturnCode
 import com.cocode.babakcast.data.model.VideoChapter
 import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
+import com.cocode.babakcast.domain.split.ChapterTooLargeException
+import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
+import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.util.DownloadFileParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,8 +23,7 @@ class AudioSplitter @Inject constructor() {
 
     companion object {
         private const val TAG = "AudioSplitter"
-        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024
-        private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024
+        internal const val MAX_CHUNK_SIZE_BYTES = SplitSize.DEFAULT_BYTES
         private const val MAX_SPLIT_ATTEMPTS = 5
         private const val DEFAULT_EXTENSION = "mp3"
     }
@@ -30,7 +32,8 @@ class AudioSplitter @Inject constructor() {
     suspend fun splitAudioIfNeeded(
         audioFile: File,
         chapterHints: List<VideoChapter> = emptyList(),
-        splitMode: SplitMode = SplitMode.SIZE_16MB,
+        splitMode: SplitMode = SplitMode.BY_SIZE,
+        chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
@@ -42,10 +45,10 @@ class AudioSplitter @Inject constructor() {
             val sourceSize = audioFile.length()
             Log.d(
                 TAG,
-                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES splitMode=$splitMode chapterHints=${chapterHints.size}"
+                "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$chunkSizeBytes splitMode=$splitMode chapterHints=${chapterHints.size}"
             )
 
-            if (sourceSize <= MAX_CHUNK_SIZE_BYTES && splitMode == SplitMode.SIZE_16MB) {
+            if (SplitDecision.skipFor(splitMode, sourceSize, chunkSizeBytes)) {
                 Log.d(TAG, "splitAudioIfNeeded skip: size within limit, returning original file")
                 return@withContext Result.success(listOf(audioFile))
             }
@@ -67,8 +70,9 @@ class AudioSplitter @Inject constructor() {
             val baseName = audioFile.nameWithoutExtension
             val outputExtension = audioFile.extension.ifBlank { DEFAULT_EXTENSION }
 
-            if (splitMode == SplitMode.CHAPTERS) {
-                return@withContext splitByChapters(
+            when (splitMode) {
+                SplitMode.NONE -> error("NONE should have been skipped by SplitDecision")
+                SplitMode.CHAPTERS -> splitByChapters(
                     audioFile = audioFile,
                     outputDir = outputDir,
                     baseName = baseName,
@@ -78,100 +82,112 @@ class AudioSplitter @Inject constructor() {
                     chapterHints = chapterHints,
                     onProgress = onProgress
                 )
+                SplitMode.BY_SIZE -> splitBySize(
+                    audioFile = audioFile,
+                    outputDir = outputDir,
+                    baseName = baseName,
+                    outputExtension = outputExtension,
+                    sourceSize = sourceSize,
+                    duration = duration,
+                    bytesPerSecond = bytesPerSecond,
+                    chunkSizeBytes = chunkSizeBytes,
+                    onProgress = onProgress
+                )
             }
-
-            val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
-            val splitFiles = mutableListOf<File>()
-
-            val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
-
-            Log.d(
-                TAG,
-                "splitAudioIfNeeded planning durationSec=${FfmpegCommands.formatSeconds(duration)} bytesPerSec=${"%.2f".format(java.util.Locale.US, bytesPerSecond)} targetChunkSec=${FfmpegCommands.formatSeconds(chunkDuration)} estimatedParts=$estimatedParts"
-            )
-
-            var currentTime = 0.0
-            var chunkIndex = 0
-
-            while (currentTime < duration) {
-                val currentPart = (chunkIndex + 1).coerceAtMost(estimatedParts)
-                onProgress?.invoke(currentPart, estimatedParts)
-                val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
-                val outputBaseName = "${baseName}_part${partNumber}"
-                val outputFile = File(outputDir, "$outputBaseName.$outputExtension")
-
-                var segmentDuration = minOf(chunkDuration, duration - currentTime)
-                var attempt = 0
-                var splitSuccess = false
-
-                while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
-                    Log.d(
-                        TAG,
-                        "splitAudioIfNeeded chunk=${chunkIndex + 1} attempt=${attempt + 1} startSec=${FfmpegCommands.formatSeconds(currentTime)} durationSec=${FfmpegCommands.formatSeconds(segmentDuration)}"
-                    )
-                    val command = FfmpegCommands.buildCopySegmentCommand(
-                        inputFile = audioFile,
-                        outputFile = outputFile,
-                        startSeconds = currentTime,
-                        durationSeconds = segmentDuration
-                    )
-
-                    val session = FFmpegKit.execute(command)
-
-                    if (ReturnCode.isSuccess(session.returnCode)) {
-                        if (outputFile.exists() && outputFile.length() > 0) {
-                            if (outputFile.length() <= MAX_CHUNK_SIZE_BYTES) {
-                                Log.d(
-                                    TAG,
-                                    "splitAudioIfNeeded chunk=${chunkIndex + 1} success path=${outputFile.name} sizeBytes=${outputFile.length()}"
-                                )
-                                splitFiles.add(outputFile)
-                                splitSuccess = true
-                            } else {
-                                Log.w(
-                                    TAG,
-                                    "splitAudioIfNeeded chunk=${chunkIndex + 1} oversize sizeBytes=${outputFile.length()} retrying with shorter duration"
-                                )
-                                outputFile.delete()
-                                segmentDuration *= 0.85
-                                attempt++
-                            }
-                        } else {
-                            return@withContext Result.failure(Exception("Split file was not created"))
-                        }
-                    } else {
-                        val errorOutput = session.failStackTrace ?: "Unknown error"
-                        Log.e(TAG, "splitAudioIfNeeded ffmpeg failed chunk=${chunkIndex + 1} error=$errorOutput")
-                        return@withContext Result.failure(Exception("Failed to split audio: $errorOutput"))
-                    }
-                }
-
-                if (!splitSuccess) {
-                    Log.e(TAG, "splitAudioIfNeeded failed after retries chunk=${chunkIndex + 1}")
-                    cleanupFiles(splitFiles)
-                    return@withContext Result.failure(Exception("Failed to split audio into WhatsApp-sized parts"))
-                }
-
-                currentTime += segmentDuration
-                chunkIndex++
-            }
-
-            if (splitFiles.isNotEmpty()) {
-                Log.d(TAG, "splitAudioIfNeeded deleting source after split path=${audioFile.name}")
-                audioFile.delete()
-            }
-
-            val totalOutputSize = splitFiles.sumOf { it.length() }
-            Log.d(
-                TAG,
-                "splitAudioIfNeeded completed parts=${splitFiles.size} totalOutputBytes=$totalOutputSize sourceBytes=$sourceSize"
-            )
-
-            Result.success(splitFiles)
         } catch (e: Exception) {
             Log.e(TAG, "splitAudioIfNeeded exception", e)
             Result.failure(e)
         }
+    }
+
+    private fun splitBySize(
+        audioFile: File,
+        outputDir: File,
+        baseName: String,
+        outputExtension: String,
+        sourceSize: Long,
+        duration: Double,
+        bytesPerSecond: Double,
+        chunkSizeBytes: Long,
+        onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
+    ): Result<List<File>> {
+        val chunkDuration = SplitSize.targetChunkBytes(chunkSizeBytes).toDouble() / bytesPerSecond
+        val splitFiles = mutableListOf<File>()
+        val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
+
+        Log.d(
+            TAG,
+            "splitAudioIfNeeded planning durationSec=${FfmpegCommands.formatSeconds(duration)} bytesPerSec=${"%.2f".format(java.util.Locale.US, bytesPerSecond)} targetChunkSec=${FfmpegCommands.formatSeconds(chunkDuration)} estimatedParts=$estimatedParts"
+        )
+
+        var currentTime = 0.0
+        var chunkIndex = 0
+        while (currentTime < duration) {
+            val currentPart = (chunkIndex + 1).coerceAtMost(estimatedParts)
+            onProgress?.invoke(currentPart, estimatedParts)
+            val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
+            val outputFile = File(outputDir, "${baseName}_part${partNumber}.$outputExtension")
+
+            var segmentDuration = minOf(chunkDuration, duration - currentTime)
+            var attempt = 0
+            var splitSuccess = false
+
+            while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
+                Log.d(
+                    TAG,
+                    "splitAudioIfNeeded chunk=${chunkIndex + 1} attempt=${attempt + 1} startSec=${FfmpegCommands.formatSeconds(currentTime)} durationSec=${FfmpegCommands.formatSeconds(segmentDuration)}"
+                )
+                val command = FfmpegCommands.buildCopySegmentCommand(
+                    inputFile = audioFile,
+                    outputFile = outputFile,
+                    startSeconds = currentTime,
+                    durationSeconds = segmentDuration
+                )
+                val session = FFmpegKit.execute(command)
+
+                if (!ReturnCode.isSuccess(session.returnCode)) {
+                    val errorOutput = session.failStackTrace ?: "Unknown error"
+                    Log.e(TAG, "splitAudioIfNeeded ffmpeg failed chunk=${chunkIndex + 1} error=$errorOutput")
+                    return Result.failure(Exception("Failed to split audio: $errorOutput"))
+                }
+                val producedBytes = outputFile.length()
+                if (producedBytes <= 0) {
+                    return Result.failure(Exception("Split file was not created"))
+                }
+                if (producedBytes <= chunkSizeBytes) {
+                    Log.d(TAG, "splitAudioIfNeeded chunk=${chunkIndex + 1} success path=${outputFile.name} sizeBytes=$producedBytes")
+                    splitFiles.add(outputFile)
+                    splitSuccess = true
+                } else {
+                    Log.w(TAG, "splitAudioIfNeeded chunk=${chunkIndex + 1} oversize sizeBytes=$producedBytes retrying with shorter duration")
+                    outputFile.delete()
+                    segmentDuration *= 0.85
+                    attempt++
+                }
+            }
+
+            if (!splitSuccess) {
+                Log.e(TAG, "splitAudioIfNeeded failed after retries chunk=${chunkIndex + 1}")
+                cleanupFiles(splitFiles)
+                return Result.failure(Exception("Failed to split audio into requested chunk size"))
+            }
+
+            currentTime += segmentDuration
+            chunkIndex++
+        }
+
+        if (splitFiles.isNotEmpty()) {
+            Log.d(TAG, "splitAudioIfNeeded deleting source after split path=${audioFile.name}")
+            audioFile.delete()
+        }
+
+        val totalOutputSize = splitFiles.sumOf { it.length() }
+        Log.d(
+            TAG,
+            "splitAudioIfNeeded completed parts=${splitFiles.size} totalOutputBytes=$totalOutputSize sourceBytes=$sourceSize"
+        )
+
+        return Result.success(splitFiles)
     }
 
     private fun splitByChapters(
@@ -201,10 +217,10 @@ class AudioSplitter @Inject constructor() {
             val label = oversized.chapter.title.ifBlank { "Unnamed chapter" }
             val sizeMb = oversized.estimatedBytes.toDouble() / (1024.0 * 1024.0)
             return Result.failure(
-                Exception(
-                    "Chapter split exceeds 16MB for \"$label\" (estimated ${
+                ChapterTooLargeException(
+                    "Chapter split exceeds ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (estimated ${
                         String.format(java.util.Locale.US, "%.1f", sizeMb)
-                    } MB). Choose 16 MB split."
+                    } MB). Switch to size-based splitting."
                 )
             )
         }
@@ -245,10 +261,10 @@ class AudioSplitter @Inject constructor() {
                 val label = estimated.chapter.title.ifBlank { "Unnamed chapter" }
                 val sizeMb = outputFile.length().toDouble() / (1024.0 * 1024.0)
                 return Result.failure(
-                    Exception(
-                        "Chapter split produced chunk larger than 16MB for \"$label\" (${
+                    ChapterTooLargeException(
+                        "Chapter split produced chunk over ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (${
                             String.format(java.util.Locale.US, "%.1f", sizeMb)
-                        } MB). Choose 16 MB split."
+                        } MB). Switch to size-based splitting."
                     )
                 )
             }

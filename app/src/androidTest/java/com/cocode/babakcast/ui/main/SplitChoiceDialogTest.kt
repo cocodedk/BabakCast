@@ -74,6 +74,6 @@ class SplitChoiceDialogTest {
         }
 
         composeRule.onNodeWithText("Use 16 MB chunks").performClick()
-        assertEquals(SplitMode.SIZE_16MB, chosen)
+        assertEquals(SplitMode.BY_SIZE, chosen)
     }
 }

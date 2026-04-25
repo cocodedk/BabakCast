@@ -6,7 +6,10 @@ import com.cocode.babakcast.data.model.VideoChapter
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
+import com.cocode.babakcast.domain.split.ChapterTooLargeException
+import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
+import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.util.DownloadFileParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,46 +17,34 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Splits videos into chunks of ≤16MB each
- */
 @Singleton
 class VideoSplitter @Inject constructor() {
 
     companion object {
-        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024 // 16 MB limit
-        private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024 // 15 MB target to reduce tiny chunks
+        internal const val MAX_CHUNK_SIZE_BYTES = SplitSize.DEFAULT_BYTES
         private const val MAX_SPLIT_ATTEMPTS = 5
     }
 
-    /**
-     * Split video into chunks if it exceeds 16MB
-     */
     suspend fun splitVideoIfNeeded(
         videoInfo: VideoInfo,
-        splitMode: SplitMode = SplitMode.SIZE_16MB,
+        splitMode: SplitMode = SplitMode.BY_SIZE,
+        chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
         chapterHints: List<VideoChapter> = videoInfo.chapters,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
             val videoFile = videoInfo.file ?: return@withContext Result.success(videoInfo)
-
-            if (!videoInfo.needsSplitting && splitMode == SplitMode.SIZE_16MB) {
+            val sourceSize = videoInfo.fileSizeBytes.takeIf { it > 0L } ?: videoFile.length()
+            if (SplitDecision.skipFor(splitMode, sourceSize, chunkSizeBytes)) {
                 return@withContext Result.success(videoInfo)
             }
 
-            // Get video duration
             val duration = getVideoDuration(videoFile)
                 ?: return@withContext Result.failure(Exception("Could not determine video duration"))
-
-            // Calculate target chunk duration (in seconds)
-            // Estimate: file_size / duration = bytes_per_second
-            // chunk_duration = target_chunk_size / bytes_per_second
             if (duration <= 0.0) {
                 return@withContext Result.failure(Exception("Invalid video duration"))
             }
 
-            val sourceSize = videoInfo.fileSizeBytes.takeIf { it > 0L } ?: videoFile.length()
             val bytesPerSecond = sourceSize / duration
             if (bytesPerSecond <= 0.0) {
                 return@withContext Result.failure(Exception("Invalid bitrate estimate"))
@@ -63,8 +54,9 @@ class VideoSplitter @Inject constructor() {
                 ?: return@withContext Result.failure(Exception("Invalid output directory"))
             val baseName = videoFile.nameWithoutExtension
 
-            if (splitMode == SplitMode.CHAPTERS) {
-                return@withContext splitByChapters(
+            when (splitMode) {
+                SplitMode.NONE -> error("NONE should have been skipped by SplitDecision")
+                SplitMode.CHAPTERS -> splitByChapters(
                     videoInfo = videoInfo,
                     videoFile = videoFile,
                     outputDir = outputDir,
@@ -74,82 +66,87 @@ class VideoSplitter @Inject constructor() {
                     chapterHints = chapterHints,
                     onProgress = onProgress
                 )
-            }
-
-            val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
-            val splitFiles = mutableListOf<File>()
-
-            val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
-
-            var currentTime = 0.0
-            var chunkIndex = 0
-
-            while (currentTime < duration) {
-                onProgress?.invoke(chunkIndex + 1, estimatedParts)
-                val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
-                val outputBaseName = "${baseName}_part${partNumber}"
-                val outputFile = File(outputDir, "${outputBaseName}.mp4")
-                
-                // Calculate segment duration
-                var segmentDuration = minOf(chunkDuration, duration - currentTime)
-                var attempt = 0
-                var splitSuccess = false
-
-                while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
-                    // FFmpeg command: extract segment using copy codec for speed
-                    val command = FfmpegCommands.buildCopySegmentCommand(
-                        inputFile = videoFile,
-                        outputFile = outputFile,
-                        startSeconds = currentTime,
-                        durationSeconds = segmentDuration
-                    )
-
-                    val session = FFmpegKit.execute(command)
-                    
-                    if (ReturnCode.isSuccess(session.returnCode)) {
-                        if (outputFile.exists() && outputFile.length() > 0) {
-                            if (outputFile.length() <= MAX_CHUNK_SIZE_BYTES) {
-                                splitFiles.add(outputFile)
-                                splitSuccess = true
-                            } else {
-                                outputFile.delete()
-                                segmentDuration *= 0.85
-                                attempt++
-                            }
-                        } else {
-                            return@withContext Result.failure(Exception("Split file was not created"))
-                        }
-                    } else {
-                        val errorOutput = session.failStackTrace ?: "Unknown error"
-                        return@withContext Result.failure(
-                            Exception("Failed to split video: $errorOutput")
-                        )
-                    }
-                }
-
-                if (!splitSuccess) {
-                    cleanupFiles(splitFiles)
-                    return@withContext Result.failure(Exception("Failed to split video into WhatsApp-sized parts"))
-                }
-
-                currentTime += segmentDuration
-                chunkIndex++
-            }
-
-            // Delete original file after successful split
-            if (splitFiles.isNotEmpty()) {
-                videoFile.delete()
-            }
-
-            Result.success(
-                videoInfo.copy(
-                    file = null,
-                    splitFiles = splitFiles
+                SplitMode.BY_SIZE -> splitBySize(
+                    videoInfo = videoInfo,
+                    videoFile = videoFile,
+                    outputDir = outputDir,
+                    baseName = baseName,
+                    duration = duration,
+                    bytesPerSecond = bytesPerSecond,
+                    chunkSizeBytes = chunkSizeBytes,
+                    onProgress = onProgress
                 )
-            )
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun splitBySize(
+        videoInfo: VideoInfo,
+        videoFile: File,
+        outputDir: File,
+        baseName: String,
+        duration: Double,
+        bytesPerSecond: Double,
+        chunkSizeBytes: Long,
+        onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
+    ): Result<VideoInfo> {
+        val chunkDuration = SplitSize.targetChunkBytes(chunkSizeBytes).toDouble() / bytesPerSecond
+        val splitFiles = mutableListOf<File>()
+        val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
+
+        var currentTime = 0.0
+        var chunkIndex = 0
+        while (currentTime < duration) {
+            onProgress?.invoke(chunkIndex + 1, estimatedParts)
+            val partNumber = DownloadFileParser.formatPartNumber(chunkIndex + 1, estimatedParts)
+            val outputFile = File(outputDir, "${baseName}_part${partNumber}.mp4")
+
+            var segmentDuration = minOf(chunkDuration, duration - currentTime)
+            var attempt = 0
+            var splitSuccess = false
+
+            while (attempt < MAX_SPLIT_ATTEMPTS && !splitSuccess) {
+                val command = FfmpegCommands.buildCopySegmentCommand(
+                    inputFile = videoFile,
+                    outputFile = outputFile,
+                    startSeconds = currentTime,
+                    durationSeconds = segmentDuration
+                )
+                val session = FFmpegKit.execute(command)
+
+                if (!ReturnCode.isSuccess(session.returnCode)) {
+                    val errorOutput = session.failStackTrace ?: "Unknown error"
+                    return Result.failure(Exception("Failed to split video: $errorOutput"))
+                }
+                val producedBytes = outputFile.length()
+                if (producedBytes <= 0) {
+                    return Result.failure(Exception("Split file was not created"))
+                }
+                if (producedBytes <= chunkSizeBytes) {
+                    splitFiles.add(outputFile)
+                    splitSuccess = true
+                } else {
+                    outputFile.delete()
+                    segmentDuration *= 0.85
+                    attempt++
+                }
+            }
+
+            if (!splitSuccess) {
+                cleanupFiles(splitFiles)
+                return Result.failure(Exception("Failed to split video into requested chunk size"))
+            }
+
+            currentTime += segmentDuration
+            chunkIndex++
+        }
+
+        if (splitFiles.isNotEmpty()) {
+            videoFile.delete()
+        }
+        return Result.success(videoInfo.copy(file = null, splitFiles = splitFiles))
     }
 
     private fun splitByChapters(
@@ -179,10 +176,10 @@ class VideoSplitter @Inject constructor() {
             val label = oversized.chapter.title.ifBlank { "Unnamed chapter" }
             val sizeMb = oversized.estimatedBytes.toDouble() / (1024.0 * 1024.0)
             return Result.failure(
-                Exception(
-                    "Chapter split exceeds 16MB for \"$label\" (estimated ${
+                ChapterTooLargeException(
+                    "Chapter split exceeds ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (estimated ${
                         String.format(java.util.Locale.US, "%.1f", sizeMb)
-                    } MB). Choose 16 MB split."
+                    } MB). Switch to size-based splitting."
                 )
             )
         }
@@ -222,10 +219,10 @@ class VideoSplitter @Inject constructor() {
                 val label = estimated.chapter.title.ifBlank { "Unnamed chapter" }
                 val sizeMb = outputFile.length().toDouble() / (1024.0 * 1024.0)
                 return Result.failure(
-                    Exception(
-                        "Chapter split produced chunk larger than 16MB for \"$label\" (${
+                    ChapterTooLargeException(
+                        "Chapter split produced chunk over ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (${
                             String.format(java.util.Locale.US, "%.1f", sizeMb)
-                        } MB). Choose 16 MB split."
+                        } MB). Switch to size-based splitting."
                     )
                 )
             }

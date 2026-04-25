@@ -2,6 +2,7 @@ package com.cocode.babakcast.util
 
 import android.content.Context
 import com.cocode.babakcast.R
+import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import java.io.IOException
 
 /**
@@ -13,6 +14,8 @@ object ErrorHandler {
      */
     fun handleException(exception: Throwable): AppError {
         return when (exception) {
+            is ChapterTooLargeException ->
+                AppError.ChapterSplitTooLarge(exception.message ?: "Chapter split exceeds size cap")
             is IllegalArgumentException -> {
                 when {
                     exception.message?.contains("YouTube", ignoreCase = true) == true ->
@@ -46,9 +49,6 @@ object ErrorHandler {
                         AppError.TranscriptNotAvailable(msg)
                     msg.contains("not initialized", ignoreCase = true) ->
                         AppError.NotInitialized("Download engine is still starting.")
-                    msg.contains("chapter split exceeds 16mb", ignoreCase = true) ||
-                        msg.contains("chapter split produced chunk larger than 16mb", ignoreCase = true) ->
-                        AppError.ChapterSplitTooLarge(msg)
                     msg.contains("audio extraction", ignoreCase = true) ->
                         AppError.AudioExtractFailed(msg)
                     msg.contains("audio split", ignoreCase = true) ->

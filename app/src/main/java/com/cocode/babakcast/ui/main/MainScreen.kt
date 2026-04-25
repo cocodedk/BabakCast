@@ -267,6 +267,8 @@ fun MainScreen(
                 ActionButtonsSection(
                     uiState = uiState,
                     onDownloadVideo = viewModel::downloadVideo,
+                    onDownloadSplitVideo = viewModel::downloadSplitVideo,
+                    onSplitSizeChange = viewModel::updateSplitSizeMb,
                     onDownloadAllMedia = viewModel::downloadAllXMedia,
                     onCopyTweetText = viewModel::fetchAndCopyTweetText,
                     onShareTweetText = viewModel::fetchAndShareTweetText,
@@ -379,8 +381,9 @@ fun MainScreen(
     uiState.splitChoicePrompt?.let { prompt ->
         SplitModeDialog(
             prompt = prompt,
+            splitSizeMb = uiState.splitSizeMb,
             onChoice = viewModel::chooseSplitMode,
-            onDismiss = { viewModel.chooseSplitMode(SplitMode.SIZE_16MB) }
+            onDismiss = viewModel::dismissSplitChoice
         )
     }
 }
