@@ -6,8 +6,10 @@ import com.arthenica.ffmpegkit.ReturnCode
 import com.cocode.babakcast.data.model.VideoChapter
 import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
+import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
+import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.util.DownloadFileParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,8 +23,7 @@ class AudioSplitter @Inject constructor() {
 
     companion object {
         private const val TAG = "AudioSplitter"
-        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024
-        private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024
+        internal const val MAX_CHUNK_SIZE_BYTES = SplitSize.DEFAULT_BYTES
         private const val MAX_SPLIT_ATTEMPTS = 5
         private const val DEFAULT_EXTENSION = "mp3"
     }
@@ -110,8 +111,7 @@ class AudioSplitter @Inject constructor() {
         chunkSizeBytes: Long,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
     ): Result<List<File>> {
-        val targetChunkBytes = (chunkSizeBytes * 15) / 16
-        val chunkDuration = targetChunkBytes.toDouble() / bytesPerSecond
+        val chunkDuration = SplitSize.targetChunkBytes(chunkSizeBytes).toDouble() / bytesPerSecond
         val splitFiles = mutableListOf<File>()
         val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
 
@@ -217,10 +217,10 @@ class AudioSplitter @Inject constructor() {
             val label = oversized.chapter.title.ifBlank { "Unnamed chapter" }
             val sizeMb = oversized.estimatedBytes.toDouble() / (1024.0 * 1024.0)
             return Result.failure(
-                Exception(
-                    "Chapter split exceeds 16MB for \"$label\" (estimated ${
+                ChapterTooLargeException(
+                    "Chapter split exceeds ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (estimated ${
                         String.format(java.util.Locale.US, "%.1f", sizeMb)
-                    } MB). Choose 16 MB split."
+                    } MB). Switch to size-based splitting."
                 )
             )
         }
@@ -261,10 +261,10 @@ class AudioSplitter @Inject constructor() {
                 val label = estimated.chapter.title.ifBlank { "Unnamed chapter" }
                 val sizeMb = outputFile.length().toDouble() / (1024.0 * 1024.0)
                 return Result.failure(
-                    Exception(
-                        "Chapter split produced chunk larger than 16MB for \"$label\" (${
+                    ChapterTooLargeException(
+                        "Chapter split produced chunk over ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (${
                             String.format(java.util.Locale.US, "%.1f", sizeMb)
-                        } MB). Choose 16 MB split."
+                        } MB). Switch to size-based splitting."
                     )
                 )
             }

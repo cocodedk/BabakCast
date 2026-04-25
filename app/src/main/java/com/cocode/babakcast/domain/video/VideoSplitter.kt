@@ -6,6 +6,7 @@ import com.cocode.babakcast.data.model.VideoChapter
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
+import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
@@ -22,8 +23,6 @@ class VideoSplitter @Inject constructor() {
     companion object {
         internal const val MAX_CHUNK_SIZE_BYTES = SplitSize.DEFAULT_BYTES
         private const val MAX_SPLIT_ATTEMPTS = 5
-        // Aim slightly below the cap so the first attempt usually fits on one shot.
-        private fun targetChunkSize(maxChunk: Long): Long = (maxChunk * 15) / 16
     }
 
     suspend fun splitVideoIfNeeded(
@@ -93,7 +92,7 @@ class VideoSplitter @Inject constructor() {
         chunkSizeBytes: Long,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
     ): Result<VideoInfo> {
-        val chunkDuration = targetChunkSize(chunkSizeBytes).toDouble() / bytesPerSecond
+        val chunkDuration = SplitSize.targetChunkBytes(chunkSizeBytes).toDouble() / bytesPerSecond
         val splitFiles = mutableListOf<File>()
         val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
 
@@ -176,10 +175,9 @@ class VideoSplitter @Inject constructor() {
         if (oversized != null) {
             val label = oversized.chapter.title.ifBlank { "Unnamed chapter" }
             val sizeMb = oversized.estimatedBytes.toDouble() / (1024.0 * 1024.0)
-            val capMb = MAX_CHUNK_SIZE_BYTES / (1024 * 1024)
             return Result.failure(
-                Exception(
-                    "Chapter split exceeds $capMb MB cap for \"$label\" (estimated ${
+                ChapterTooLargeException(
+                    "Chapter split exceeds ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (estimated ${
                         String.format(java.util.Locale.US, "%.1f", sizeMb)
                     } MB). Switch to size-based splitting."
                 )
@@ -220,10 +218,9 @@ class VideoSplitter @Inject constructor() {
                 cleanupFiles(splitFiles + outputFile)
                 val label = estimated.chapter.title.ifBlank { "Unnamed chapter" }
                 val sizeMb = outputFile.length().toDouble() / (1024.0 * 1024.0)
-                val capMb = MAX_CHUNK_SIZE_BYTES / (1024 * 1024)
                 return Result.failure(
-                    Exception(
-                        "Chapter split produced chunk over $capMb MB cap for \"$label\" (${
+                    ChapterTooLargeException(
+                        "Chapter split produced chunk over ${SplitSize.DEFAULT_MB} MB cap for \"$label\" (${
                             String.format(java.util.Locale.US, "%.1f", sizeMb)
                         } MB). Switch to size-based splitting."
                     )

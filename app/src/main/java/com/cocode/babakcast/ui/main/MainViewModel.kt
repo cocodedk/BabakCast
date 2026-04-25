@@ -13,6 +13,7 @@ import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.audio.AudioExtractor
 import com.cocode.babakcast.domain.audio.AudioSplitter
+import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
@@ -522,7 +523,7 @@ class MainViewModel @Inject constructor(
         videoInfo: VideoInfo,
         splitMode: SplitMode
     ) {
-        val chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
+        val chunkSizeBytes = _uiState.value.splitSizeBytes
         val fileSize = videoInfo.fileSizeBytes.takeIf { it > 0L } ?: videoInfo.file?.length() ?: 0L
         if (SplitDecision.skipFor(splitMode, fileSize, chunkSizeBytes)) {
             _uiState.value = _uiState.value.copy(
@@ -614,7 +615,7 @@ class MainViewModel @Inject constructor(
             audioFile = audioFile,
             chapterHints = videoInfo.chapters,
             splitMode = splitMode,
-            chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
+            chunkSizeBytes = _uiState.value.splitSizeBytes
         ) { currentPart, totalParts ->
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
@@ -683,11 +684,7 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    private fun isChapterTooLargeError(error: Throwable): Boolean {
-        val message = error.message.orEmpty()
-        return message.contains("chapter split exceeds", ignoreCase = true) ||
-            message.contains("chapter split produced chunk over", ignoreCase = true)
-    }
+    private fun isChapterTooLargeError(error: Throwable): Boolean = error is ChapterTooLargeException
 }
 
 private fun SplitMode.splittingMessage(noun: String): String = when (this) {
