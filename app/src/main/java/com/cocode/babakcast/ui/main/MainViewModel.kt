@@ -110,7 +110,7 @@ class MainViewModel @Inject constructor(
                 )
             )
         } else {
-            splitAndShareVideo(videoInfo, SplitMode.SIZE_16MB)
+            splitAndShareVideo(videoInfo, SplitMode.BY_SIZE)
         }
     }
 
@@ -315,7 +315,7 @@ class MainViewModel @Inject constructor(
                                     videoInfo = videoInfo,
                                     videoFile = videoFile,
                                     audioFile = audioFile,
-                                    splitMode = SplitMode.SIZE_16MB
+                                    splitMode = SplitMode.BY_SIZE
                                 )
                             }
                         },
@@ -526,7 +526,7 @@ class MainViewModel @Inject constructor(
         val chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
         val fileSize = videoInfo.file?.length() ?: videoInfo.fileSizeBytes
         val skipSplit = splitMode == SplitMode.NONE ||
-            (splitMode == SplitMode.SIZE_16MB && fileSize > 0L && fileSize <= chunkSizeBytes)
+            (splitMode == SplitMode.BY_SIZE && fileSize > 0L && fileSize <= chunkSizeBytes)
         if (skipSplit) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,

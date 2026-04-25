@@ -33,7 +33,7 @@ class VideoSplitterCustomChunkSizeTest {
 
         val result = VideoSplitter().splitVideoIfNeeded(
             videoInfo = info,
-            splitMode = SplitMode.SIZE_16MB,
+            splitMode = SplitMode.BY_SIZE,
             chunkSizeBytes = 25L * 1024 * 1024 // 25 MB target
         )
 
@@ -62,7 +62,7 @@ class VideoSplitterCustomChunkSizeTest {
 
         val result = VideoSplitter().splitVideoIfNeeded(
             videoInfo = info,
-            splitMode = SplitMode.SIZE_16MB,
+            splitMode = SplitMode.BY_SIZE,
             chunkSizeBytes = 100L * 1024 * 1024 // 100 MB target → no split needed
         )
 

@@ -32,7 +32,7 @@ internal fun SplitModeDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = { onChoice(SplitMode.SIZE_16MB) }) {
+            TextButton(onClick = { onChoice(SplitMode.BY_SIZE) }) {
                 Text("Use $splitSizeMb MB chunks")
             }
         }

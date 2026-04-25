@@ -27,7 +27,7 @@ class VideoSplitter @Inject constructor() {
 
     suspend fun splitVideoIfNeeded(
         videoInfo: VideoInfo,
-        splitMode: SplitMode = SplitMode.SIZE_16MB,
+        splitMode: SplitMode = SplitMode.BY_SIZE,
         chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
         chapterHints: List<VideoChapter> = videoInfo.chapters,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
@@ -39,7 +39,7 @@ class VideoSplitter @Inject constructor() {
 
             val videoFile = videoInfo.file ?: return@withContext Result.success(videoInfo)
 
-            if (splitMode == SplitMode.SIZE_16MB && videoFile.length() <= chunkSizeBytes) {
+            if (splitMode == SplitMode.BY_SIZE && videoFile.length() <= chunkSizeBytes) {
                 return@withContext Result.success(videoInfo)
             }
 

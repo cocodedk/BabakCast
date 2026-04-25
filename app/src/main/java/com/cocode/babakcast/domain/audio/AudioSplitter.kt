@@ -30,7 +30,7 @@ class AudioSplitter @Inject constructor() {
     suspend fun splitAudioIfNeeded(
         audioFile: File,
         chapterHints: List<VideoChapter> = emptyList(),
-        splitMode: SplitMode = SplitMode.SIZE_16MB,
+        splitMode: SplitMode = SplitMode.BY_SIZE,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
@@ -45,7 +45,7 @@ class AudioSplitter @Inject constructor() {
                 "splitAudioIfNeeded start name=${audioFile.name} sizeBytes=$sourceSize maxChunkBytes=$MAX_CHUNK_SIZE_BYTES splitMode=$splitMode chapterHints=${chapterHints.size}"
             )
 
-            if (sourceSize <= MAX_CHUNK_SIZE_BYTES && splitMode == SplitMode.SIZE_16MB) {
+            if (sourceSize <= MAX_CHUNK_SIZE_BYTES && splitMode == SplitMode.BY_SIZE) {
                 Log.d(TAG, "splitAudioIfNeeded skip: size within limit, returning original file")
                 return@withContext Result.success(listOf(audioFile))
             }
