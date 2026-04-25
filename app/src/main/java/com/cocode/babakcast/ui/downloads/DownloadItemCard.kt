@@ -99,22 +99,7 @@ internal fun DownloadItemCard(
     }
 }
 
-private fun formatFileSize(bytes: Long): String {
-    if (bytes <= 0) return "0 B"
-    val units = arrayOf("B", "KB", "MB", "GB")
-    var size = bytes.toDouble()
-    var unitIndex = 0
-    while (size >= 1024 && unitIndex < units.lastIndex) {
-        size /= 1024
-        unitIndex++
-    }
-    val formatted = if (size >= 100 || unitIndex == 0) {
-        size.toInt().toString()
-    } else {
-        String.format(Locale.getDefault(), "%.1f", size)
-    }
-    return "$formatted ${units[unitIndex]}"
-}
+private fun formatFileSize(bytes: Long): String = com.cocode.babakcast.util.ByteFormatter.format(bytes)
 
 private fun formatDate(timestamp: Long): String {
     val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
