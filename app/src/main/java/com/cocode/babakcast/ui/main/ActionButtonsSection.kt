@@ -33,7 +33,8 @@ import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 internal fun ActionButtonsSection(
     uiState: MainUiState,
     onDownloadVideo: () -> Unit,
-    onDownloadWholeVideo: () -> Unit,
+    onDownloadSplitVideo: () -> Unit,
+    onSplitSizeChange: (Int) -> Unit,
     onDownloadAllMedia: () -> Unit,
     onCopyTweetText: () -> Unit,
     onShareTweetText: () -> Unit,
@@ -45,9 +46,10 @@ internal fun ActionButtonsSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        val downloadEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
         Button(
             onClick = onDownloadVideo,
-            enabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank(),
+            enabled = downloadEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -68,10 +70,17 @@ internal fun ActionButtonsSection(
             )
         }
 
-        val wholeVideoEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
+        SplitSizeSlider(
+            valueMb = uiState.splitSizeMb,
+            minMb = MainViewModel.MIN_SPLIT_MB,
+            maxMb = MainViewModel.MAX_SPLIT_MB,
+            enabled = downloadEnabled,
+            onValueChange = onSplitSizeChange
+        )
+
         OutlinedButton(
-            onClick = onDownloadWholeVideo,
-            enabled = wholeVideoEnabled,
+            onClick = onDownloadSplitVideo,
+            enabled = downloadEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -80,9 +89,9 @@ internal fun ActionButtonsSection(
                 contentColor = BabakCastColors.PrimaryAccent,
                 disabledContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.3f)
             ),
-            border = ButtonDefaults.outlinedButtonBorder(enabled = wholeVideoEnabled).copy(
+            border = ButtonDefaults.outlinedButtonBorder(enabled = downloadEnabled).copy(
                 brush = SolidColor(
-                    if (wholeVideoEnabled) {
+                    if (downloadEnabled) {
                         BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
                     } else {
                         BabakCastColors.PrimaryAccent.copy(alpha = 0.2f)
@@ -91,7 +100,7 @@ internal fun ActionButtonsSection(
             )
         ) {
             Text(
-                "Download Full Video (no split)",
+                "Download Split (${uiState.splitSizeMb} MB)",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp

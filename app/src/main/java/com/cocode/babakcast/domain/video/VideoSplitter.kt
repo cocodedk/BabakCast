@@ -21,9 +21,10 @@ import javax.inject.Singleton
 class VideoSplitter @Inject constructor() {
 
     companion object {
-        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024 // 16 MB limit
-        private const val TARGET_CHUNK_SIZE_BYTES = 15L * 1024 * 1024 // 15 MB target to reduce tiny chunks
+        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024 // legacy 16 MB default
         private const val MAX_SPLIT_ATTEMPTS = 5
+        // Aim slightly below the cap so the first attempt usually fits on one shot.
+        private fun targetChunkSize(maxChunk: Long): Long = (maxChunk * 15) / 16
     }
 
     /**
@@ -32,6 +33,7 @@ class VideoSplitter @Inject constructor() {
     suspend fun splitVideoIfNeeded(
         videoInfo: VideoInfo,
         splitMode: SplitMode = SplitMode.SIZE_16MB,
+        chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
         chapterHints: List<VideoChapter> = videoInfo.chapters,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
@@ -42,7 +44,7 @@ class VideoSplitter @Inject constructor() {
 
             val videoFile = videoInfo.file ?: return@withContext Result.success(videoInfo)
 
-            if (!videoInfo.needsSplitting && splitMode == SplitMode.SIZE_16MB) {
+            if (splitMode == SplitMode.SIZE_16MB && videoFile.length() <= chunkSizeBytes) {
                 return@withContext Result.success(videoInfo)
             }
 
@@ -80,7 +82,7 @@ class VideoSplitter @Inject constructor() {
                 )
             }
 
-            val chunkDuration = TARGET_CHUNK_SIZE_BYTES.toDouble() / bytesPerSecond
+            val chunkDuration = targetChunkSize(chunkSizeBytes).toDouble() / bytesPerSecond
             val splitFiles = mutableListOf<File>()
 
             val estimatedParts = kotlin.math.ceil(duration / chunkDuration).toInt().coerceAtLeast(1)
@@ -112,7 +114,7 @@ class VideoSplitter @Inject constructor() {
                     
                     if (ReturnCode.isSuccess(session.returnCode)) {
                         if (outputFile.exists() && outputFile.length() > 0) {
-                            if (outputFile.length() <= MAX_CHUNK_SIZE_BYTES) {
+                            if (outputFile.length() <= chunkSizeBytes) {
                                 splitFiles.add(outputFile)
                                 splitSuccess = true
                             } else {

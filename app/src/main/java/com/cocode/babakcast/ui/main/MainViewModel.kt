@@ -46,6 +46,12 @@ class MainViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val shareHelper: ShareHelper
 ) : ViewModel() {
+
+    companion object {
+        const val MIN_SPLIT_MB = 5
+        const val MAX_SPLIT_MB = 100
+    }
+
     private val tag = "MainViewModel"
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -84,7 +90,55 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(summaryLength = length)
     }
 
+    fun updateSplitSizeMb(mb: Int) {
+        _uiState.value = _uiState.value.copy(splitSizeMb = mb.coerceIn(MIN_SPLIT_MB, MAX_SPLIT_MB))
+    }
+
     fun downloadVideo() {
+        val url = _uiState.value.url
+        if (!_uiState.value.downloadEngineReady) return
+        if (url.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
+            )
+            return
+        }
+
+        pendingSplitRequest = null
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                error = null,
+                progress = 0f,
+                isDownloading = true,
+                isSummarizing = false,
+                isDownloadingAudio = false,
+                loadingMessage = "Downloading full video...",
+                isProgressIndeterminate = false,
+                splitChoicePrompt = null
+            )
+
+            mediaRepository.downloadVideo(url) { progress ->
+                _uiState.value = _uiState.value.copy(progress = progress)
+            }.fold(
+                onSuccess = { videoInfo ->
+                    splitAndShareVideo(videoInfo, SplitMode.NONE)
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = ErrorHandler.handleException(error),
+                        isDownloading = false,
+                        isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
+                    )
+                }
+            )
+        }
+    }
+
+    fun downloadSplitVideo() {
         val url = _uiState.value.url
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
@@ -128,50 +182,6 @@ class MainViewModel @Inject constructor(
                     } else {
                         splitAndShareVideo(videoInfo, SplitMode.SIZE_16MB)
                     }
-                },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = ErrorHandler.handleException(error),
-                        isDownloading = false,
-                        isDownloadingAudio = false,
-                        loadingMessage = null,
-                        isProgressIndeterminate = false
-                    )
-                }
-            )
-        }
-    }
-
-    fun downloadWholeVideo() {
-        val url = _uiState.value.url
-        if (!_uiState.value.downloadEngineReady) return
-        if (url.isBlank()) {
-            _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
-            )
-            return
-        }
-
-        pendingSplitRequest = null
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                error = null,
-                progress = 0f,
-                isDownloading = true,
-                isSummarizing = false,
-                isDownloadingAudio = false,
-                loadingMessage = "Downloading full video...",
-                isProgressIndeterminate = false,
-                splitChoicePrompt = null
-            )
-
-            mediaRepository.downloadVideo(url) { progress ->
-                _uiState.value = _uiState.value.copy(progress = progress)
-            }.fold(
-                onSuccess = { videoInfo ->
-                    splitAndShareVideo(videoInfo, SplitMode.NONE)
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
@@ -551,8 +561,11 @@ class MainViewModel @Inject constructor(
         videoInfo: VideoInfo,
         splitMode: SplitMode
     ) {
-        if (splitMode == SplitMode.NONE ||
-            (!videoInfo.needsSplitting && splitMode == SplitMode.SIZE_16MB)) {
+        val chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
+        val fileSize = videoInfo.file?.length() ?: videoInfo.fileSizeBytes
+        val skipSplit = splitMode == SplitMode.NONE ||
+            (splitMode == SplitMode.SIZE_16MB && fileSize > 0L && fileSize <= chunkSizeBytes)
+        if (skipSplit) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 videoInfo = videoInfo,
@@ -578,6 +591,7 @@ class MainViewModel @Inject constructor(
         videoSplitter.splitVideoIfNeeded(
             videoInfo = videoInfo,
             splitMode = splitMode,
+            chunkSizeBytes = chunkSizeBytes,
             chapterHints = videoInfo.chapters
         ) { currentPart, totalParts ->
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)

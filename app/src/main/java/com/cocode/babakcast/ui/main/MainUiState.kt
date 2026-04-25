@@ -22,5 +22,6 @@ data class MainUiState(
     val supportsSummarize: Boolean = true,
     val summaryLength: SummaryLength = SummaryLength.MEDIUM,
     val tweetText: String? = null,
-    val isFetchingTweetText: Boolean = false
+    val isFetchingTweetText: Boolean = false,
+    val splitSizeMb: Int = 16
 )
