@@ -13,6 +13,7 @@ import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.audio.AudioExtractor
 import com.cocode.babakcast.domain.audio.AudioSplitter
+import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.domain.video.VideoSplitter
@@ -355,10 +356,8 @@ class MainViewModel @Inject constructor(
             isDownloading = pending is PendingSplitRequest.Video,
             isDownloadingAudio = pending is PendingSplitRequest.Audio,
             loadingMessage = when (pending) {
-                is PendingSplitRequest.Video ->
-                    if (splitMode == SplitMode.CHAPTERS) "Splitting video by chapters..." else "Splitting video..."
-                is PendingSplitRequest.Audio ->
-                    if (splitMode == SplitMode.CHAPTERS) "Splitting audio by chapters..." else "Splitting audio..."
+                is PendingSplitRequest.Video -> splitMode.splittingMessage("video")
+                is PendingSplitRequest.Audio -> splitMode.splittingMessage("audio")
             },
             isProgressIndeterminate = false,
             splitChoicePrompt = null
@@ -525,9 +524,7 @@ class MainViewModel @Inject constructor(
     ) {
         val chunkSizeBytes = _uiState.value.splitSizeMb * 1024L * 1024L
         val fileSize = videoInfo.file?.length() ?: videoInfo.fileSizeBytes
-        val skipSplit = splitMode == SplitMode.NONE ||
-            (splitMode == SplitMode.BY_SIZE && fileSize > 0L && fileSize <= chunkSizeBytes)
-        if (skipSplit) {
+        if (SplitDecision.skipFor(splitMode, fileSize, chunkSizeBytes)) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 videoInfo = videoInfo,
@@ -543,11 +540,7 @@ class MainViewModel @Inject constructor(
 
         _uiState.value = _uiState.value.copy(
             progress = 0f,
-            loadingMessage = if (splitMode == SplitMode.CHAPTERS) {
-                "Splitting video by chapters..."
-            } else {
-                "Splitting video..."
-            }
+            loadingMessage = splitMode.splittingMessage("video")
         )
 
         videoSplitter.splitVideoIfNeeded(
@@ -559,11 +552,7 @@ class MainViewModel @Inject constructor(
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
                 progress = (currentPart / denominator).coerceIn(0f, 1f),
-                loadingMessage = if (splitMode == SplitMode.CHAPTERS) {
-                    "Splitting video chapter $currentPart/$totalParts..."
-                } else {
-                    "Splitting video part $currentPart/$totalParts..."
-                }
+                loadingMessage = splitMode.splittingProgressMessage("video", currentPart, totalParts)
             )
         }.fold(
             onSuccess = { splitVideoInfo ->
@@ -617,11 +606,7 @@ class MainViewModel @Inject constructor(
     ) {
         _uiState.value = _uiState.value.copy(
             progress = 0f,
-            loadingMessage = if (splitMode == SplitMode.CHAPTERS) {
-                "Splitting audio by chapters..."
-            } else {
-                "Splitting audio..."
-            },
+            loadingMessage = splitMode.splittingMessage("audio"),
             isProgressIndeterminate = false
         )
 
@@ -633,11 +618,7 @@ class MainViewModel @Inject constructor(
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
                 progress = (currentPart / denominator).coerceIn(0f, 1f),
-                loadingMessage = if (splitMode == SplitMode.CHAPTERS) {
-                    "Splitting audio chapter $currentPart/$totalParts..."
-                } else {
-                    "Splitting audio part $currentPart/$totalParts..."
-                }
+                loadingMessage = splitMode.splittingProgressMessage("audio", currentPart, totalParts)
             )
         }.fold(
             onSuccess = { audioFiles ->
@@ -706,4 +687,20 @@ class MainViewModel @Inject constructor(
         return message.contains("chapter split exceeds 16mb", ignoreCase = true) ||
             message.contains("chapter split produced chunk larger than 16mb", ignoreCase = true)
     }
+}
+
+private fun SplitMode.splittingMessage(noun: String): String = when (this) {
+    SplitMode.NONE -> error("$noun has no splitting message in NONE mode")
+    SplitMode.BY_SIZE -> "Splitting $noun..."
+    SplitMode.CHAPTERS -> "Splitting $noun by chapters..."
+}
+
+private fun SplitMode.splittingProgressMessage(
+    noun: String,
+    currentPart: Int,
+    totalParts: Int
+): String = when (this) {
+    SplitMode.NONE -> error("$noun has no progress message in NONE mode")
+    SplitMode.BY_SIZE -> "Splitting $noun part $currentPart/$totalParts..."
+    SplitMode.CHAPTERS -> "Splitting $noun chapter $currentPart/$totalParts..."
 }
