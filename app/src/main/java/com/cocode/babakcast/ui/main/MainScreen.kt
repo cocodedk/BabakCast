@@ -383,7 +383,7 @@ fun MainScreen(
             prompt = prompt,
             splitSizeMb = uiState.splitSizeMb,
             onChoice = viewModel::chooseSplitMode,
-            onDismiss = { viewModel.chooseSplitMode(SplitMode.BY_SIZE) }
+            onDismiss = viewModel::dismissSplitChoice
         )
     }
 }

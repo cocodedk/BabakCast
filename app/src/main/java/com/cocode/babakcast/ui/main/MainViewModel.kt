@@ -358,6 +358,18 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun dismissSplitChoice() {
+        pendingSplitRequest = null
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            isDownloading = false,
+            isDownloadingAudio = false,
+            loadingMessage = null,
+            isProgressIndeterminate = false,
+            splitChoicePrompt = null
+        )
+    }
+
     fun chooseSplitMode(splitMode: SplitMode) {
         val pending = pendingSplitRequest ?: return
         pendingSplitRequest = null

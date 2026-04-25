@@ -23,7 +23,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cocode.babakcast.ui.theme.BabakCastColors
-import com.cocode.babakcast.util.openUrl
+import com.cocode.babakcast.util.openUrlOrToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +35,7 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     LaunchedEffect(viewModel) {
-        viewModel.downloadEvents.collect { url -> context.openUrl(url) }
+        viewModel.downloadEvents.collect { url -> context.openUrlOrToast(url) }
     }
 
     Scaffold(
@@ -157,7 +157,7 @@ fun SettingsScreen(
                         fontSize = 12.sp
                     ),
                     color = BabakCastColors.SecondaryAccent,
-                    modifier = Modifier.clickable { context.openUrl("https://cocode.dk") }
+                    modifier = Modifier.clickable { context.openUrlOrToast("https://cocode.dk") }
                 )
 
                 Text(
@@ -166,7 +166,7 @@ fun SettingsScreen(
                         fontSize = 12.sp
                     ),
                     color = BabakCastColors.SecondaryAccent,
-                    modifier = Modifier.clickable { context.openUrl("https://cocodedk.github.io/BabakCast") }
+                    modifier = Modifier.clickable { context.openUrlOrToast("https://cocodedk.github.io/BabakCast") }
                 )
             }
         }

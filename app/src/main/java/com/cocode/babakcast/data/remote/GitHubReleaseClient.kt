@@ -31,6 +31,7 @@ class GitHubReleaseClient @Inject constructor(
             .url(url)
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28")
+            .header("User-Agent", "BabakCast-Android")
             .build()
         try {
             okHttpClient.newCall(request).execute().use { response ->
@@ -42,7 +43,7 @@ class GitHubReleaseClient @Inject constructor(
                     ?: return@withContext Result.failure(Exception("GitHub response did not contain a usable APK asset"))
                 Result.success(release)
             }
-        } catch (e: Throwable) {
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }

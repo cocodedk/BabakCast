@@ -18,11 +18,10 @@ data class AppVersion(
         fun parse(text: String): AppVersion? {
             val match = PATTERN.matchEntire(text.trim()) ?: return null
             val (majorStr, minorStr, patchStr) = match.destructured
-            return AppVersion(
-                major = majorStr.toInt(),
-                minor = minorStr.toInt(),
-                patch = patchStr.ifEmpty { "0" }.toInt()
-            )
+            val major = majorStr.toIntOrNull() ?: return null
+            val minor = minorStr.toIntOrNull() ?: return null
+            val patch = patchStr.ifEmpty { "0" }.toIntOrNull() ?: return null
+            return AppVersion(major, minor, patch)
         }
     }
 }
