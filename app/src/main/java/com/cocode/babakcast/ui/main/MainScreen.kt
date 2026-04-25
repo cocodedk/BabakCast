@@ -267,6 +267,7 @@ fun MainScreen(
                 ActionButtonsSection(
                     uiState = uiState,
                     onDownloadVideo = viewModel::downloadVideo,
+                    onDownloadWholeVideo = viewModel::downloadWholeVideo,
                     onDownloadAllMedia = viewModel::downloadAllXMedia,
                     onCopyTweetText = viewModel::fetchAndCopyTweetText,
                     onShareTweetText = viewModel::fetchAndShareTweetText,

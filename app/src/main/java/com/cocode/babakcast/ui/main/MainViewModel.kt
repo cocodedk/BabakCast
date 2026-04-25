@@ -143,6 +143,50 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun downloadWholeVideo() {
+        val url = _uiState.value.url
+        if (!_uiState.value.downloadEngineReady) return
+        if (url.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
+            )
+            return
+        }
+
+        pendingSplitRequest = null
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                error = null,
+                progress = 0f,
+                isDownloading = true,
+                isSummarizing = false,
+                isDownloadingAudio = false,
+                loadingMessage = "Downloading full video...",
+                isProgressIndeterminate = false,
+                splitChoicePrompt = null
+            )
+
+            mediaRepository.downloadVideo(url) { progress ->
+                _uiState.value = _uiState.value.copy(progress = progress)
+            }.fold(
+                onSuccess = { videoInfo ->
+                    splitAndShareVideo(videoInfo, SplitMode.NONE)
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = ErrorHandler.handleException(error),
+                        isDownloading = false,
+                        isDownloadingAudio = false,
+                        loadingMessage = null,
+                        isProgressIndeterminate = false
+                    )
+                }
+            )
+        }
+    }
+
     fun downloadAllXMedia() {
         val url = _uiState.value.url
         if (!_uiState.value.downloadEngineReady) return
@@ -507,7 +551,8 @@ class MainViewModel @Inject constructor(
         videoInfo: VideoInfo,
         splitMode: SplitMode
     ) {
-        if (!videoInfo.needsSplitting && splitMode == SplitMode.SIZE_16MB) {
+        if (splitMode == SplitMode.NONE ||
+            (!videoInfo.needsSplitting && splitMode == SplitMode.SIZE_16MB)) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 videoInfo = videoInfo,

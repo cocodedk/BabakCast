@@ -36,6 +36,10 @@ class VideoSplitter @Inject constructor() {
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
+            if (splitMode == SplitMode.NONE) {
+                return@withContext Result.success(videoInfo)
+            }
+
             val videoFile = videoInfo.file ?: return@withContext Result.success(videoInfo)
 
             if (!videoInfo.needsSplitting && splitMode == SplitMode.SIZE_16MB) {

@@ -33,6 +33,7 @@ import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 internal fun ActionButtonsSection(
     uiState: MainUiState,
     onDownloadVideo: () -> Unit,
+    onDownloadWholeVideo: () -> Unit,
     onDownloadAllMedia: () -> Unit,
     onCopyTweetText: () -> Unit,
     onShareTweetText: () -> Unit,
@@ -60,6 +61,37 @@ internal fun ActionButtonsSection(
         ) {
             Text(
                 "Download Video",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            )
+        }
+
+        val wholeVideoEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
+        OutlinedButton(
+            onClick = onDownloadWholeVideo,
+            enabled = wholeVideoEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = BabakCastColors.PrimaryAccent,
+                disabledContentColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.3f)
+            ),
+            border = ButtonDefaults.outlinedButtonBorder(enabled = wholeVideoEnabled).copy(
+                brush = SolidColor(
+                    if (wholeVideoEnabled) {
+                        BabakCastColors.PrimaryAccent.copy(alpha = 0.5f)
+                    } else {
+                        BabakCastColors.PrimaryAccent.copy(alpha = 0.2f)
+                    }
+                )
+            )
+        ) {
+            Text(
+                "Download Full Video (no split)",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
