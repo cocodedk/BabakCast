@@ -1,4 +1,5 @@
 import java.io.File
+import java.util.Properties
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -13,11 +14,22 @@ plugins {
     id("jacoco")
 }
 
-// Signing for release: set KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD (e.g. in CI)
-val signingKeystorePath = System.getenv("KEYSTORE_PATH")
-val signingKeystorePassword = System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
-val signingKeyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
-val signingKeyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+// Signing inputs come from env vars (CI) or local.properties (developer machines).
+// Both debug and release builds use the same keystore when configured, so update-
+// in-place between locally-built debug APKs and the published release APKs works
+// without uninstalling and losing app data.
+val localSigningProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(name: String): String? =
+    System.getenv(name)?.takeIf { it.isNotBlank() }
+        ?: localSigningProps.getProperty(name)?.takeIf { it.isNotBlank() }
+
+val signingKeystorePath = signingValue("KEYSTORE_PATH")
+val signingKeystorePassword = signingValue("KEYSTORE_PASSWORD")
+val signingKeyAlias = signingValue("KEY_ALIAS")
+val signingKeyPassword = signingValue("KEY_PASSWORD")
 val hasSigningConfig = signingKeystorePath != null &&
     signingKeyAlias != null &&
     signingKeystorePassword != null &&
@@ -53,6 +65,9 @@ android {
     buildTypes {
         debug {
             enableUnitTestCoverage = true
+            if (hasSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         release {
             if (hasSigningConfig) {
