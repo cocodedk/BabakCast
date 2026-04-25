@@ -13,7 +13,9 @@ sealed class UpdateUiState {
         val apkDownloadUrl: String,
         val apkSizeBytes: Long,
         val networkType: NetworkType,
-        val awaitingCellularConfirm: Boolean
+        /** User has explicitly OK'd cellular use this session. UI shows the
+         *  warning when `networkType == CELLULAR && !cellularConfirmed`. */
+        val cellularConfirmed: Boolean = false
     ) : UpdateUiState()
     data class Failed(val reason: String) : UpdateUiState()
 }

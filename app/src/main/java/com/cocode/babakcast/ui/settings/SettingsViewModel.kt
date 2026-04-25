@@ -236,17 +236,14 @@ class SettingsViewModel @Inject constructor(
             val newState = when (val result = updateChecker.checkForUpdate()) {
                 is UpdateAvailability.UpToDate -> UpdateUiState.UpToDate(result.installed)
                 is UpdateAvailability.CheckFailed -> UpdateUiState.Failed(result.reason)
-                is UpdateAvailability.UpdateAvailable -> {
-                    val networkType = networkTypeProvider.current()
-                    UpdateUiState.Available(
-                        installed = result.installed,
-                        latest = result.latest,
-                        apkDownloadUrl = result.apkDownloadUrl,
-                        apkSizeBytes = result.apkSizeBytes,
-                        networkType = networkType,
-                        awaitingCellularConfirm = networkType == NetworkType.CELLULAR
-                    )
-                }
+                is UpdateAvailability.UpdateAvailable -> UpdateUiState.Available(
+                    installed = result.installed,
+                    latest = result.latest,
+                    apkDownloadUrl = result.apkDownloadUrl,
+                    apkSizeBytes = result.apkSizeBytes,
+                    networkType = networkTypeProvider.current(),
+                    cellularConfirmed = false
+                )
             }
             _uiState.value = _uiState.value.copy(updateState = newState)
         }
@@ -255,10 +252,15 @@ class SettingsViewModel @Inject constructor(
     fun requestDownload() {
         val state = _uiState.value.updateState as? UpdateUiState.Available ?: return
         val current = networkTypeProvider.current()
-        if (current == NetworkType.CELLULAR && state.awaitingCellularConfirm) {
-            _uiState.value = _uiState.value.copy(updateState = state.copy(networkType = current))
+        if (current == NetworkType.CELLULAR && !state.cellularConfirmed) {
+            // Refresh the displayed network type so the UI shows the warning,
+            // even if the check happened earlier on Wi-Fi.
+            if (current != state.networkType) {
+                _uiState.value = _uiState.value.copy(updateState = state.copy(networkType = current))
+            }
             return
         }
+        _uiState.value = _uiState.value.copy(updateState = state.copy(networkType = current))
         _downloadEvents.tryEmit(state.apkDownloadUrl)
     }
 
@@ -266,7 +268,7 @@ class SettingsViewModel @Inject constructor(
         val state = _uiState.value.updateState as? UpdateUiState.Available ?: return
         val current = networkTypeProvider.current()
         _uiState.value = _uiState.value.copy(
-            updateState = state.copy(awaitingCellularConfirm = false, networkType = current)
+            updateState = state.copy(cellularConfirmed = true, networkType = current)
         )
         _downloadEvents.tryEmit(state.apkDownloadUrl)
     }

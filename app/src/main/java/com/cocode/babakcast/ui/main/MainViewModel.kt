@@ -98,7 +98,14 @@ class MainViewModel @Inject constructor(
     }
 
     fun downloadSplitVideo() = startVideoDownload("Downloading video...") { videoInfo ->
-        if (videoInfo.needsSplitting && videoInfo.chapters.isNotEmpty()) {
+        val fileSize = videoInfo.fileSizeBytes.takeIf { it > 0L }
+            ?: videoInfo.file?.length() ?: 0L
+        val needsSplit = !SplitDecision.skipFor(
+            mode = SplitMode.BY_SIZE,
+            fileSizeBytes = fileSize,
+            chunkSizeBytes = _uiState.value.splitSizeBytes
+        )
+        if (needsSplit && videoInfo.chapters.isNotEmpty()) {
             pendingSplitRequest = PendingSplitRequest.Video(videoInfo)
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -296,7 +303,12 @@ class MainViewModel @Inject constructor(
                                 tag,
                                 "downloadAudio extracted audio file=${audioFile.name} sizeBytes=${audioFile.length()}"
                             )
-                            if (audioFile.length() > AudioSplitter.MAX_CHUNK_SIZE_BYTES && videoInfo.chapters.isNotEmpty()) {
+                            val audioNeedsSplit = !SplitDecision.skipFor(
+                                mode = SplitMode.BY_SIZE,
+                                fileSizeBytes = audioFile.length(),
+                                chunkSizeBytes = _uiState.value.splitSizeBytes
+                            )
+                            if (audioNeedsSplit && videoInfo.chapters.isNotEmpty()) {
                                 pendingSplitRequest = PendingSplitRequest.Audio(
                                     videoInfo = videoInfo,
                                     videoFile = videoFile,

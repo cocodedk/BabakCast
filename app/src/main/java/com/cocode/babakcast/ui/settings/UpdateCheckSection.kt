@@ -139,7 +139,7 @@ private fun AvailableCard(
                     TextButton(onClick = onDismiss) { Text("Close") }
                 }
             }
-            state.awaitingCellularConfirm -> {
+            state.networkType == NetworkType.CELLULAR && !state.cellularConfirmed -> {
                 Spacer(Modifier.height(2.dp))
                 Text(
                     "You're on cellular data. The download will use about ${ByteFormatter.format(state.apkSizeBytes)} of your plan.",
