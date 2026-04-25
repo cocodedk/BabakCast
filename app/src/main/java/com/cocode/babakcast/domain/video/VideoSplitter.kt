@@ -7,6 +7,7 @@ import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.FfmpegCommands
 import com.cocode.babakcast.domain.split.ChapterSplitEstimator
 import com.cocode.babakcast.domain.split.SplitMode
+import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.util.DownloadFileParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,22 +15,16 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Splits videos into chunks of ≤16MB each
- */
 @Singleton
 class VideoSplitter @Inject constructor() {
 
     companion object {
-        internal const val MAX_CHUNK_SIZE_BYTES = 16L * 1024 * 1024 // legacy 16 MB default
+        internal const val MAX_CHUNK_SIZE_BYTES = SplitSize.DEFAULT_BYTES
         private const val MAX_SPLIT_ATTEMPTS = 5
         // Aim slightly below the cap so the first attempt usually fits on one shot.
         private fun targetChunkSize(maxChunk: Long): Long = (maxChunk * 15) / 16
     }
 
-    /**
-     * Split video into chunks if it exceeds 16MB
-     */
     suspend fun splitVideoIfNeeded(
         videoInfo: VideoInfo,
         splitMode: SplitMode = SplitMode.SIZE_16MB,

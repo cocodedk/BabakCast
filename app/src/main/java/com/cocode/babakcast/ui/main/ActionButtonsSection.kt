@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.data.model.SummaryLength
+import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 
@@ -72,8 +73,8 @@ internal fun ActionButtonsSection(
 
         SplitSizeSlider(
             valueMb = uiState.splitSizeMb,
-            minMb = MainViewModel.MIN_SPLIT_MB,
-            maxMb = MainViewModel.MAX_SPLIT_MB,
+            minMb = SplitSize.MIN_MB,
+            maxMb = SplitSize.MAX_MB,
             enabled = downloadEnabled,
             onValueChange = onSplitSizeChange
         )

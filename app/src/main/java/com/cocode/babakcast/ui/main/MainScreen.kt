@@ -381,6 +381,7 @@ fun MainScreen(
     uiState.splitChoicePrompt?.let { prompt ->
         SplitModeDialog(
             prompt = prompt,
+            splitSizeMb = uiState.splitSizeMb,
             onChoice = viewModel::chooseSplitMode,
             onDismiss = { viewModel.chooseSplitMode(SplitMode.SIZE_16MB) }
         )

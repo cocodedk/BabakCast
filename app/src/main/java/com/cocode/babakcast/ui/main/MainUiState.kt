@@ -2,6 +2,7 @@ package com.cocode.babakcast.ui.main
 
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
+import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.util.AppError
 
 data class MainUiState(
@@ -23,5 +24,5 @@ data class MainUiState(
     val summaryLength: SummaryLength = SummaryLength.MEDIUM,
     val tweetText: String? = null,
     val isFetchingTweetText: Boolean = false,
-    val splitSizeMb: Int = 16
+    val splitSizeMb: Int = SplitSize.DEFAULT_MB
 )

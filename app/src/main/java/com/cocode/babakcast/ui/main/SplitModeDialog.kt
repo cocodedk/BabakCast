@@ -9,6 +9,7 @@ import com.cocode.babakcast.domain.split.SplitMode
 @Composable
 internal fun SplitModeDialog(
     prompt: SplitChoicePrompt,
+    splitSizeMb: Int,
     onChoice: (SplitMode) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -22,7 +23,7 @@ internal fun SplitModeDialog(
         text = {
             Text(
                 text = "This $mediaLabel source includes ${prompt.chapterCount} chapters. " +
-                    "Split by chapters or keep standard 16 MB chunks?"
+                    "Split by chapters or keep $splitSizeMb MB chunks?"
             )
         },
         confirmButton = {
@@ -32,7 +33,7 @@ internal fun SplitModeDialog(
         },
         dismissButton = {
             TextButton(onClick = { onChoice(SplitMode.SIZE_16MB) }) {
-                Text("Use 16 MB chunks")
+                Text("Use $splitSizeMb MB chunks")
             }
         }
     )

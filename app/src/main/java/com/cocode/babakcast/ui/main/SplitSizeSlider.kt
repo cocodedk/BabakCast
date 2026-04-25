@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import kotlin.math.roundToInt
 
 @Composable
 internal fun SplitSizeSlider(
@@ -48,9 +49,11 @@ internal fun SplitSizeSlider(
         }
         Slider(
             value = valueMb.toFloat(),
-            onValueChange = { onValueChange(it.toInt()) },
+            onValueChange = {
+                val snapped = it.roundToInt().coerceIn(minMb, maxMb)
+                if (snapped != valueMb) onValueChange(snapped)
+            },
             valueRange = minMb.toFloat()..maxMb.toFloat(),
-            steps = (maxMb - minMb) - 1,
             enabled = enabled,
             colors = SliderDefaults.colors(
                 thumbColor = BabakCastColors.PrimaryAccent,
