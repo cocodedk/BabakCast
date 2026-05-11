@@ -338,6 +338,8 @@ fun MainScreen(
                 uiState.summary?.let { summary ->
                     SummarySection(
                         summary = summary,
+                        shareChunkCount = uiState.summaryShareChunks?.size ?: 1,
+                        shareChunkIndex = uiState.summaryShareIndex,
                         onCopySummary = {
                             scope.launch {
                                 clipboardManager.setPlainText(summary)
