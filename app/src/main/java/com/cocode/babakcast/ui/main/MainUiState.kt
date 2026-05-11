@@ -24,7 +24,9 @@ data class MainUiState(
     val summaryLength: SummaryLength = SummaryLength.MEDIUM,
     val tweetText: String? = null,
     val isFetchingTweetText: Boolean = false,
-    val splitSizeMb: Int = SplitSize.DEFAULT_MB
+    val splitSizeMb: Int = SplitSize.DEFAULT_MB,
+    val summaryShareChunks: List<String>? = null,
+    val summaryShareIndex: Int = 0
 ) {
     val splitSizeBytes: Long get() = splitSizeMb * 1024L * 1024L
 }

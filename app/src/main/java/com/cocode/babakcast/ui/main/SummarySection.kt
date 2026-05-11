@@ -20,10 +20,17 @@ import com.cocode.babakcast.ui.theme.BabakCastColors
 @Composable
 internal fun SummarySection(
     summary: String,
+    shareChunkCount: Int,
+    shareChunkIndex: Int,
     onCopySummary: () -> Unit,
     onShareSummaryAsFile: () -> Unit,
     onShareSummary: () -> Unit
 ) {
+    val shareLabel = if (shareChunkCount > 1) {
+        "Send part ${shareChunkIndex + 1}/$shareChunkCount →"
+    } else {
+        "Share →"
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -93,7 +100,7 @@ internal fun SummarySection(
                     )
                 ) {
                     Text(
-                        "Share →",
+                        shareLabel,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium

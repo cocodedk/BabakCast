@@ -22,6 +22,7 @@ import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.ShareHelper
+import com.cocode.babakcast.util.ShareTextChunker
 import com.cocode.babakcast.util.urlparsing.InstagramUrlExtractor
 import com.cocode.babakcast.util.urlparsing.LinkedInUrlExtractor
 import com.cocode.babakcast.util.urlparsing.XUrlExtractor
@@ -490,9 +491,12 @@ class MainViewModel @Inject constructor(
                         temperature = 0.2
                     ).fold(
                         onSuccess = { summary ->
+                            val chunks = ShareTextChunker.splitForShare(summary)
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 summary = summary,
+                                summaryShareChunks = chunks.takeIf { it.size > 1 },
+                                summaryShareIndex = 0,
                                 isSummarizing = false,
                                 isDownloadingAudio = false,
                                 loadingMessage = null,
@@ -530,8 +534,17 @@ class MainViewModel @Inject constructor(
     }
 
     fun shareSummary() {
-        val summary = _uiState.value.summary ?: return
-        shareHelper.shareLongText(summary, "Share Summary")
+        val state = _uiState.value
+        val chunks = state.summaryShareChunks
+        if (chunks != null) {
+            val index = state.summaryShareIndex.coerceIn(0, chunks.size - 1)
+            val nextIndex = if (index + 1 >= chunks.size) 0 else index + 1
+            _uiState.value = state.copy(summaryShareIndex = nextIndex)
+            shareHelper.shareText(chunks[index], "Share Summary")
+            return
+        }
+        val summary = state.summary ?: return
+        shareHelper.shareText(summary, "Share Summary")
     }
 
     fun shareSummaryAsFile() {
