@@ -54,16 +54,6 @@ internal fun SummarySection(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (summary.length > 8000) {
-                Text(
-                    text = "Long summary detected — Copy is recommended instead of Share.",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End

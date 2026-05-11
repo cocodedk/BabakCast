@@ -66,7 +66,7 @@ class ShareHelper @Inject constructor(
         fileName: String = "summary.txt",
         forceFile: Boolean = false
     ) {
-        val maxInlineChars = 8000
+        val maxInlineChars = 60_000
         if (!forceFile && text.length <= maxInlineChars) {
             shareText(text, title)
             return

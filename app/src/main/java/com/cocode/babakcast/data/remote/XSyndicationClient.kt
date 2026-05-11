@@ -91,7 +91,8 @@ class XSyndicationClient @Inject constructor(
          */
         fun parseMediaDetails(jsonString: String): TweetMediaResult {
             val root = json.parseToJsonElement(jsonString).jsonObject
-            val text = root["text"]?.jsonPrimitive?.content ?: ""
+            val text = root["note_tweet"]?.jsonObject?.get("text")?.jsonPrimitive?.content
+                ?: root["text"]?.jsonPrimitive?.content ?: ""
             val mediaDetails = root["mediaDetails"]?.jsonArray
                 ?: return TweetMediaResult(text, emptyList())
 

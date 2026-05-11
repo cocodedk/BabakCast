@@ -494,4 +494,33 @@ class XSyndicationClientParseTest {
         assertEquals("https://pbs.twimg.com/media/HEVBvNbXAAAXz99.jpg", photos[0].originalUrl)
         assertEquals("https://pbs.twimg.com/media/HEVBvyNboAAc3Hk.jpg", photos[1].originalUrl)
     }
+
+    @Test
+    fun parseNoteTweetText_returnsFullTextOverTruncatedText() {
+        val response = """
+        {
+            "text": "First 280 chars truncated...",
+            "note_tweet": {
+                "text": "Full long-form text that exceeds 280 characters and is only available via note_tweet field for X Premium posts."
+            },
+            "mediaDetails": []
+        }
+        """.trimIndent()
+
+        val result = XSyndicationClient.parseMediaDetails(response)
+
+        assertEquals(
+            "Full long-form text that exceeds 280 characters and is only available via note_tweet field for X Premium posts.",
+            result.text
+        )
+    }
+
+    @Test
+    fun parseNoNoteTweetField_fallsBackToTextField() {
+        val response = """{"text": "Regular short tweet"}"""
+
+        val result = XSyndicationClient.parseMediaDetails(response)
+
+        assertEquals("Regular short tweet", result.text)
+    }
 }
