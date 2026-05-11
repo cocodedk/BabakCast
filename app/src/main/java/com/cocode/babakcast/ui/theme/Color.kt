@@ -22,6 +22,7 @@ object BabakCastColors {
     
     // Status colors
     val Success = Color(0xFF4CAF50)
+    val OnSuccess = Color(0xFF052E16)  // dark-on-green for AA contrast on badges
     val Warning = Color(0xFFF59E0B)
     val Error = Color(0xFFEF4444)
 }
