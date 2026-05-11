@@ -66,7 +66,10 @@ class ShareHelper @Inject constructor(
         fileName: String = "summary.txt",
         forceFile: Boolean = false
     ) {
-        val maxInlineChars = 60_000
+        // WhatsApp's ACTION_SEND handler silently truncates inline text well below its
+        // 65 536 message limit (medium summaries ~3-5 KB already get cut). Keep inline
+        // only for clearly short bodies; anything bigger shares as a .txt file.
+        val maxInlineChars = 2_000
         if (!forceFile && text.length <= maxInlineChars) {
             shareText(text, title)
             return
