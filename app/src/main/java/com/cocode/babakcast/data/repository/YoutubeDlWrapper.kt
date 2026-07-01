@@ -142,14 +142,20 @@ internal class YoutubeDlWrapper(
     }
 
     internal companion object {
+        // YouTube disabled the token-free "android_sdkless" client and now gates the
+        // "web" client behind a PO token, so yt-dlp's default client chain returns
+        // HTTP 403. Steer to the remaining working clients (nsig solved on-device via
+        // the bundled QuickJS runtime). Removing android_sdkless is a no-op on newer
+        // yt-dlp builds that already dropped it, so this stays correct after updates.
+        private const val YOUTUBE_EXTRACTOR_ARGS = "youtube:player_client=default,-android_sdkless"
+        private const val X_EXTRACTOR_ARGS = "twitter:api=syndication"
+
         internal fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)
             request.addOption("--skip-download")
             request.addOption("--dump-json")
             request.addOption("--no-warnings")
-            if (platform == Platform.X) {
-                request.addOption("--extractor-args", "twitter:api=syndication")
-            }
+            applyPlatformExtractorArgs(request, platform)
             return request
         }
 
@@ -157,11 +163,17 @@ internal class YoutubeDlWrapper(
             val request = YoutubeDLRequest(url)
             request.addOption("-f", "best[ext=mp4]/best")
             request.addOption("--no-warnings")
-            if (platform == Platform.X) {
-                request.addOption("--extractor-args", "twitter:api=syndication")
-            }
+            applyPlatformExtractorArgs(request, platform)
             request.addOption("-o", outputPath)
             return request
+        }
+
+        private fun applyPlatformExtractorArgs(request: YoutubeDLRequest, platform: Platform) {
+            when (platform) {
+                Platform.YOUTUBE -> request.addOption("--extractor-args", YOUTUBE_EXTRACTOR_ARGS)
+                Platform.X -> request.addOption("--extractor-args", X_EXTRACTOR_ARGS)
+                else -> Unit
+            }
         }
     }
 }
