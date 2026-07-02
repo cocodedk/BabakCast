@@ -9,6 +9,7 @@ import com.cocode.babakcast.data.remote.XSyndicationClient
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.YouTubeMetadataParser
+import com.cocode.babakcast.util.retry
 import com.cocode.babakcast.util.urlparsing.InstagramUrlExtractor
 import com.cocode.babakcast.util.urlparsing.InstagramUrlParser
 import com.cocode.babakcast.util.urlparsing.LinkedInUrlExtractor
@@ -41,6 +42,10 @@ class MediaRepository @Inject constructor(
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val ytDl = YoutubeDlWrapper(tag)
     private val xDownloader = XDirectDownloader(okHttpClient, tag)
+
+    // YouTube intermittently 403s a media download; a fresh re-extraction usually
+    // succeeds, so retry the download a few times before surfacing the error.
+    private val downloadMaxAttempts = 3
 
     init {
         videosDir.mkdirs()
@@ -134,7 +139,14 @@ class MediaRepository @Inject constructor(
             val outputFile = File(videosDir, "${baseName}.mp4")
 
             val request = buildDownloadRequest(url, platform, outputFile.absolutePath)
-            ytDl.executeDownload(request, onProgress)
+            retry(
+                maxAttempts = downloadMaxAttempts,
+                onRetry = { attempt, e ->
+                    Log.w(tag, "Download attempt $attempt/$downloadMaxAttempts failed, retrying: ${e.message}")
+                }
+            ) {
+                ytDl.executeDownload(request, onProgress)
+            }
 
             if (!outputFile.exists()) {
                 return@withContext Result.failure(Exception("Download failed: file not created"))
