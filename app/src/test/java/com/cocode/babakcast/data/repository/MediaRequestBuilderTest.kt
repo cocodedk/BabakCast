@@ -21,11 +21,15 @@ class MediaRequestBuilderTest {
     }
 
     @Test
-    fun infoRequestYouTubeNoExtractorArgs() {
+    fun infoRequestYouTubeUsesPlayerClientExtractorArgs() {
         val request = MediaRepository.buildInfoRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE
         )
-        assertFalse(request.hasOption("--extractor-args"))
+        assertTrue(request.hasOption("--extractor-args"))
+        assertEquals(
+            "youtube:player_client=default,-android_sdkless",
+            request.getOption("--extractor-args")
+        )
     }
 
     @Test
@@ -59,11 +63,15 @@ class MediaRequestBuilderTest {
     }
 
     @Test
-    fun downloadRequestYouTubeNoExtractorArgs() {
+    fun downloadRequestYouTubeUsesPlayerClientExtractorArgs() {
         val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
-        assertFalse(request.hasOption("--extractor-args"))
+        assertTrue(request.hasOption("--extractor-args"))
+        assertEquals(
+            "youtube:player_client=default,-android_sdkless",
+            request.getOption("--extractor-args")
+        )
     }
 
     @Test
