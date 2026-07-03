@@ -29,6 +29,38 @@ internal object FfmpegCommands {
             "\"${outputFile.absolutePath}\""
     }
 
+    fun buildAddMetadataCommand(
+        inputFile: File,
+        outputFile: File,
+        title: String,
+        track: String,
+        album: String
+    ): String {
+        return "-i \"${inputFile.absolutePath}\" " +
+            "-map_metadata 0 " +
+            "-c copy " +
+            "-id3v2_version 3 " +
+            metadataArg("title", title) +
+            metadataArg("track", track) +
+            metadataArg("album", album) +
+            "-y " +
+            "\"${outputFile.absolutePath}\""
+    }
+
+    private fun metadataArg(key: String, value: String): String {
+        val clean = sanitizeMetadataValue(value)
+        return if (clean.isBlank()) "" else "-metadata $key=\"$clean\" "
+    }
+
+    fun sanitizeMetadataValue(value: String): String {
+        return value
+            .replace("\\", " ")
+            .replace("\"", "'")
+            .replace("\n", " ")
+            .replace("\r", " ")
+            .trim()
+    }
+
     fun parseDurationSeconds(output: String): Double? {
         val match = durationRegex.find(output) ?: return null
         val hours = match.groupValues[1].toInt()
