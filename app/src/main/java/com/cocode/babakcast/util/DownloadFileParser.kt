@@ -2,14 +2,18 @@ package com.cocode.babakcast.util
 
 object DownloadFileParser {
     private const val MIN_PART_NUMBER_WIDTH = 4
-    private val partRegex = Regex("(.+)_part(\\d+)$")
+    // Matches either the internal "_part0001" token or the share-friendly
+    // " — Part 1 of 5" suffix, so both naming schemes group and order correctly.
+    private val partRegex = Regex("(.+?)(?:_part(\\d+)|\\s+\\u2014\\s+Part\\s+(\\d+)\\s+of\\s+\\d+)$")
 
     fun extractGroupKey(fileNameNoExt: String): String {
         return partRegex.find(fileNameNoExt)?.groupValues?.get(1) ?: fileNameNoExt
     }
 
     fun extractPartNumber(fileNameNoExt: String): Int? {
-        return partRegex.find(fileNameNoExt)?.groupValues?.get(2)?.toIntOrNull()
+        val match = partRegex.find(fileNameNoExt) ?: return null
+        val token = match.groupValues[2].ifBlank { match.groupValues[3] }
+        return token.toIntOrNull()
     }
 
     /**

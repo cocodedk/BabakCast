@@ -27,4 +27,13 @@ class DownloadFileParserPartNameTest {
             sorted
         )
     }
+
+    @Test
+    fun parsesBothLegacyAndCleanSchemes() {
+        assertEquals("episode_audio_dQw4w9WgXcQ", DownloadFileParser.extractGroupKey("episode_audio_dQw4w9WgXcQ_part0003"))
+        assertEquals(3, DownloadFileParser.extractPartNumber("episode_audio_dQw4w9WgXcQ_part0003"))
+        assertEquals("My Episode", DownloadFileParser.extractGroupKey("My Episode — Part 02 of 12"))
+        assertEquals(2, DownloadFileParser.extractPartNumber("My Episode — Part 02 of 12"))
+        assertEquals("Just A Title", DownloadFileParser.extractGroupKey("Just A Title"))
+    }
 }

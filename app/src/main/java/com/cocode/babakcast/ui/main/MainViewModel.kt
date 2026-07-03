@@ -21,6 +21,7 @@ import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.AudioShareCaption
+import com.cocode.babakcast.util.AudioShareName
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.ShareHelper
@@ -699,8 +700,9 @@ class MainViewModel @Inject constructor(
         videoFile: File,
         audioFiles: List<File>
     ) {
-        val details = audioFiles.joinToString { "${it.name}:${it.length()}" }
-        Log.d(tag, "downloadAudio share partCount=${audioFiles.size} parts=[$details]")
+        val shareFiles = renameForShare(audioFiles, videoInfo.title)
+        val details = shareFiles.joinToString { "${it.name}:${it.length()}" }
+        Log.d(tag, "downloadAudio share partCount=${shareFiles.size} parts=[$details]")
         _uiState.value = _uiState.value.copy(
             isLoading = false,
             isDownloadingAudio = false,
@@ -710,14 +712,28 @@ class MainViewModel @Inject constructor(
         )
         _shareRequests.emit(
             ShareRequest.Audio(
-                caption = AudioShareCaption.build(videoInfo.title, audioFiles.size),
-                files = audioFiles,
+                caption = AudioShareCaption.build(videoInfo.title, shareFiles.size),
+                files = shareFiles,
                 mimeType = "audio/mpeg",
                 title = "Share audio"
             )
         )
         if (videoFile.exists()) {
             videoFile.delete()
+        }
+    }
+
+    private fun renameForShare(files: List<File>, title: String): List<File> {
+        val total = files.size
+        return files.mapIndexed { index, file ->
+            val cleanName = AudioShareName.build(title, index + 1, total, file.extension)
+            val target = File(file.parentFile, cleanName)
+            when {
+                file.name == cleanName -> file
+                target.exists() -> file
+                file.renameTo(target) -> target
+                else -> file
+            }
         }
     }
 
