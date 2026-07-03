@@ -273,6 +273,7 @@ fun MainScreen(
                     onCopyTweetText = viewModel::fetchAndCopyTweetText,
                     onShareTweetText = viewModel::fetchAndShareTweetText,
                     onDownloadAudio = viewModel::downloadAudio,
+                    onDownloadSplitAudio = viewModel::downloadSplitAudio,
                     onSummarize = viewModel::generateSummary,
                     onSummaryLengthChange = viewModel::updateSummaryLength
                 )
