@@ -19,5 +19,6 @@ class AudioShareCaptionBuilderTest {
 
     @Test fun zeroOrNegativeParts_treatedAsSingle() {
         assertEquals("My Episode", AudioShareCaption.build("My Episode", 0))
+        assertEquals("My Episode", AudioShareCaption.build("My Episode", -2))
     }
 }

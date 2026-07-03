@@ -51,9 +51,22 @@ class AudioPartTagger @Inject constructor() {
         )
         val session = FFmpegKit.execute(command)
         val ok = ReturnCode.isSuccess(session.returnCode) && temp.exists() && temp.length() > 0
-        if (ok && file.delete()) {
-            temp.renameTo(file)
+        if (!ok) {
+            temp.delete()
+            return
+        }
+        // Swap the tagged file into place without risking the original: move the original
+        // aside first and restore it if the final rename fails, so the part is never lost.
+        val backup = File(dir, "${file.nameWithoutExtension}.orig.${file.extension}")
+        backup.delete()
+        if (!file.renameTo(backup)) {
+            temp.delete()
+            return
+        }
+        if (temp.renameTo(file)) {
+            backup.delete()
         } else {
+            backup.renameTo(file)
             temp.delete()
         }
     }
