@@ -21,7 +21,7 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 - **X (Twitter) tweet text copy & share** — Paste an X/Twitter URL, tap *Copy Text* to copy the tweet text to clipboard, or *Share Text* to open the Android share sheet — no media download needed.
 - **Instagram video download** — Paste an Instagram post, reel, or IGTV URL to download videos.
 - **LinkedIn video download** — Paste a LinkedIn post or feed update URL to download videos from public posts.
-- **Audio download** — Extract audio (MP3) from YouTube, X, or Instagram videos and share audio files (auto-split at 16 MB for sharing limits).
+- **Audio download** — Extract audio (MP3) from YouTube, X, or Instagram videos. *Download Audio* shares one file; *Download Audio Split* splits at your chosen size (default 16 MB) for sharing limits and tags each part "Part n of N" so recipients can tell the order even when a messaging app reorders them.
 - **Transcript summarization** — Extract captions from YouTube videos and summarize with your chosen AI model (bullet points, paragraph, or TL;DR).
 - **Bring-your-own AI** — OpenAI, Azure OpenAI, Anthropic, Google Gemini, OpenRouter. Configure API key and model in Settings.
 - **No backend** — Everything runs on your device. No accounts, no analytics, no tracking.
@@ -74,7 +74,7 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 1. **Download video** — Paste a YouTube, X (Twitter), Instagram, or LinkedIn URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
 2. **Download all media (X/Twitter)** — Paste an X/Twitter URL, tap *Download All Media*. The app fetches all photos, videos, and GIFs from the post and opens the share sheet with everything in one go.
 3. **Copy or share tweet text** — Paste an X/Twitter URL, tap *Copy Text* to copy the tweet text to your clipboard (with a confirmation snackbar), or *Share Text* to open the Android share sheet.
-4. **Download audio** — Paste a YouTube, X, or Instagram URL, tap *Download Audio*. The app extracts audio, splits it if needed, and opens the share sheet.
+4. **Download audio** — Paste a YouTube, X, or Instagram URL. Tap *Download Audio* for a single MP3, or *Download Audio Split* to split it at your chosen size (default 16 MB). Split parts are tagged "Part n of N" and the share caption notes the count, so they play in order.
 5. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose. (Note: transcript summarization is available for YouTube only.)
 
 ---

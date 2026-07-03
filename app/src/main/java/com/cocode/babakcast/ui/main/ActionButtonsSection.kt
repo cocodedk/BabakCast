@@ -40,6 +40,7 @@ internal fun ActionButtonsSection(
     onCopyTweetText: () -> Unit,
     onShareTweetText: () -> Unit,
     onDownloadAudio: () -> Unit,
+    onDownloadSplitAudio: () -> Unit,
     onSummarize: () -> Unit,
     onSummaryLengthChange: (SummaryLength) -> Unit
 ) {
@@ -213,48 +214,11 @@ internal fun ActionButtonsSection(
             }
         }
 
-        val audioEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
-        OutlinedButton(
-            onClick = onDownloadAudio,
-            enabled = audioEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-            ),
-            border = ButtonDefaults.outlinedButtonBorder(enabled = audioEnabled).copy(
-                brush = SolidColor(
-                    if (audioEnabled) {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    } else {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    }
-                )
-            )
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (uiState.isDownloadingAudio) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = BabakCastColors.PrimaryAccent
-                    )
-                }
-                Text(
-                    if (uiState.isDownloadingAudio) "Downloading Audio…" else "Download Audio",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
-                )
-            }
-        }
+        AudioActionButtons(
+            uiState = uiState,
+            onDownloadAudio = onDownloadAudio,
+            onDownloadSplitAudio = onDownloadSplitAudio
+        )
 
         AnimatedVisibility(
             visible = uiState.supportsSummarize,
