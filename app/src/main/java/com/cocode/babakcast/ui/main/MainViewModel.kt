@@ -19,6 +19,7 @@ import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.AudioShareCaption
 import com.cocode.babakcast.util.ErrorHandler
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.ShareHelper
@@ -249,7 +250,34 @@ class MainViewModel @Inject constructor(
     fun fetchAndShareTweetText() =
         fetchTweetTextAndEmit(TweetTextEvent::Share, "This tweet has no text to share")
 
-    fun downloadAudio() {
+    fun downloadAudio() = startAudioDownload { videoInfo, videoFile, audioFile ->
+        splitAndShareAudio(videoInfo, videoFile, audioFile, SplitMode.NONE)
+    }
+
+    fun downloadSplitAudio() = startAudioDownload { videoInfo, videoFile, audioFile ->
+        val audioNeedsSplit = !SplitDecision.skipFor(
+            mode = SplitMode.BY_SIZE,
+            fileSizeBytes = audioFile.length(),
+            chunkSizeBytes = _uiState.value.splitSizeBytes
+        )
+        if (audioNeedsSplit && videoInfo.chapters.isNotEmpty()) {
+            pendingSplitRequest = PendingSplitRequest.Audio(videoInfo, videoFile, audioFile)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                isDownloadingAudio = false,
+                loadingMessage = null,
+                isProgressIndeterminate = false,
+                splitChoicePrompt = SplitChoicePrompt(
+                    mediaType = SplitChoiceMediaType.AUDIO,
+                    chapterCount = videoInfo.chapters.size
+                )
+            )
+        } else {
+            splitAndShareAudio(videoInfo, videoFile, audioFile, SplitMode.BY_SIZE)
+        }
+    }
+
+    private fun startAudioDownload(onAudioReady: suspend (VideoInfo, File, File) -> Unit) {
         val url = _uiState.value.url
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
@@ -289,51 +317,13 @@ class MainViewModel @Inject constructor(
                         return@fold
                     }
 
-                    Log.d(
-                        tag,
-                        "downloadAudio video ready file=${videoFile.name} sizeBytes=${videoFile.length()} needsSplitting=${videoInfo.needsSplitting}"
-                    )
                     _uiState.value = _uiState.value.copy(
                         loadingMessage = "Extracting audio...",
                         isProgressIndeterminate = true
                     )
 
                     audioExtractor.extractAudio(videoFile).fold(
-                        onSuccess = { audioFile ->
-                            Log.d(
-                                tag,
-                                "downloadAudio extracted audio file=${audioFile.name} sizeBytes=${audioFile.length()}"
-                            )
-                            val audioNeedsSplit = !SplitDecision.skipFor(
-                                mode = SplitMode.BY_SIZE,
-                                fileSizeBytes = audioFile.length(),
-                                chunkSizeBytes = _uiState.value.splitSizeBytes
-                            )
-                            if (audioNeedsSplit && videoInfo.chapters.isNotEmpty()) {
-                                pendingSplitRequest = PendingSplitRequest.Audio(
-                                    videoInfo = videoInfo,
-                                    videoFile = videoFile,
-                                    audioFile = audioFile
-                                )
-                                _uiState.value = _uiState.value.copy(
-                                    isLoading = false,
-                                    isDownloadingAudio = false,
-                                    loadingMessage = null,
-                                    isProgressIndeterminate = false,
-                                    splitChoicePrompt = SplitChoicePrompt(
-                                        mediaType = SplitChoiceMediaType.AUDIO,
-                                        chapterCount = videoInfo.chapters.size
-                                    )
-                                )
-                            } else {
-                                splitAndShareAudio(
-                                    videoInfo = videoInfo,
-                                    videoFile = videoFile,
-                                    audioFile = audioFile,
-                                    splitMode = SplitMode.BY_SIZE
-                                )
-                            }
-                        },
+                        onSuccess = { audioFile -> onAudioReady(videoInfo, videoFile, audioFile) },
                         onFailure = { error ->
                             Log.e(tag, "downloadAudio extract failed", error)
                             _uiState.value = _uiState.value.copy(
@@ -640,6 +630,12 @@ class MainViewModel @Inject constructor(
         audioFile: File,
         splitMode: SplitMode
     ) {
+        val chunkSizeBytes = _uiState.value.splitSizeBytes
+        if (SplitDecision.skipFor(splitMode, audioFile.length(), chunkSizeBytes)) {
+            shareAudioFiles(videoInfo, videoFile, listOf(audioFile))
+            return
+        }
+
         _uiState.value = _uiState.value.copy(
             progress = 0f,
             loadingMessage = splitMode.splittingMessage("audio"),
@@ -650,7 +646,8 @@ class MainViewModel @Inject constructor(
             audioFile = audioFile,
             chapterHints = videoInfo.chapters,
             splitMode = splitMode,
-            chunkSizeBytes = _uiState.value.splitSizeBytes
+            chunkSizeBytes = chunkSizeBytes,
+            displayTitle = videoInfo.title
         ) { currentPart, totalParts ->
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
@@ -658,33 +655,7 @@ class MainViewModel @Inject constructor(
                 loadingMessage = splitMode.splittingProgressMessage("audio", currentPart, totalParts)
             )
         }.fold(
-            onSuccess = { audioFiles ->
-                val details = audioFiles.joinToString { "${it.name}:${it.length()}" }
-                Log.d(
-                    tag,
-                    "downloadAudio split success partCount=${audioFiles.size} parts=[$details]"
-                )
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isDownloadingAudio = false,
-                    loadingMessage = null,
-                    isProgressIndeterminate = false,
-                    splitChoicePrompt = null
-                )
-                val caption = videoInfo.title.ifBlank { "Audio" }
-                _shareRequests.emit(
-                    ShareRequest.AudioTwoStep(
-                        caption = caption,
-                        files = audioFiles,
-                        mimeType = "audio/mpeg",
-                        title = "Share audio"
-                    )
-                )
-                Log.d(tag, "downloadAudio share request emitted with ${audioFiles.size} file(s)")
-                if (videoFile.exists()) {
-                    videoFile.delete()
-                }
-            },
+            onSuccess = { audioFiles -> shareAudioFiles(videoInfo, videoFile, audioFiles) },
             onFailure = { error ->
                 Log.e(tag, "downloadAudio split failed", error)
                 if (splitMode == SplitMode.CHAPTERS && isChapterTooLargeError(error)) {
@@ -717,6 +688,33 @@ class MainViewModel @Inject constructor(
                 )
             }
         )
+    }
+
+    private suspend fun shareAudioFiles(
+        videoInfo: VideoInfo,
+        videoFile: File,
+        audioFiles: List<File>
+    ) {
+        val details = audioFiles.joinToString { "${it.name}:${it.length()}" }
+        Log.d(tag, "downloadAudio share partCount=${audioFiles.size} parts=[$details]")
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            isDownloadingAudio = false,
+            loadingMessage = null,
+            isProgressIndeterminate = false,
+            splitChoicePrompt = null
+        )
+        _shareRequests.emit(
+            ShareRequest.AudioTwoStep(
+                caption = AudioShareCaption.build(videoInfo.title, audioFiles.size),
+                files = audioFiles,
+                mimeType = "audio/mpeg",
+                title = "Share audio"
+            )
+        )
+        if (videoFile.exists()) {
+            videoFile.delete()
+        }
     }
 
     private fun isChapterTooLargeError(error: Throwable): Boolean = error is ChapterTooLargeException
