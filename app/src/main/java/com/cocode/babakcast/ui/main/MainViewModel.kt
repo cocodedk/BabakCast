@@ -62,6 +62,11 @@ class MainViewModel @Inject constructor(
     private val _shareRequests = MutableSharedFlow<ShareRequest>(extraBufferCapacity = 1)
     val shareRequests: SharedFlow<ShareRequest> = _shareRequests.asSharedFlow()
 
+    // Files to share once the title (caption) has been shared and the app returns
+    // to the foreground — the second stage of the WhatsApp-friendly audio share.
+    private val _pendingAudioFiles = MutableStateFlow<ShareRequest.Audio?>(null)
+    val pendingAudioFiles: StateFlow<ShareRequest.Audio?> = _pendingAudioFiles.asStateFlow()
+
     private val _tweetTextEvents = MutableSharedFlow<TweetTextEvent>(extraBufferCapacity = 1)
     val tweetTextEvents: SharedFlow<TweetTextEvent> = _tweetTextEvents.asSharedFlow()
 
@@ -291,6 +296,7 @@ class MainViewModel @Inject constructor(
         }
 
         pendingSplitRequest = null
+        _pendingAudioFiles.value = null
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
@@ -329,6 +335,7 @@ class MainViewModel @Inject constructor(
                         onSuccess = { audioFile -> onAudioReady(videoInfo, videoFile, audioFile) },
                         onFailure = { error ->
                             Log.e(tag, "downloadAudio extract failed", error)
+                            if (videoFile.exists()) videoFile.delete()
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = AppError.AudioExtractFailed(error.message ?: "Audio extraction failed"),
@@ -353,6 +360,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun dismissSplitChoice() {
+        deletePendingSplitFiles()
         pendingSplitRequest = null
         _uiState.value = _uiState.value.copy(
             isLoading = false,
@@ -362,6 +370,22 @@ class MainViewModel @Inject constructor(
             isProgressIndeterminate = false,
             splitChoicePrompt = null
         )
+    }
+
+    fun clearPendingAudioFiles() {
+        _pendingAudioFiles.value = null
+    }
+
+    private fun deletePendingSplitFiles() {
+        when (val pending = pendingSplitRequest) {
+            is PendingSplitRequest.Audio -> {
+                if (pending.audioFile.exists()) pending.audioFile.delete()
+                if (pending.videoFile.exists()) pending.videoFile.delete()
+            }
+            is PendingSplitRequest.Video ->
+                pending.videoInfo.file?.let { if (it.exists()) it.delete() }
+            null -> {}
+        }
     }
 
     fun chooseSplitMode(splitMode: SplitMode) {
@@ -683,6 +707,8 @@ class MainViewModel @Inject constructor(
                     return@fold
                 }
 
+                if (videoFile.exists()) videoFile.delete()
+                if (audioFile.exists()) audioFile.delete()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = ErrorHandler.handleException(error),
@@ -710,14 +736,18 @@ class MainViewModel @Inject constructor(
             isProgressIndeterminate = false,
             splitChoicePrompt = null
         )
-        _shareRequests.emit(
-            ShareRequest.Audio(
-                caption = AudioShareCaption.build(videoInfo.title, shareFiles.size),
-                files = shareFiles,
-                mimeType = "audio/mpeg",
-                title = "Share audio"
-            )
+        val request = ShareRequest.Audio(
+            caption = AudioShareCaption.build(videoInfo.title, shareFiles.size),
+            files = shareFiles,
+            mimeType = "audio/mpeg",
+            title = "Share audio"
         )
+        // Non-blank caption means a two-stage share: hold the files for after the
+        // title is shared (see MainScreen's ON_RESUME observer).
+        if (request.caption.isNotBlank()) {
+            _pendingAudioFiles.value = request
+        }
+        _shareRequests.emit(request)
         if (videoFile.exists()) {
             videoFile.delete()
         }

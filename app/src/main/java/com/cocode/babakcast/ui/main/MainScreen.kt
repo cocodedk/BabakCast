@@ -34,6 +34,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,6 +50,8 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.ClipData
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.Modifier
@@ -101,18 +104,23 @@ fun MainScreen(
         viewModel.shareRequests.collect { request ->
             when (request) {
                 is ShareRequest.Audio -> {
-                    // Single combined share: files + caption in one sheet. Two separate
-                    // shares don't survive the switch to WhatsApp (app backgrounded,
-                    // transient state lost), so send it all at once; part order also
-                    // travels inside each file's "Part n of N" ID3 tag.
-                    val shareIntent = shareHelper.buildShareFilesChooser(
-                        files = request.files,
-                        mimeType = request.mimeType,
-                        title = request.title,
-                        text = request.caption.ifBlank { null }
-                    )
-                    if (shareIntent != null) {
-                        audioShareLauncher.launch(shareIntent)
+                    if (request.caption.isBlank()) {
+                        val shareIntent = shareHelper.buildShareFilesChooser(
+                            files = request.files,
+                            mimeType = request.mimeType,
+                            title = request.title,
+                            text = null
+                        )
+                        if (shareIntent != null) {
+                            audioShareLauncher.launch(shareIntent)
+                        }
+                    } else {
+                        // Two-stage: share the title as its own message first — WhatsApp
+                        // drops caption text when files are attached. The files follow on
+                        // the next app-resume (ON_RESUME observer below); a background
+                        // activity start would be blocked.
+                        val textIntent = shareHelper.buildShareTextChooser(request.caption, "Share title")
+                        textShareLauncher.launch(textIntent)
                     }
                 }
             }
@@ -135,6 +143,30 @@ fun MainScreen(
                 }
             }
         }
+    }
+
+    // Two-stage audio share step 2: after the title is shared and the user returns to
+    // the app, launch the file share (a background activity start would be blocked).
+    DisposableEffect(activity) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val pending = viewModel.pendingAudioFiles.value
+                if (pending != null) {
+                    viewModel.clearPendingAudioFiles()
+                    val intent = shareHelper.buildShareFilesChooser(
+                        files = pending.files,
+                        mimeType = pending.mimeType,
+                        title = pending.title,
+                        text = null
+                    )
+                    if (intent != null) {
+                        audioShareLauncher.launch(intent)
+                    }
+                }
+            }
+        }
+        activity?.lifecycle?.addObserver(observer)
+        onDispose { activity?.lifecycle?.removeObserver(observer) }
     }
 
     Scaffold(
