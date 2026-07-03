@@ -78,27 +78,12 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val shareHelper = remember(context) { ShareHelper(context.applicationContext) }
-    var pendingAudioShare by remember { mutableStateOf<ShareRequest.AudioTwoStep?>(null) }
     val audioShareLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { }
     val textShareLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) {
-        val pending = pendingAudioShare
-        if (pending != null) {
-            val shareIntent = shareHelper.buildShareFilesChooser(
-                files = pending.files,
-                mimeType = pending.mimeType,
-                title = pending.title,
-                text = pending.caption
-            )
-            if (shareIntent != null) {
-                audioShareLauncher.launch(shareIntent)
-            }
-            pendingAudioShare = null
-        }
-    }
+    ) { }
 
     // Apply shared URL when user shares from YouTube, X, or other app into BabakCast
     val activity = LocalActivity.current as? ComponentActivity
@@ -115,24 +100,19 @@ fun MainScreen(
     LaunchedEffect(viewModel) {
         viewModel.shareRequests.collect { request ->
             when (request) {
-                is ShareRequest.AudioTwoStep -> {
-                    if (request.caption.isBlank()) {
-                        val shareIntent = shareHelper.buildShareFilesChooser(
-                            files = request.files,
-                            mimeType = request.mimeType,
-                            title = request.title,
-                            text = null
-                        )
-                        if (shareIntent != null) {
-                            audioShareLauncher.launch(shareIntent)
-                        }
-                    } else {
-                        pendingAudioShare = request
-                        val textIntent = shareHelper.buildShareTextChooser(
-                            text = request.caption,
-                            title = "Share title"
-                        )
-                        textShareLauncher.launch(textIntent)
+                is ShareRequest.Audio -> {
+                    // Single combined share: files + caption in one sheet. Two separate
+                    // shares don't survive the switch to WhatsApp (app backgrounded,
+                    // transient state lost), so send it all at once; part order also
+                    // travels inside each file's "Part n of N" ID3 tag.
+                    val shareIntent = shareHelper.buildShareFilesChooser(
+                        files = request.files,
+                        mimeType = request.mimeType,
+                        title = request.title,
+                        text = request.caption.ifBlank { null }
+                    )
+                    if (shareIntent != null) {
+                        audioShareLauncher.launch(shareIntent)
                     }
                 }
             }

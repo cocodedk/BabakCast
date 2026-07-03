@@ -709,7 +709,7 @@ class MainViewModel @Inject constructor(
             splitChoicePrompt = null
         )
         _shareRequests.emit(
-            ShareRequest.AudioTwoStep(
+            ShareRequest.Audio(
                 caption = AudioShareCaption.build(videoInfo.title, audioFiles.size),
                 files = audioFiles,
                 mimeType = "audio/mpeg",
