@@ -7,6 +7,8 @@ import com.cocode.babakcast.domain.FfmpegCommands
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Writes ID3 "Part n of N" tags onto split audio parts so the sequence is visible
@@ -29,14 +31,14 @@ class AudioPartTagger @Inject constructor() {
         }
     }
 
-    fun tagParts(files: List<File>, displayTitle: String): List<File> {
+    suspend fun tagParts(files: List<File>, displayTitle: String): List<File> = withContext(Dispatchers.IO) {
         val total = files.size
         files.forEachIndexed { index, file ->
             val meta = partMetadata(displayTitle, index + 1, total)
             runCatching { writeTags(file, meta) }
                 .onFailure { Log.w(TAG, "tagParts failed name=${file.name}", it) }
         }
-        return files
+        files
     }
 
     private fun writeTags(file: File, meta: PartMetadata) {

@@ -19,9 +19,7 @@ import javax.inject.Singleton
 import kotlin.jvm.JvmName
 
 @Singleton
-class AudioSplitter @Inject constructor(
-    private val partTagger: AudioPartTagger
-) {
+class AudioSplitter @Inject constructor() {
 
     companion object {
         private const val TAG = "AudioSplitter"
@@ -36,7 +34,6 @@ class AudioSplitter @Inject constructor(
         chapterHints: List<VideoChapter> = emptyList(),
         splitMode: SplitMode = SplitMode.BY_SIZE,
         chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
-        displayTitle: String = "",
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
@@ -73,7 +70,7 @@ class AudioSplitter @Inject constructor(
             val baseName = audioFile.nameWithoutExtension
             val outputExtension = audioFile.extension.ifBlank { DEFAULT_EXTENSION }
 
-            val splitResult = when (splitMode) {
+            when (splitMode) {
                 SplitMode.NONE -> error("NONE should have been skipped by SplitDecision")
                 SplitMode.CHAPTERS -> splitByChapters(
                     audioFile = audioFile,
@@ -96,9 +93,6 @@ class AudioSplitter @Inject constructor(
                     chunkSizeBytes = chunkSizeBytes,
                     onProgress = onProgress
                 )
-            }
-            splitResult.map { files ->
-                if (files.size > 1) partTagger.tagParts(files, displayTitle) else files
             }
         } catch (e: Exception) {
             Log.e(TAG, "splitAudioIfNeeded exception", e)

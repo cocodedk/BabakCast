@@ -12,6 +12,7 @@ import com.cocode.babakcast.data.repository.ProviderRepository
 import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.audio.AudioExtractor
+import com.cocode.babakcast.domain.audio.AudioPartTagger
 import com.cocode.babakcast.domain.audio.AudioSplitter
 import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
@@ -46,6 +47,7 @@ class MainViewModel @Inject constructor(
     private val videoSplitter: VideoSplitter,
     private val audioExtractor: AudioExtractor,
     private val audioSplitter: AudioSplitter,
+    private val partTagger: AudioPartTagger,
     private val aiRepository: AIRepository,
     private val providerRepository: ProviderRepository,
     private val settingsRepository: SettingsRepository,
@@ -646,8 +648,7 @@ class MainViewModel @Inject constructor(
             audioFile = audioFile,
             chapterHints = videoInfo.chapters,
             splitMode = splitMode,
-            chunkSizeBytes = chunkSizeBytes,
-            displayTitle = videoInfo.title
+            chunkSizeBytes = chunkSizeBytes
         ) { currentPart, totalParts ->
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
@@ -655,7 +656,10 @@ class MainViewModel @Inject constructor(
                 loadingMessage = splitMode.splittingProgressMessage("audio", currentPart, totalParts)
             )
         }.fold(
-            onSuccess = { audioFiles -> shareAudioFiles(videoInfo, videoFile, audioFiles) },
+            onSuccess = { audioFiles ->
+                if (audioFiles.size > 1) partTagger.tagParts(audioFiles, videoInfo.title)
+                shareAudioFiles(videoInfo, videoFile, audioFiles)
+            },
             onFailure = { error ->
                 Log.e(tag, "downloadAudio split failed", error)
                 if (splitMode == SplitMode.CHAPTERS && isChapterTooLargeError(error)) {
