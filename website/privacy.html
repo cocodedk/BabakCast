@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy | BabakCast</title>
+  <meta name="description" content="Privacy policy for BabakCast (com.cocode.babakcast): a local-first Android app that sends the content you choose to summarize to the third-party AI provider you configure, and no data to the developer." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://cocodedk.github.io/BabakCast/privacy.html" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080b16; --bg-2: #0f1730;
+      --surface: rgba(16, 22, 42, 0.76);
+      --line: rgba(96, 193, 255, 0.45);
+      --text: #eef3ff; --muted: #abc1e6;
+      --neon-blue: #44bfff; --neon-pink: #ff4edc; --neon-amber: #f7c164;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text); line-height: 1.7;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: radial-gradient(1400px 900px at 15% -10%, #273d72 0%, transparent 60%),
+                  radial-gradient(1200px 800px at 95% 0%, #3c1d6a 0%, transparent 58%),
+                  linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed; overflow-x: hidden;
+    }
+    .shell { width: min(820px, 92vw); margin: 0 auto; padding: 40px 0 64px; }
+    a { color: var(--neon-blue); text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { color: var(--neon-pink); }
+    .back { display: inline-block; margin-bottom: 22px; color: var(--muted); font-size: 0.92rem; text-decoration: none; }
+    .back:hover { color: var(--neon-blue); }
+    .card {
+      border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--surface); backdrop-filter: blur(10px);
+      box-shadow: 0 0 36px rgba(16, 32, 66, 0.48);
+      padding: clamp(22px, 5vw, 44px);
+    }
+    h1, h2 { font-family: "Space Grotesk", "IBM Plex Sans", sans-serif; margin: 0; line-height: 1.2; }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); color: var(--text); margin-bottom: 6px; }
+    h2 { font-size: 1.2rem; color: var(--neon-amber); margin: 30px 0 8px; }
+    .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 4px; }
+    code { background: rgba(11, 17, 33, 0.6); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.86em; }
+    p, li { color: var(--muted); }
+    strong { color: var(--text); }
+    ul { padding-inline-start: 1.2em; }
+    li { margin: 6px 0; }
+    .lede { color: var(--text); font-size: 1.05rem; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); margin: 46px 0; }
+    section[dir="rtl"] { font-family: "Vazirmatn", "IBM Plex Sans", sans-serif; text-align: right; }
+    section[dir="rtl"] h1, section[dir="rtl"] h2 { font-family: "Vazirmatn", "Space Grotesk", sans-serif; }
+    footer { color: var(--muted); font-size: 0.85rem; margin-top: 40px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="./index.html">&larr; BabakCast</a>
+    <div class="card">
+
+      <!-- ==================== ENGLISH ==================== -->
+      <section lang="en">
+        <h1>Privacy Policy</h1>
+        <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
+        <p class="meta">Last updated: 14 July 2026</p>
+
+        <p class="lede"><strong>BabakCast is a local-first tool with no backend of its own: the developer operates no server and receives no data about you. However, BabakCast is not an offline app — when you ask it to download media or summarize a transcript, it sends the content and links you provide directly to the third-party services you choose, over the internet.</strong></p>
+
+        <p>This policy explains exactly what leaves your device, where it goes, and what stays on your phone. BabakCast has no user accounts, no analytics, no advertising, and no tracking, and it does not ship with any API keys.</p>
+
+        <h2>1. Content you send to AI providers</h2>
+        <p>When you use the <strong>summarize</strong> or translate features, BabakCast sends the text you are processing &mdash; the video transcript (for example, YouTube captions) or other text, together with a fixed instruction prompt &mdash; to the <strong>AI provider you have configured in Settings</strong>. That content leaves your device and is transmitted, over HTTPS, to that provider's servers, where it is processed under <em>their</em> privacy policy and data-retention practices.</p>
+        <p>You choose the provider. BabakCast supports the following, and sends your content only to the one you select:</p>
+        <ul>
+          <li><strong>OpenAI</strong> &mdash; <code>api.openai.com</code></li>
+          <li><strong>Azure OpenAI</strong> (Microsoft) &mdash; your <code>*.openai.azure.com</code> resource</li>
+          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code></li>
+          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>OpenRouter</strong> &mdash; <code>openrouter.ai</code></li>
+        </ul>
+        <p>These providers are independent data controllers. Their handling of your content is governed by their own policies:
+        <a href="https://www.anthropic.com/legal/privacy" rel="noopener" target="_blank">Anthropic</a>,
+        <a href="https://openai.com/policies/privacy-policy" rel="noopener" target="_blank">OpenAI</a>,
+        <a href="https://privacy.microsoft.com/privacystatement" rel="noopener" target="_blank">Microsoft (Azure)</a>,
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google</a>, and
+        <a href="https://openrouter.ai/privacy" rel="noopener" target="_blank">OpenRouter</a>.
+        Please review the policy of the provider you use before sending sensitive content.</p>
+
+        <h2>2. Links you paste and media downloads</h2>
+        <p>To download a video, image, audio track, or transcript, BabakCast contacts the <strong>source platform directly</strong> using the link you paste. This means your device connects to, and reveals its IP address and the requested item to, whichever of these services the link belongs to:</p>
+        <ul>
+          <li><strong>YouTube / Google</strong> &mdash; video, audio, and transcript downloads</li>
+          <li><strong>X (Twitter)</strong> &mdash; media downloads and tweet-text retrieval use X's public syndication endpoint (<code>cdn.syndication.twimg.com</code>) and X media servers; only the public tweet ID from your link is sent, with no login</li>
+          <li><strong>Instagram / Meta</strong> &mdash; video downloads</li>
+          <li><strong>LinkedIn</strong> &mdash; video downloads from public posts</li>
+        </ul>
+        <p>Only the public link you provide is used; BabakCast does not log in to these platforms or send them your credentials. Each platform handles the resulting request under its own privacy policy:
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google/YouTube</a>,
+        <a href="https://x.com/en/privacy" rel="noopener" target="_blank">X</a>,
+        <a href="https://privacycenter.instagram.com/policy" rel="noopener" target="_blank">Instagram</a>, and
+        <a href="https://www.linkedin.com/legal/privacy-policy" rel="noopener" target="_blank">LinkedIn</a>.</p>
+
+        <h2>3. Your API keys</h2>
+        <p>You supply your own API key for each AI provider you enable. Keys are stored <strong>only on your device</strong>, encrypted with Android's <code>EncryptedSharedPreferences</code> (AES-256, with the master key held in the Android Keystore). A key is <strong>never sent to the developer</strong>. It is transmitted only to its own provider's API, as the authorization credential, over HTTPS, when you list models or make a request. Keys are shown masked in the app and can be deleted at any time in Settings.</p>
+
+        <h2>4. Update checks</h2>
+        <p>BabakCast can check for a newer version by requesting the latest release from the GitHub API (<code>api.github.com</code>). This request carries no personal data beyond the standard connection information (such as your IP address) that any web request includes. GitHub's handling is covered by the
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">GitHub Privacy Statement</a>.</p>
+
+        <h2>5. Data stored on your device</h2>
+        <p>Everything BabakCast creates is stored locally, in the app's own storage, and is removed when you uninstall the app or clear its data:</p>
+        <ul>
+          <li><strong>Downloaded media and transcripts</strong> &mdash; videos, images, audio, and extracted transcript files, saved in the app's private external files directory.</li>
+          <li><strong>Settings</strong> &mdash; your preferences (default provider, language, summary style and length, theme, temperature) in a local preferences store. These contain no personal content.</li>
+          <li><strong>API keys</strong> &mdash; encrypted, as described above.</li>
+        </ul>
+        <p>BabakCast keeps no analytics database and no usage history, and it does not read files elsewhere on your device except the links and shared text you explicitly give it.</p>
+
+        <h2>6. Permissions</h2>
+        <ul>
+          <li><strong>Internet</strong> and <strong>network state</strong> &mdash; required to reach the services above and to detect your connection type.</li>
+          <li><strong>Read/write external storage</strong> (Android 12 / API 32 and older only) &mdash; legacy permission used to save and share downloaded files on older devices. It is not requested on newer Android versions.</li>
+          <li>No location, contacts, camera, or microphone permissions are requested.</li>
+        </ul>
+
+        <h2>7. No tracking, no accounts, no ads</h2>
+        <ul>
+          <li>No analytics, crash reporting, or advertising SDKs are included.</li>
+          <li>No cookies, no advertising identifiers, and no user accounts.</li>
+          <li>The developer runs no server and receives none of your data.</li>
+        </ul>
+
+        <h2>8. Device backup</h2>
+        <p>If you have enabled Android Auto Backup or Google account backup, the operating system may include this app's local data in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google's Privacy Policy</a> for details.</p>
+
+        <h2>9. External links</h2>
+        <p>The app contains links to the developer's website (<a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>) and the project's GitHub page. Selecting them opens your browser; those sites are governed by their own privacy policies.</p>
+
+        <h2>10. Children</h2>
+        <p>The app does not knowingly collect data from anyone, including children.</p>
+
+        <h2>11. Changes</h2>
+        <p>If this policy changes, the updated version will be posted on this page with a new "last updated" date.</p>
+
+        <h2>12. Contact</h2>
+        <p>Questions about this policy can be sent to
+        <a href="mailto:bb@cocode.dk">bb@cocode.dk</a> (CoCode.dk, developer: Babak Bandpey).</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ==================== PERSIAN (فارسی) ==================== -->
+      <section lang="fa" dir="rtl">
+        <h1>سیاست حفظ حریم خصوصی</h1>
+        <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
+        <p class="meta">آخرین به‌روزرسانی: ۱۴ ژوئیه ۲۰۲۶</p>
+
+        <p class="lede"><strong>BabakCast ابزاری محلی‌محور (local-first) است و سرور اختصاصی خودش را ندارد: توسعه‌دهنده هیچ سروری را اداره نمی‌کند و هیچ داده‌ای دربارهٔ شما دریافت نمی‌کند. با این حال BabakCast یک برنامهٔ کاملاً آفلاین نیست — وقتی از آن می‌خواهید رسانه‌ای را دانلود کند یا خلاصه‌ای بسازد، محتوا و پیوندهایی را که وارد می‌کنید مستقیماً و از طریق اینترنت به سرویس‌های شخص‌ثالثی که خودتان انتخاب می‌کنید ارسال می‌کند.</strong></p>
+
+        <p>این سیاست دقیقاً توضیح می‌دهد چه چیزی دستگاه شما را ترک می‌کند، کجا می‌رود و چه چیزی روی گوشی شما می‌ماند. BabakCast هیچ حساب کاربری، ابزار تحلیلی، تبلیغات یا ردیابی ندارد و با هیچ کلید API از پیش‌تعیین‌شده‌ای عرضه نمی‌شود.</p>
+
+        <h2>۱. محتوایی که به ارائه‌دهندگان هوش مصنوعی ارسال می‌شود</h2>
+        <p>هنگام استفاده از قابلیت‌های <strong>خلاصه‌سازی</strong> یا ترجمه، BabakCast متنی را که پردازش می‌کنید — رونوشت ویدیو (برای نمونه، زیرنویس‌های یوتیوب) یا متن دیگر، همراه با یک دستور ثابت — به <strong>ارائه‌دهندهٔ هوش مصنوعی‌ای که در تنظیمات پیکربندی کرده‌اید</strong> ارسال می‌کند. آن محتوا دستگاه شما را ترک می‌کند و از طریق HTTPS به سرورهای آن ارائه‌دهنده منتقل می‌شود و در آنجا تحت سیاست حریم خصوصی و رویه‌های نگهداری دادهٔ <em>خودِ آن‌ها</em> پردازش می‌شود.</p>
+        <p>انتخاب ارائه‌دهنده با شماست. BabakCast از موارد زیر پشتیبانی می‌کند و محتوای شما را فقط به همان موردی که برمی‌گزینید می‌فرستد:</p>
+        <ul>
+          <li><strong>OpenAI</strong> &mdash; <code>api.openai.com</code></li>
+          <li><strong>Azure OpenAI</strong> (مایکروسافت) &mdash; منبع <code>*.openai.azure.com</code> شما</li>
+          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code></li>
+          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>OpenRouter</strong> &mdash; <code>openrouter.ai</code></li>
+        </ul>
+        <p>این ارائه‌دهندگان کنترل‌کنندگان مستقل داده هستند و نحوهٔ رفتار آن‌ها با محتوای شما تابع سیاست‌های خودشان است:
+        <a href="https://www.anthropic.com/legal/privacy" rel="noopener" target="_blank">Anthropic</a>،
+        <a href="https://openai.com/policies/privacy-policy" rel="noopener" target="_blank">OpenAI</a>،
+        <a href="https://privacy.microsoft.com/privacystatement" rel="noopener" target="_blank">مایکروسافت (Azure)</a>،
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">گوگل</a> و
+        <a href="https://openrouter.ai/privacy" rel="noopener" target="_blank">OpenRouter</a>.
+        پیش از ارسال محتوای حساس، لطفاً سیاست ارائه‌دهنده‌ای را که استفاده می‌کنید بررسی کنید.</p>
+
+        <h2>۲. پیوندهایی که وارد می‌کنید و دانلود رسانه</h2>
+        <p>برای دانلود ویدیو، تصویر، صدا یا رونوشت، BabakCast با استفاده از پیوندی که وارد می‌کنید <strong>مستقیماً با پلتفرم مبدأ</strong> ارتباط می‌گیرد. یعنی دستگاه شما به هر یک از این سرویس‌ها که پیوند به آن تعلق دارد متصل می‌شود و نشانی IP و مورد درخواستی را برای آن آشکار می‌کند:</p>
+        <ul>
+          <li><strong>یوتیوب / گوگل</strong> &mdash; دانلود ویدیو، صدا و رونوشت</li>
+          <li><strong>X (توییتر)</strong> &mdash; دانلود رسانه و دریافت متن توییت از طریق نقطهٔ پایانی همگام‌سازی عمومی X (<code>cdn.syndication.twimg.com</code>) و سرورهای رسانهٔ X؛ تنها شناسهٔ عمومی توییت از پیوند شما، بدون ورود به حساب، ارسال می‌شود</li>
+          <li><strong>اینستاگرام / متا</strong> &mdash; دانلود ویدیو</li>
+          <li><strong>لینکدین</strong> &mdash; دانلود ویدیو از پست‌های عمومی</li>
+        </ul>
+        <p>تنها از پیوند عمومی‌ای که ارائه می‌دهید استفاده می‌شود؛ BabakCast به این پلتفرم‌ها وارد نمی‌شود و اطلاعات ورود شما را برایشان نمی‌فرستد. هر پلتفرم درخواست حاصل را تحت سیاست حریم خصوصی خود مدیریت می‌کند:
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">گوگل/یوتیوب</a>،
+        <a href="https://x.com/en/privacy" rel="noopener" target="_blank">X</a>،
+        <a href="https://privacycenter.instagram.com/policy" rel="noopener" target="_blank">اینستاگرام</a> و
+        <a href="https://www.linkedin.com/legal/privacy-policy" rel="noopener" target="_blank">لینکدین</a>.</p>
+
+        <h2>۳. کلیدهای API شما</h2>
+        <p>شما کلید API خودتان را برای هر ارائه‌دهندهٔ هوش مصنوعی که فعال می‌کنید تأمین می‌کنید. کلیدها <strong>فقط روی دستگاه شما</strong> و به‌صورت رمزگذاری‌شده با <code>EncryptedSharedPreferences</code> اندروید (AES-256، با کلید اصلی نگهداری‌شده در Android Keystore) ذخیره می‌شوند. کلید <strong>هرگز برای توسعه‌دهنده ارسال نمی‌شود</strong>. کلید فقط به API خودِ ارائه‌دهنده، به‌عنوان اعتبارنامهٔ احراز هویت و از طریق HTTPS، هنگام فهرست‌کردن مدل‌ها یا ارسال درخواست منتقل می‌شود. کلیدها در برنامه به‌صورت پوشیده نمایش داده می‌شوند و هر زمان می‌توانید آن‌ها را در تنظیمات حذف کنید.</p>
+
+        <h2>۴. بررسی به‌روزرسانی</h2>
+        <p>BabakCast می‌تواند با درخواست آخرین نسخه از API گیت‌هاب (<code>api.github.com</code>) وجود نسخهٔ جدیدتر را بررسی کند. این درخواست جز اطلاعات اتصال استاندارد (مانند نشانی IP شما) که هر درخواست وب در بر دارد، هیچ داده شخصی‌ای حمل نمی‌کند. رفتار گیت‌هاب تحت
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">بیانیهٔ حریم خصوصی گیت‌هاب</a> است.</p>
+
+        <h2>۵. داده‌های ذخیره‌شده روی دستگاه شما</h2>
+        <p>هر چیزی که BabakCast می‌سازد به‌صورت محلی و در فضای ذخیره‌سازی خودِ برنامه نگهداری می‌شود و با حذف برنامه یا پاک‌کردن داده‌های آن از بین می‌رود:</p>
+        <ul>
+          <li><strong>رسانه‌ها و رونوشت‌های دانلودشده</strong> &mdash; ویدیو، تصویر، صدا و فایل‌های رونوشت استخراج‌شده، ذخیره‌شده در پوشهٔ فایل‌های خارجی خصوصیِ برنامه.</li>
+          <li><strong>تنظیمات</strong> &mdash; ترجیحات شما (ارائه‌دهندهٔ پیش‌فرض، زبان، سبک و طول خلاصه، پوسته، دما) در یک انبار تنظیمات محلی. این‌ها هیچ محتوای شخصی‌ای ندارند.</li>
+          <li><strong>کلیدهای API</strong> &mdash; رمزگذاری‌شده، همان‌گونه که در بالا توضیح داده شد.</li>
+        </ul>
+        <p>BabakCast هیچ پایگاه‌دادهٔ تحلیلی و هیچ تاریخچهٔ استفاده‌ای نگه نمی‌دارد و به‌جز پیوندها و متنی که آشکارا به آن می‌دهید، فایل‌های دیگر دستگاه شما را نمی‌خواند.</p>
+
+        <h2>۶. مجوزها</h2>
+        <ul>
+          <li><strong>اینترنت</strong> و <strong>وضعیت شبکه</strong> &mdash; برای دسترسی به سرویس‌های بالا و تشخیص نوع اتصال لازم است.</li>
+          <li><strong>خواندن/نوشتن حافظهٔ خارجی</strong> (فقط اندروید ۱۲ / API 32 و پایین‌تر) &mdash; مجوز قدیمی برای ذخیره و اشتراک فایل‌های دانلودشده روی دستگاه‌های قدیمی‌تر. در نسخه‌های جدیدتر اندروید درخواست نمی‌شود.</li>
+          <li>هیچ مجوز موقعیت مکانی، مخاطبین، دوربین یا میکروفون درخواست نمی‌شود.</li>
+        </ul>
+
+        <h2>۷. بدون ردیابی، بدون حساب، بدون تبلیغات</h2>
+        <ul>
+          <li>هیچ ابزار تحلیلی، گزارش خطا یا کیت تبلیغاتی گنجانده نشده است.</li>
+          <li>هیچ کوکی، شناسهٔ تبلیغاتی و حساب کاربری وجود ندارد.</li>
+          <li>توسعه‌دهنده هیچ سروری اجرا نمی‌کند و هیچ‌یک از داده‌های شما را دریافت نمی‌کند.</li>
+        </ul>
+
+        <h2>۸. پشتیبان‌گیری دستگاه</h2>
+        <p>اگر پشتیبان‌گیری خودکار اندروید یا پشتیبان‌گیری حساب گوگل را فعال کرده باشید، سیستم‌عامل ممکن است داده‌های محلی این برنامه را در پشتیبان شخصی گوگل شما بگنجاند. این کار کاملاً توسط شما و گوگل کنترل می‌شود و توسعه‌دهنده به آن دسترسی ندارد. برای جزئیات به
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">سیاست حریم خصوصی گوگل</a> مراجعه کنید.</p>
+
+        <h2>۹. پیوندهای بیرونی</h2>
+        <p>برنامه شامل پیوندهایی به وب‌سایت توسعه‌دهنده (<a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>) و صفحهٔ گیت‌هاب پروژه است. انتخاب آن‌ها مرورگر شما را باز می‌کند و این سایت‌ها تابع سیاست‌های حریم خصوصی خودشان هستند.</p>
+
+        <h2>۱۰. کودکان</h2>
+        <p>این برنامه آگاهانه هیچ داده‌ای را از هیچ‌کس، از جمله کودکان، جمع‌آوری نمی‌کند.</p>
+
+        <h2>۱۱. تغییرات</h2>
+        <p>در صورت تغییر این سیاست، نسخهٔ به‌روزشده با تاریخ جدید در همین صفحه منتشر خواهد شد.</p>
+
+        <h2>۱۲. تماس</h2>
+        <p>پرسش‌های مربوط به این سیاست را می‌توانید به
+        <a href="mailto:bb@cocode.dk">bb@cocode.dk</a> (CoCode.dk، توسعه‌دهنده: بابک بندپی) ارسال کنید.</p>
+      </section>
+
+    </div>
+    <footer>Apache-2.0 | &copy; 2026 CoCode.dk &mdash; Babak Bandpey | BabakCast</footer>
+  </div>
+</body>
+</html>
