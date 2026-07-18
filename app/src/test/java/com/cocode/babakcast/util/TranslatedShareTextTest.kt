@@ -25,4 +25,9 @@ class TranslatedShareTextTest {
         assertEquals(1, result.count { it == '‏' })
         assertEquals("‏ب", result.substringAfterLast("\n"))
     }
+
+    @Test
+    fun combineWithEmptyOriginalStillProducesSeparatorAndTranslation() {
+        assertEquals("\n\n———\n\n‏سلام", TranslatedShareText.combine("", "سلام"))
+    }
 }

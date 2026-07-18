@@ -79,7 +79,7 @@ The U+200F (right-to-left mark) after the separator makes bidi renderers
 
 ### Changed: `MainViewModel` share call sites
 Tweet text share/copy, audio/video caption share, summary share each:
-1. Read `translateBeforeShare` **once** into a local `val` at tap time (passed into
+1. Read `translateBeforeShare` **once** into a local `val` at share time (for download-then-share flows, at download completion) (passed into
    the coroutine — a mid-flight toggle flip cannot affect an in-progress share).
 2. Set `isTranslatingForShare = true`.
 3. Call `shareTranslator.translateIfEnabled(text, enabled)` and map the result:

@@ -73,4 +73,16 @@ class ShareTranslatorTest {
         )
         assertEquals(ShareTranslationResult.Failed("hello"), result)
     }
+
+    @Test
+    fun blankSuccessfulTranslationFailsWithOriginalText() = runBlocking {
+        val result = ShareTranslator.run(
+            text = "hello",
+            enabled = true,
+            resolveProviderId = { "p1" },
+            translate = { Result.success("   ") },
+            timeoutMs = 1_000
+        )
+        assertEquals(ShareTranslationResult.Failed("hello"), result)
+    }
 }

@@ -42,7 +42,7 @@ class ShareTranslator @Inject constructor(
             if (!enabled) return ShareTranslationResult.Skipped
             val providerId = resolveProviderId() ?: return ShareTranslationResult.Failed(text)
             val translated = withTimeoutOrNull(timeoutMs) {
-                translate(providerId).getOrNull()
+                translate(providerId).getOrNull()?.takeIf { it.isNotBlank() }
             }
             return if (translated != null) {
                 ShareTranslationResult.Translated(TranslatedShareText.combine(text, translated))
