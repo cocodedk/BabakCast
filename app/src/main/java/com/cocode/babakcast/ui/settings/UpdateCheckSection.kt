@@ -31,6 +31,7 @@ import com.cocode.babakcast.util.ByteFormatter
 @Composable
 internal fun UpdateCheckSection(
     state: UpdateUiState,
+    installedVersion: String,
     onCheck: () -> Unit,
     onDownload: () -> Unit,
     onConfirmCellular: () -> Unit,
@@ -44,6 +45,12 @@ internal fun UpdateCheckSection(
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 1.sp
             ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Text(
+            "Version $installedVersion",
+            fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
