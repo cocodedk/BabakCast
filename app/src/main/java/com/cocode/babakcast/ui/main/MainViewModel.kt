@@ -567,26 +567,28 @@ class MainViewModel @Inject constructor(
                 shareHelper.shareText(chunks[index], "Share Summary")
                 return
             }
-            val summary = state.summary ?: return
+            val summary = state.summary?.takeIf { it.isNotBlank() } ?: return
             shareHelper.shareText(summary, "Share Summary")
             return
         }
-        val summary = state.summary ?: return
+        val summary = state.summary?.takeIf { it.isNotBlank() } ?: return
         viewModelScope.launch {
             withShareTranslation {
                 val combined = textForShare(summary, true)
                 val chunks = ShareTextChunker.splitForShare(combined)
-                _uiState.value = _uiState.value.copy(
-                    summaryShareChunks = chunks.takeIf { it.size > 1 },
-                    summaryShareIndex = if (chunks.size > 1) 1 else 0
-                )
+                if (_uiState.value.summary == summary) {
+                    _uiState.value = _uiState.value.copy(
+                        summaryShareChunks = chunks.takeIf { it.size > 1 },
+                        summaryShareIndex = if (chunks.size > 1) 1 else 0
+                    )
+                }
                 shareHelper.shareText(chunks.first(), "Share Summary")
             }
         }
     }
 
     fun shareSummaryAsFile() {
-        val summary = _uiState.value.summary ?: return
+        val summary = _uiState.value.summary?.takeIf { it.isNotBlank() } ?: return
         val enabled = _uiState.value.translateBeforeShare
         viewModelScope.launch {
             withShareTranslation {

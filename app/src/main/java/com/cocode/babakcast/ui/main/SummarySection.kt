@@ -22,6 +22,7 @@ internal fun SummarySection(
     summary: String,
     shareChunkCount: Int,
     shareChunkIndex: Int,
+    shareEnabled: Boolean,
     onCopySummary: () -> Unit,
     onShareSummaryAsFile: () -> Unit,
     onShareSummary: () -> Unit
@@ -81,8 +82,10 @@ internal fun SummarySection(
                 }
                 TextButton(
                     onClick = onShareSummaryAsFile,
+                    enabled = shareEnabled,
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                     )
                 ) {
                     Text(
@@ -95,8 +98,10 @@ internal fun SummarySection(
                 }
                 TextButton(
                     onClick = onShareSummary,
+                    enabled = shareEnabled,
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = BabakCastColors.SecondaryAccent
+                        contentColor = BabakCastColors.SecondaryAccent,
+                        disabledContentColor = BabakCastColors.SecondaryAccent.copy(alpha = 0.3f)
                     )
                 ) {
                     Text(
