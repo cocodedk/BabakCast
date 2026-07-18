@@ -3,6 +3,7 @@ package com.cocode.babakcast.ui.main
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocode.babakcast.data.ai.ProviderResolver
 import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
@@ -52,6 +53,7 @@ class MainViewModel @Inject constructor(
     private val aiRepository: AIRepository,
     private val providerRepository: ProviderRepository,
     private val settingsRepository: SettingsRepository,
+    private val providerResolver: ProviderResolver,
     private val shareHelper: ShareHelper
 ) : ViewModel() {
     private val tag = "MainViewModel"
@@ -465,19 +467,7 @@ class MainViewModel @Inject constructor(
             // Get transcript
             mediaRepository.extractTranscript(url).fold(
                 onSuccess = { transcript ->
-                    val defaultProviderId = settingsRepository.settings.first().defaultProviderId
-                    val providerId = when {
-                        defaultProviderId != null && providerRepository.hasApiKey(defaultProviderId) ->
-                            defaultProviderId
-                        else ->
-                            providerRepository.providers.value.firstOrNull {
-                                providerRepository.hasApiKey(it.id)
-                            }?.id
-                    }
-
-                    val defaultProvider = providerId?.let {
-                        providerRepository.getProviderWithSelectedModel(it)
-                    } ?: run {
+                    val defaultProvider = providerResolver.resolve() ?: run {
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = AppError.ProviderMisconfigured("No AI provider configured"),
