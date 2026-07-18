@@ -557,22 +557,42 @@ class MainViewModel @Inject constructor(
 
     fun shareSummary() {
         val state = _uiState.value
-        val chunks = state.summaryShareChunks
-        if (chunks != null) {
-            val index = state.summaryShareIndex.coerceIn(0, chunks.size - 1)
-            val nextIndex = if (index + 1 >= chunks.size) 0 else index + 1
-            _uiState.value = state.copy(summaryShareIndex = nextIndex)
-            shareHelper.shareText(chunks[index], "Share Summary")
+        val enabled = state.translateBeforeShare
+        if (!enabled) {
+            val chunks = state.summaryShareChunks
+            if (chunks != null) {
+                val index = state.summaryShareIndex.coerceIn(0, chunks.size - 1)
+                val nextIndex = if (index + 1 >= chunks.size) 0 else index + 1
+                _uiState.value = state.copy(summaryShareIndex = nextIndex)
+                shareHelper.shareText(chunks[index], "Share Summary")
+                return
+            }
+            val summary = state.summary ?: return
+            shareHelper.shareText(summary, "Share Summary")
             return
         }
         val summary = state.summary ?: return
-        shareHelper.shareText(summary, "Share Summary")
+        viewModelScope.launch {
+            withShareTranslation {
+                val combined = textForShare(summary, true)
+                val chunks = ShareTextChunker.splitForShare(combined)
+                _uiState.value = _uiState.value.copy(
+                    summaryShareChunks = chunks.takeIf { it.size > 1 },
+                    summaryShareIndex = if (chunks.size > 1) 1 else 0
+                )
+                shareHelper.shareText(chunks.first(), "Share Summary")
+            }
+        }
     }
 
     fun shareSummaryAsFile() {
-        val summary = _uiState.value.summary
-        if (summary != null) {
-            shareHelper.shareLongText(summary, "Share Summary", forceFile = true)
+        val summary = _uiState.value.summary ?: return
+        val enabled = _uiState.value.translateBeforeShare
+        viewModelScope.launch {
+            withShareTranslation {
+                val text = textForShare(summary, enabled)
+                shareHelper.shareLongText(text, "Share Summary", forceFile = true)
+            }
         }
     }
 
