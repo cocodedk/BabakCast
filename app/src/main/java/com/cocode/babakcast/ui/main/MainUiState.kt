@@ -24,6 +24,8 @@ data class MainUiState(
     val summaryLength: SummaryLength = SummaryLength.MEDIUM,
     val tweetText: String? = null,
     val isFetchingTweetText: Boolean = false,
+    val translateBeforeShare: Boolean = false,
+    val isTranslatingForShare: Boolean = false,
     val splitSizeMb: Int = SplitSize.DEFAULT_MB,
     val summaryShareChunks: List<String>? = null,
     val summaryShareIndex: Int = 0

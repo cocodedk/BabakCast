@@ -287,7 +287,8 @@ fun MainScreen(
                     onDownloadAudio = viewModel::downloadAudio,
                     onDownloadSplitAudio = viewModel::downloadSplitAudio,
                     onSummarize = viewModel::generateSummary,
-                    onSummaryLengthChange = viewModel::updateSummaryLength
+                    onSummaryLengthChange = viewModel::updateSummaryLength,
+                    onTranslateToggle = viewModel::setTranslateBeforeShare
                 )
 
             // Progress Indicator

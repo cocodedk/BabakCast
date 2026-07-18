@@ -540,6 +540,10 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(error = null)
     }
 
+    fun setTranslateBeforeShare(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(translateBeforeShare = enabled)
+    }
+
     fun shareSummary() {
         val state = _uiState.value
         val chunks = state.summaryShareChunks
