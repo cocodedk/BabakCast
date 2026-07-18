@@ -287,7 +287,8 @@ fun MainScreen(
                     onDownloadAudio = viewModel::downloadAudio,
                     onDownloadSplitAudio = viewModel::downloadSplitAudio,
                     onSummarize = viewModel::generateSummary,
-                    onSummaryLengthChange = viewModel::updateSummaryLength
+                    onSummaryLengthChange = viewModel::updateSummaryLength,
+                    onTranslateToggle = viewModel::setTranslateBeforeShare
                 )
 
             // Progress Indicator
@@ -353,6 +354,7 @@ fun MainScreen(
                         summary = summary,
                         shareChunkCount = uiState.summaryShareChunks?.size ?: 1,
                         shareChunkIndex = uiState.summaryShareIndex,
+                        shareEnabled = !uiState.isTranslatingForShare && !uiState.isLoading,
                         onCopySummary = {
                             scope.launch {
                                 clipboardManager.setPlainText(summary)

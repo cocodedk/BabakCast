@@ -42,13 +42,17 @@ internal fun ActionButtonsSection(
     onDownloadAudio: () -> Unit,
     onDownloadSplitAudio: () -> Unit,
     onSummarize: () -> Unit,
-    onSummaryLengthChange: (SummaryLength) -> Unit
+    onSummaryLengthChange: (SummaryLength) -> Unit,
+    onTranslateToggle: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        val downloadEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
+        TranslateToggleRow(uiState, onTranslateToggle)
+
+        val downloadEnabled = uiState.downloadEngineReady && !uiState.isLoading &&
+            uiState.url.isNotBlank() && !uiState.isTranslatingForShare
         Button(
             onClick = onDownloadVideo,
             enabled = downloadEnabled,
@@ -116,7 +120,8 @@ internal fun ActionButtonsSection(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            val isXActionEnabled = !uiState.isLoading && uiState.url.isNotBlank()
+            val isXActionEnabled = !uiState.isLoading && uiState.url.isNotBlank() &&
+                !uiState.isTranslatingForShare
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val isAllMediaEnabled = uiState.downloadEngineReady && isXActionEnabled
                 OutlinedButton(
@@ -247,7 +252,7 @@ internal fun ActionButtonsSection(
                                 index = index,
                                 count = lengths.size
                             ),
-                            enabled = !uiState.isLoading,
+                            enabled = !uiState.isLoading && !uiState.isTranslatingForShare,
                             colors = SegmentedButtonDefaults.colors(
                                 activeContainerColor = BabakCastColors.PrimaryAccent.copy(alpha = 0.15f),
                                 activeContentColor = BabakCastColors.PrimaryAccent,
@@ -277,7 +282,8 @@ internal fun ActionButtonsSection(
         val summarizeEnabled = uiState.downloadEngineReady &&
             !uiState.isLoading &&
             uiState.url.isNotBlank() &&
-            uiState.supportsSummarize
+            uiState.supportsSummarize &&
+            !uiState.isTranslatingForShare
         OutlinedButton(
             onClick = onSummarize,
             enabled = summarizeEnabled,

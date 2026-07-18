@@ -28,7 +28,8 @@ internal fun AudioActionButtons(
     onDownloadAudio: () -> Unit,
     onDownloadSplitAudio: () -> Unit
 ) {
-    val audioEnabled = uiState.downloadEngineReady && !uiState.isLoading && uiState.url.isNotBlank()
+    val audioEnabled = uiState.downloadEngineReady && !uiState.isLoading &&
+        uiState.url.isNotBlank() && !uiState.isTranslatingForShare
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         AudioButton(
             label = "Download Audio",

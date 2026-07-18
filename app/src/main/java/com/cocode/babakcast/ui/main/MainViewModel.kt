@@ -3,12 +3,13 @@ package com.cocode.babakcast.ui.main
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cocode.babakcast.data.ai.ProviderResolver
+import com.cocode.babakcast.data.ai.ShareTranslator
 import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.data.model.TweetDownloadResult
 import com.cocode.babakcast.data.repository.AIRepository
-import com.cocode.babakcast.data.repository.ProviderRepository
 import com.cocode.babakcast.data.repository.MediaRepository
 import com.cocode.babakcast.data.repository.YoutubeDLReady
 import com.cocode.babakcast.domain.audio.AudioExtractor
@@ -50,11 +51,16 @@ class MainViewModel @Inject constructor(
     private val audioSplitter: AudioSplitter,
     private val partTagger: AudioPartTagger,
     private val aiRepository: AIRepository,
-    private val providerRepository: ProviderRepository,
     private val settingsRepository: SettingsRepository,
-    private val shareHelper: ShareHelper
+    private val providerResolver: ProviderResolver,
+    private val shareHelper: ShareHelper,
+    private val shareTranslator: ShareTranslator
 ) : ViewModel() {
     private val tag = "MainViewModel"
+
+    private val shareTranslationRunner = ShareTranslationRunner(shareTranslator) { transform ->
+        _uiState.value = transform(_uiState.value)
+    }
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -211,8 +217,12 @@ class MainViewModel @Inject constructor(
                         loadingMessage = null,
                         isProgressIndeterminate = false
                     )
-                    val caption = result.text.ifBlank { null }
-                    shareHelper.shareMixedMedia(result.allFiles, caption)
+                    val enabled = _uiState.value.translateBeforeShare
+                    shareTranslationRunner.withTranslation {
+                        val caption = result.text.ifBlank { null }
+                            ?.let { shareTranslationRunner.textForShare(it, enabled) }
+                        shareHelper.shareMixedMedia(result.allFiles, caption)
+                    }
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
@@ -238,8 +248,12 @@ class MainViewModel @Inject constructor(
                             error = AppError.InvalidUrl(blankMessage)
                         )
                     } else {
-                        _uiState.value = _uiState.value.copy(isFetchingTweetText = false, tweetText = text)
-                        _tweetTextEvents.emit(event(text))
+                        val enabled = _uiState.value.translateBeforeShare
+                        shareTranslationRunner.withTranslation {
+                            val shareText = shareTranslationRunner.textForShare(text, enabled)
+                            _uiState.value = _uiState.value.copy(isFetchingTweetText = false, tweetText = text)
+                            _tweetTextEvents.emit(event(shareText))
+                        }
                     }
                 },
                 onFailure = { error ->
@@ -465,19 +479,7 @@ class MainViewModel @Inject constructor(
             // Get transcript
             mediaRepository.extractTranscript(url).fold(
                 onSuccess = { transcript ->
-                    val defaultProviderId = settingsRepository.settings.first().defaultProviderId
-                    val providerId = when {
-                        defaultProviderId != null && providerRepository.hasApiKey(defaultProviderId) ->
-                            defaultProviderId
-                        else ->
-                            providerRepository.providers.value.firstOrNull {
-                                providerRepository.hasApiKey(it.id)
-                            }?.id
-                    }
-
-                    val defaultProvider = providerId?.let {
-                        providerRepository.getProviderWithSelectedModel(it)
-                    } ?: run {
+                    val defaultProvider = providerResolver.resolve() ?: run {
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = AppError.ProviderMisconfigured("No AI provider configured"),
@@ -550,24 +552,50 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(error = null)
     }
 
+    fun setTranslateBeforeShare(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(translateBeforeShare = enabled)
+    }
+
     fun shareSummary() {
         val state = _uiState.value
-        val chunks = state.summaryShareChunks
-        if (chunks != null) {
-            val index = state.summaryShareIndex.coerceIn(0, chunks.size - 1)
-            val nextIndex = if (index + 1 >= chunks.size) 0 else index + 1
-            _uiState.value = state.copy(summaryShareIndex = nextIndex)
-            shareHelper.shareText(chunks[index], "Share Summary")
+        val enabled = state.translateBeforeShare
+        if (!enabled) {
+            val chunks = state.summaryShareChunks
+            if (chunks != null) {
+                val index = state.summaryShareIndex.coerceIn(0, chunks.size - 1)
+                val nextIndex = if (index + 1 >= chunks.size) 0 else index + 1
+                _uiState.value = state.copy(summaryShareIndex = nextIndex)
+                shareHelper.shareText(chunks[index], "Share Summary")
+                return
+            }
+            val summary = state.summary?.takeIf { it.isNotBlank() } ?: return
+            shareHelper.shareText(summary, "Share Summary")
             return
         }
-        val summary = state.summary ?: return
-        shareHelper.shareText(summary, "Share Summary")
+        val summary = state.summary?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            shareTranslationRunner.withTranslation {
+                val combined = shareTranslationRunner.textForShare(summary, true)
+                val chunks = ShareTextChunker.splitForShare(combined)
+                if (_uiState.value.summary == summary) {
+                    _uiState.value = _uiState.value.copy(
+                        summaryShareChunks = chunks.takeIf { it.size > 1 },
+                        summaryShareIndex = if (chunks.size > 1) 1 else 0
+                    )
+                }
+                shareHelper.shareText(chunks.first(), "Share Summary")
+            }
+        }
     }
 
     fun shareSummaryAsFile() {
-        val summary = _uiState.value.summary
-        if (summary != null) {
-            shareHelper.shareLongText(summary, "Share Summary", forceFile = true)
+        val summary = _uiState.value.summary?.takeIf { it.isNotBlank() } ?: return
+        val enabled = _uiState.value.translateBeforeShare
+        viewModelScope.launch {
+            shareTranslationRunner.withTranslation {
+                val text = shareTranslationRunner.textForShare(summary, enabled)
+                shareHelper.shareLongText(text, "Share Summary", forceFile = true)
+            }
         }
     }
 
@@ -736,18 +764,21 @@ class MainViewModel @Inject constructor(
             isProgressIndeterminate = false,
             splitChoicePrompt = null
         )
-        val request = ShareRequest.Audio(
-            caption = AudioShareCaption.build(videoInfo.title, shareFiles.size),
-            files = shareFiles,
-            mimeType = "audio/mpeg",
-            title = "Share audio"
-        )
-        // Non-blank caption means a two-stage share: hold the files for after the
-        // title is shared (see MainScreen's ON_RESUME observer).
-        if (request.caption.isNotBlank()) {
-            _pendingAudioFiles.value = request
+        val enabled = _uiState.value.translateBeforeShare
+        shareTranslationRunner.withTranslation {
+            val request = ShareRequest.Audio(
+                caption = shareTranslationRunner.textForShare(AudioShareCaption.build(videoInfo.title, shareFiles.size), enabled),
+                files = shareFiles,
+                mimeType = "audio/mpeg",
+                title = "Share audio"
+            )
+            // Non-blank caption means a two-stage share: hold the files for after the
+            // title is shared (see MainScreen's ON_RESUME observer).
+            if (request.caption.isNotBlank()) {
+                _pendingAudioFiles.value = request
+            }
+            _shareRequests.emit(request)
         }
-        _shareRequests.emit(request)
         if (videoFile.exists()) {
             videoFile.delete()
         }
