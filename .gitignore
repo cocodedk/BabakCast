@@ -21,3 +21,9 @@ release.keystore
 
 # Git worktrees
 .worktrees/
+
+# Local AI tooling (machine-specific, not shared)
+/.claude/
+/.codex
+/.kotlin/
+/.mcp.json
