@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cocode.babakcast.data.ai.ProviderResolver
+import com.cocode.babakcast.data.ai.ShareTranslationResult
+import com.cocode.babakcast.data.ai.ShareTranslator
 import com.cocode.babakcast.data.local.SettingsRepository
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
@@ -54,7 +56,8 @@ class MainViewModel @Inject constructor(
     private val providerRepository: ProviderRepository,
     private val settingsRepository: SettingsRepository,
     private val providerResolver: ProviderResolver,
-    private val shareHelper: ShareHelper
+    private val shareHelper: ShareHelper,
+    private val shareTranslator: ShareTranslator
 ) : ViewModel() {
     private val tag = "MainViewModel"
 
@@ -213,8 +216,12 @@ class MainViewModel @Inject constructor(
                         loadingMessage = null,
                         isProgressIndeterminate = false
                     )
-                    val caption = result.text.ifBlank { null }
-                    shareHelper.shareMixedMedia(result.allFiles, caption)
+                    val enabled = _uiState.value.translateBeforeShare
+                    withShareTranslation {
+                        val caption = result.text.ifBlank { null }
+                            ?.let { textForShare(it, enabled) }
+                        shareHelper.shareMixedMedia(result.allFiles, caption)
+                    }
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
@@ -240,8 +247,12 @@ class MainViewModel @Inject constructor(
                             error = AppError.InvalidUrl(blankMessage)
                         )
                     } else {
-                        _uiState.value = _uiState.value.copy(isFetchingTweetText = false, tweetText = text)
-                        _tweetTextEvents.emit(event(text))
+                        val enabled = _uiState.value.translateBeforeShare
+                        withShareTranslation {
+                            val shareText = textForShare(text, enabled)
+                            _uiState.value = _uiState.value.copy(isFetchingTweetText = false, tweetText = text)
+                            _tweetTextEvents.emit(event(shareText))
+                        }
                     }
                 },
                 onFailure = { error ->
@@ -730,20 +741,49 @@ class MainViewModel @Inject constructor(
             isProgressIndeterminate = false,
             splitChoicePrompt = null
         )
-        val request = ShareRequest.Audio(
-            caption = AudioShareCaption.build(videoInfo.title, shareFiles.size),
-            files = shareFiles,
-            mimeType = "audio/mpeg",
-            title = "Share audio"
-        )
-        // Non-blank caption means a two-stage share: hold the files for after the
-        // title is shared (see MainScreen's ON_RESUME observer).
-        if (request.caption.isNotBlank()) {
-            _pendingAudioFiles.value = request
+        val enabled = _uiState.value.translateBeforeShare
+        withShareTranslation {
+            val request = ShareRequest.Audio(
+                caption = textForShare(AudioShareCaption.build(videoInfo.title, shareFiles.size), enabled),
+                files = shareFiles,
+                mimeType = "audio/mpeg",
+                title = "Share audio"
+            )
+            // Non-blank caption means a two-stage share: hold the files for after the
+            // title is shared (see MainScreen's ON_RESUME observer).
+            if (request.caption.isNotBlank()) {
+                _pendingAudioFiles.value = request
+            }
+            _shareRequests.emit(request)
         }
-        _shareRequests.emit(request)
         if (videoFile.exists()) {
             videoFile.delete()
+        }
+    }
+
+    /** Maps a translation result to shareable text; Failed also surfaces a toast-style error. */
+    private suspend fun textForShare(text: String, enabled: Boolean): String =
+        when (val result = shareTranslator.translateIfEnabled(text, enabled)) {
+            is ShareTranslationResult.Translated -> result.combinedText
+            is ShareTranslationResult.Skipped -> text
+            is ShareTranslationResult.Failed -> {
+                _uiState.value = _uiState.value.copy(
+                    error = AppError.NetworkError("Translation failed — sharing original text")
+                )
+                result.originalText
+            }
+        }
+
+    /** Runs [block] with the in-flight flag set; always clears it and auto-resets the toggle. */
+    private suspend fun withShareTranslation(block: suspend () -> Unit) {
+        _uiState.value = _uiState.value.copy(isTranslatingForShare = true)
+        try {
+            block()
+        } finally {
+            _uiState.value = _uiState.value.copy(
+                isTranslatingForShare = false,
+                translateBeforeShare = false
+            )
         }
     }
 
