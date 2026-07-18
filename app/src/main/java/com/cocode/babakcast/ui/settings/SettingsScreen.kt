@@ -115,6 +115,7 @@ fun SettingsScreen(
             ) {
                 UpdateCheckSection(
                     state = uiState.updateState,
+                    installedVersion = viewModel.installedVersionName,
                     onCheck = viewModel::checkForUpdate,
                     onDownload = viewModel::requestDownload,
                     onConfirmCellular = viewModel::confirmCellularDownload,

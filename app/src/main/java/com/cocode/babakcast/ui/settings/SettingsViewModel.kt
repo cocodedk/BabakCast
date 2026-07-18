@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -30,7 +31,8 @@ class SettingsViewModel @Inject constructor(
     private val secureStorage: SecureStorage,
     private val settingsRepository: SettingsRepository,
     private val updateChecker: UpdateChecker,
-    private val networkTypeProvider: NetworkTypeProvider
+    private val networkTypeProvider: NetworkTypeProvider,
+    @param:Named("installedVersionName") val installedVersionName: String
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
