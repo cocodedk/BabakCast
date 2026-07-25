@@ -1,5 +1,6 @@
 package com.cocode.babakcast.data.ai
 
+import android.util.Log
 import com.cocode.babakcast.data.repository.AIRepository
 import com.cocode.babakcast.util.TranslatedShareText
 import kotlinx.coroutines.withTimeoutOrNull
@@ -25,12 +26,17 @@ class ShareTranslator @Inject constructor(
                 aiRepository.translate(text, providerId, TARGET_LANGUAGE, TEMPERATURE)
             },
             timeoutMs = TIMEOUT_MS
-        )
+        ).also { result ->
+            if (result is ShareTranslationResult.Failed) {
+                Log.w(TAG, "Translation failed or timed out (${TIMEOUT_MS}ms cap); sharing original")
+            }
+        }
 
     companion object {
+        private const val TAG = "ShareTranslator"
         const val TARGET_LANGUAGE = "Persian"
         const val TEMPERATURE = 0.2
-        const val TIMEOUT_MS = 15_000L
+        const val TIMEOUT_MS = 60_000L
 
         suspend fun run(
             text: String,
