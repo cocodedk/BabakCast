@@ -556,6 +556,8 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(translateBeforeShare = enabled)
     }
 
+    fun cancelShareTranslation() = shareTranslationRunner.cancelActiveTranslation()
+
     fun shareSummary() {
         val state = _uiState.value
         val enabled = state.translateBeforeShare

@@ -46,9 +46,10 @@ Behavior:
 1. `enabled == false` → `Skipped` immediately (no provider lookup, no network).
 2. Resolve provider via `ProviderResolver`; none configured → `Failed(text)`.
 3. Call `aiRepository.translate(text, providerId, targetLanguage = "Persian", temperature = 0.2)`
-   wrapped in `withTimeoutOrNull(60_000)`.
+   with a dedicated 180_000 ms HTTP read timeout, wrapped in `withTimeoutOrNull(300_000)` as a hang backstop.
 4. Success → `Translated(TranslatedShareText.combine(text, translated))`.
 5. Error or timeout → `Failed(text)`.
+6. User taps "Share now" while in flight → the translation coroutine is cancelled → `Cancelled(text)` → share original, no error surfaced.
 
 ### New: `ShareTranslationResult` (sealed)
 ```kotlin
@@ -102,7 +103,7 @@ share tap
   → isTranslatingForShare = true (share buttons disable)
   → shareTranslator.translateIfEnabled(text, enabled)
       → ProviderResolver.resolve()
-      → aiRepository.translate(...) with 60s timeout
+      → aiRepository.translate(...) with 180s HTTP read timeout (300s backstop; "Share now" cancels)
   → Translated / Skipped / Failed  → share sheet (always)
   → finally: isTranslatingForShare = false; translateBeforeShare = false
 ```
@@ -123,7 +124,7 @@ share tap
 ## Risks / notes
 
 - Shares that were previously instant gain a network round-trip when the toggle is
-  on; the in-flight indicator and 60s timeout bound this.
+  on; the in-flight indicator, the "Share now" cancel affordance, and the 180s HTTP read timeout (300s backstop) bound this.
 - App UI strings are currently hardcoded inline in Compose (no `res/values-fa`);
   the toggle label follows the existing convention. Full app localization is a
   separate concern, untouched here.
