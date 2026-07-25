@@ -26,7 +26,7 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 - **Bring-your-own AI** — OpenAI, Azure OpenAI, Anthropic, Google Gemini, OpenRouter. Configure API key and model in Settings.
 - **No backend** — Everything runs on your device. No accounts, no analytics, no tracking.
 - **Encrypted API keys** — Stored locally with Android's EncryptedSharedPreferences.
-- **Optional Persian translation on share** — flip the "Translate to Persian" toggle and the next share (tweet text, captions, or summaries) includes an AI-generated Persian translation below the original.
+- **Optional Persian translation on share** — flip the "Translate to Persian" toggle and the next share (tweet text, captions, or summaries) includes an AI-generated Persian translation below the original. Slow providers get up to 3 minutes; while it runs, a **Share now** button lets you skip the wait and share the original immediately.
 
 ---
 

@@ -22,6 +22,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -48,7 +49,8 @@ class AIClient @Inject constructor(
         provider: Provider,
         messages: List<AIMessage>,
         temperature: Double,
-        maxTokens: Int
+        maxTokens: Int,
+        readTimeoutMs: Long? = null
     ): Result<AIResponse> = withContext(Dispatchers.IO) {
         try {
             // Get API key
@@ -75,8 +77,11 @@ class AIClient @Inject constructor(
             )
 
             // Execute request
-            val response = okHttpClient.newCall(request).execute()
-            
+            // Derived client shares the pool/dispatcher; only the read timeout differs.
+            val client = if (readTimeoutMs == null) okHttpClient
+            else okHttpClient.newBuilder().readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS).build()
+            val response = client.newCall(request).execute()
+
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string() ?: ""
                 Log.e(

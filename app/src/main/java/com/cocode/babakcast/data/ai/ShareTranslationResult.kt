@@ -5,4 +5,5 @@ sealed class ShareTranslationResult {
     data class Translated(val combinedText: String) : ShareTranslationResult()
     object Skipped : ShareTranslationResult()
     data class Failed(val originalText: String) : ShareTranslationResult()
+    data class Cancelled(val originalText: String) : ShareTranslationResult()
 }

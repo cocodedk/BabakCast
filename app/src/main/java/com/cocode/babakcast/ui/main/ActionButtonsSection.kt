@@ -43,13 +43,14 @@ internal fun ActionButtonsSection(
     onDownloadSplitAudio: () -> Unit,
     onSummarize: () -> Unit,
     onSummaryLengthChange: (SummaryLength) -> Unit,
-    onTranslateToggle: (Boolean) -> Unit
+    onTranslateToggle: (Boolean) -> Unit,
+    onShareNow: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TranslateToggleRow(uiState, onTranslateToggle)
+        TranslateToggleRow(uiState, onTranslateToggle, onShareNow)
 
         val downloadEnabled = uiState.downloadEngineReady && !uiState.isLoading &&
             uiState.url.isNotBlank() && !uiState.isTranslatingForShare

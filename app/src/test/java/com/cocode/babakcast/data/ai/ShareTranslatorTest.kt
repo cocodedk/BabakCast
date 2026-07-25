@@ -10,10 +10,12 @@ import org.junit.Test
 class ShareTranslatorTest {
 
     @Test
-    fun timeoutCapAccommodatesObservedProviderLatency() {
-        // Logcat captured a real provider response arriving at 22.6s for a
-        // tweet-sized prompt; the app-level timeout must not discard it.
-        assertTrue(ShareTranslator.TIMEOUT_MS >= 30_000L)
+    fun waitPolicy_httpLayerIsGenerous_andBackstopOutlivesIt() {
+        // "Wait until done": the HTTP read timeout is the working bound; the
+        // in-app backstop must only fire if the HTTP layer itself hangs, so it
+        // has to outlive connect (30s) + write (60s) + read phases combined.
+        assertTrue(ShareTranslator.HTTP_READ_TIMEOUT_MS >= 120_000L)
+        assertTrue(ShareTranslator.TIMEOUT_MS >= ShareTranslator.HTTP_READ_TIMEOUT_MS + 90_000L)
     }
 
     @Test
