@@ -23,12 +23,12 @@ class ShareTranslator @Inject constructor(
             enabled = enabled,
             resolveProviderId = { providerResolver.resolve()?.id },
             translate = { providerId ->
-                aiRepository.translate(text, providerId, TARGET_LANGUAGE, TEMPERATURE)
+                aiRepository.translate(text, providerId, TARGET_LANGUAGE, TEMPERATURE, HTTP_READ_TIMEOUT_MS)
             },
             timeoutMs = TIMEOUT_MS
         ).also { result ->
             if (result is ShareTranslationResult.Failed) {
-                Log.w(TAG, "Translation failed or timed out (${TIMEOUT_MS}ms cap); sharing original")
+                Log.w(TAG, "Translation failed; sharing original (readTimeout=${HTTP_READ_TIMEOUT_MS}ms, backstop=${TIMEOUT_MS}ms)")
             }
         }
 
@@ -36,7 +36,8 @@ class ShareTranslator @Inject constructor(
         private const val TAG = "ShareTranslator"
         const val TARGET_LANGUAGE = "Persian"
         const val TEMPERATURE = 0.2
-        const val TIMEOUT_MS = 60_000L
+        const val HTTP_READ_TIMEOUT_MS = 180_000L
+        const val TIMEOUT_MS = 300_000L
 
         suspend fun run(
             text: String,

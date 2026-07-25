@@ -139,7 +139,8 @@ class AIRepository @Inject constructor(
         text: String,
         providerId: String,
         targetLanguage: String,
-        temperature: Double
+        temperature: Double,
+        readTimeoutMs: Long? = null
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             val provider = providerRepository.getProvider(providerId)
@@ -164,7 +165,8 @@ class AIRepository @Inject constructor(
                 providerWithModel,
                 messages,
                 temperature,
-                providerWithModel.limits.max_output_tokens
+                providerWithModel.limits.max_output_tokens,
+                readTimeoutMs
             )
 
             response.map { it.content }
