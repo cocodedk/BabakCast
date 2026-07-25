@@ -10,6 +10,13 @@ import org.junit.Test
 class ShareTranslatorTest {
 
     @Test
+    fun timeoutCapAccommodatesObservedProviderLatency() {
+        // Logcat captured a real provider response arriving at 22.6s for a
+        // tweet-sized prompt; the app-level timeout must not discard it.
+        assertTrue(ShareTranslator.TIMEOUT_MS >= 30_000L)
+    }
+
+    @Test
     fun disabledToggleSkipsWithoutResolvingOrTranslating() = runBlocking {
         var resolved = false
         val result = ShareTranslator.run(

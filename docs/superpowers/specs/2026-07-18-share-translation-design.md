@@ -46,7 +46,7 @@ Behavior:
 1. `enabled == false` → `Skipped` immediately (no provider lookup, no network).
 2. Resolve provider via `ProviderResolver`; none configured → `Failed(text)`.
 3. Call `aiRepository.translate(text, providerId, targetLanguage = "Persian", temperature = 0.2)`
-   wrapped in `withTimeoutOrNull(15_000)`.
+   wrapped in `withTimeoutOrNull(60_000)`.
 4. Success → `Translated(TranslatedShareText.combine(text, translated))`.
 5. Error or timeout → `Failed(text)`.
 
@@ -102,7 +102,7 @@ share tap
   → isTranslatingForShare = true (share buttons disable)
   → shareTranslator.translateIfEnabled(text, enabled)
       → ProviderResolver.resolve()
-      → aiRepository.translate(...) with 15s timeout
+      → aiRepository.translate(...) with 60s timeout
   → Translated / Skipped / Failed  → share sheet (always)
   → finally: isTranslatingForShare = false; translateBeforeShare = false
 ```
@@ -123,7 +123,7 @@ share tap
 ## Risks / notes
 
 - Shares that were previously instant gain a network round-trip when the toggle is
-  on; the in-flight indicator and 15s timeout bound this.
+  on; the in-flight indicator and 60s timeout bound this.
 - App UI strings are currently hardcoded inline in Compose (no `res/values-fa`);
   the toggle label follows the existing convention. Full app localization is a
   separate concern, untouched here.
