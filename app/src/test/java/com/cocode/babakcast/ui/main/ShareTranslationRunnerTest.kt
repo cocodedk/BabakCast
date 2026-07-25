@@ -2,6 +2,10 @@ package com.cocode.babakcast.ui.main
 
 import com.cocode.babakcast.data.ai.ShareTranslationResult
 import com.cocode.babakcast.util.AppError
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -100,5 +104,63 @@ class ShareTranslationRunnerTest {
             AppError.NetworkError("Translation failed — sharing original text"),
             state.error
         )
+    }
+
+    @Test
+    fun textForShare_cancelledResult_returnsOriginal_withoutError() = runBlocking {
+        var state = MainUiState()
+        val r = runner(
+            state = { state },
+            setState = { state = it },
+            translate = { _, _ -> ShareTranslationResult.Cancelled("hello") }
+        )
+
+        val result = r.textForShare("hello", enabled = true)
+
+        assertEquals("hello", result)
+        assertNull(state.error)
+    }
+
+    @Test
+    fun cancelActiveTranslation_returnsOriginal_withoutError() = runBlocking {
+        var state = MainUiState()
+        val started = CompletableDeferred<Unit>()
+        val r = runner(
+            state = { state },
+            setState = { state = it },
+            translate = { _, _ ->
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        )
+
+        val share = async { r.textForShare("hello", enabled = true) }
+        started.await()
+        r.cancelActiveTranslation()
+
+        assertEquals("hello", share.await())
+        assertNull(state.error)
+    }
+
+    @Test
+    fun textForShare_outerCancellation_propagates_asCancelled() = runBlocking {
+        var state = MainUiState()
+        val started = CompletableDeferred<Unit>()
+        val r = runner(
+            state = { state },
+            setState = { state = it },
+            translate = { _, _ ->
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        )
+
+        val share = launch { r.textForShare("hello", enabled = true) }
+        started.await()
+        share.cancel()
+        share.join()
+
+        assertTrue(share.isCancelled)
+        assertNull(state.error)
     }
 }
