@@ -2,6 +2,7 @@ package com.cocode.babakcast.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +53,12 @@ object YoutubeDLReady {
         scope.launch(Dispatchers.IO) {
             try {
                 YoutubeDL.getInstance().init(appContext)
+                // yt-dlp shells out to its own ffmpeg to merge the separate video and
+                // audio streams YouTube now forces us to download. That binary is a
+                // different one from the FFmpegKit used for splitting, and it is not
+                // unpacked unless initialised here — without this, every YouTube
+                // download fails at the merge step with "ffmpeg is not installed".
+                FFmpeg.getInstance().init(appContext)
             } catch (e: Exception) {
                 Log.e(TAG, "YoutubeDL init failed", e)
                 _status.value = YoutubeDLInitStatus.Failed(describeCauseChain(e))

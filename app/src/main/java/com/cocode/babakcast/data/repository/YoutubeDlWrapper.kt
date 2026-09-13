@@ -150,6 +150,22 @@ internal class YoutubeDlWrapper(
         private const val YOUTUBE_EXTRACTOR_ARGS = "youtube:player_client=default,-android_sdkless"
         private const val X_EXTRACTOR_ARGS = "twitter:api=syndication"
 
+        /** Muxed selector, still correct for every platform that serves combined streams. */
+        private const val MUXED_FORMAT = "best[ext=mp4]/best"
+
+        // YouTube stopped returning muxed (audio+video) formats for the clients yt-dlp can
+        // still reach, so MUXED_FORMAT matches nothing and yt-dlp aborts with "Requested
+        // format is not available". Pair a video-only with an audio-only stream instead and
+        // let ffmpeg merge. H.264 + m4a at <=720p is preferred over the larger AV1/VP9 and
+        // 4K variants: those are a playback gamble on WhatsApp, the primary share target,
+        // and 4K on mobile data is a regression from the 360p muxed stream this replaces.
+        // The trailing muxed alternatives keep this working if YouTube ever serves combined
+        // formats again, or on a platform that still does.
+        private const val YOUTUBE_FORMAT =
+            "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
+                "b[ext=mp4]/bv*+ba/b"
+
         internal fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)
             request.addOption("--skip-download")
@@ -161,7 +177,14 @@ internal class YoutubeDlWrapper(
 
         internal fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)
-            request.addOption("-f", "best[ext=mp4]/best")
+            if (platform == Platform.YOUTUBE) {
+                request.addOption("-f", YOUTUBE_FORMAT)
+                // Separate video/audio streams arrive in different containers; force the
+                // merged result back to mp4 so the output path's extension stays honest.
+                request.addOption("--merge-output-format", "mp4")
+            } else {
+                request.addOption("-f", MUXED_FORMAT)
+            }
             request.addOption("--no-warnings")
             applyPlatformExtractorArgs(request, platform)
             request.addOption("-o", outputPath)
