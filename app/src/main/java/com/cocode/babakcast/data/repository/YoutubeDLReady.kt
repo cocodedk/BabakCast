@@ -53,19 +53,30 @@ object YoutubeDLReady {
         scope.launch(Dispatchers.IO) {
             try {
                 YoutubeDL.getInstance().init(appContext)
-                // yt-dlp shells out to its own ffmpeg whenever a download falls through
-                // to a separate video + audio pair — see DOWNLOAD_FORMAT. That binary is
-                // a different one from the FFmpegKit used for splitting, and it is not
-                // unpacked unless initialised here, so without this the fallback fails
-                // with "ffmpeg is not installed".
-                FFmpeg.getInstance().init(appContext)
             } catch (e: Exception) {
-                Log.e(TAG, "yt-dlp/ffmpeg init failed", e)
+                Log.e(TAG, "YoutubeDL init failed", e)
                 _status.value = YoutubeDLInitStatus.Failed(describeCauseChain(e))
                 return@launch
             }
+            initFFmpeg(appContext)
             refreshYoutubeDlIfDue(appContext)
             _status.value = YoutubeDLInitStatus.Ready
+        }
+    }
+
+    /**
+     * Unpack yt-dlp's own ffmpeg, which it shells out to whenever a download falls through to
+     * a separate video + audio pair — see DOWNLOAD_FORMAT. It is a different binary from the
+     * FFmpegKit used for splitting, and is not unpacked unless initialised here.
+     *
+     * Best-effort on purpose: only the fallback path needs it, so a failure here must not gate
+     * the muxed downloads that never merge.
+     */
+    private fun initFFmpeg(appContext: Context) {
+        try {
+            FFmpeg.getInstance().init(appContext)
+        } catch (e: Exception) {
+            Log.w(TAG, "ffmpeg init failed; merged video+audio downloads will not work", e)
         }
     }
 
