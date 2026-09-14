@@ -150,21 +150,23 @@ internal class YoutubeDlWrapper(
         private const val YOUTUBE_EXTRACTOR_ARGS = "youtube:player_client=default,-android_sdkless"
         private const val X_EXTRACTOR_ARGS = "twitter:api=syndication"
 
-        /** Muxed selector, still correct for every platform that serves combined streams. */
+        /** Muxed selector — the only one every platform needs while combined streams exist. */
         private const val MUXED_FORMAT = "best[ext=mp4]/best"
 
-        // YouTube stopped returning muxed (audio+video) formats for the clients yt-dlp can
-        // still reach, so MUXED_FORMAT matches nothing and yt-dlp aborts with "Requested
-        // format is not available". Pair a video-only with an audio-only stream instead and
-        // let ffmpeg merge. H.264 + m4a at <=720p is preferred over the larger AV1/VP9 and
-        // 4K variants: those are a playback gamble on WhatsApp, the primary share target,
-        // and 4K on mobile data is a regression from the 360p muxed stream this replaces.
-        // The trailing muxed alternatives keep this working if YouTube ever serves combined
-        // formats again, or on a platform that still does.
+        // Muxed first, so this is a no-op whenever YouTube serves a combined stream — which
+        // it does today. The trailing alternatives are a safety net: yt-dlp's YouTube client
+        // chain shifts under us, and on a chain that returns only adaptive streams (observed
+        // on yt-dlp stable 2026.08.19, which resolves to the visionos client) MUXED_FORMAT
+        // matches nothing and the download aborts with "Requested format is not available"
+        // before a single byte moves. Falling back to a video-only + audio-only pair keeps
+        // downloads working through that. H.264 + m4a at <=720p rather than the bare best
+        // pair: unconstrained this picks AV1 at 4K, a size and codec regression for
+        // WhatsApp, the primary share target.
         private const val YOUTUBE_FORMAT =
-            "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+            MUXED_FORMAT + "/" +
+                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
                 "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
-                "b[ext=mp4]/bv*+ba/b"
+                "bv*+ba"
 
         internal fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)

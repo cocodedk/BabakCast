@@ -54,21 +54,36 @@ class MediaRequestBuilderTest {
     // --- Download request ---
 
     /**
-     * YouTube no longer returns muxed (audio+video) formats for the clients yt-dlp can
-     * still reach, so "best[ext=mp4]/best" matches nothing and yt-dlp aborts with
-     * "Requested format is not available". The selector must therefore pair a
-     * video-only with an audio-only stream and let ffmpeg merge them.
+     * A muxed stream must still win when YouTube offers one, so this stays a no-op for
+     * the downloads that work today.
      */
     @Test
-    fun downloadRequestYouTubeSelectsMergedVideoAndAudio() {
+    fun downloadRequestYouTubePrefersMuxedFormat() {
         val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("-f"))
+        assertTrue(
+            "muxed selector must be tried first",
+            request.getOption("-f")!!.startsWith("best[ext=mp4]/best/")
+        )
+    }
+
+    /**
+     * When yt-dlp's client chain returns only adaptive streams, the muxed selector matches
+     * nothing and the download aborts with "Requested format is not available". A
+     * video-only + audio-only pair must be available as a fallback.
+     */
+    @Test
+    fun downloadRequestYouTubeFallsBackToMergedVideoAndAudio() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
+        )
         assertEquals(
-            "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+            "best[ext=mp4]/best/" +
+                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
                 "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
-                "b[ext=mp4]/bv*+ba/b",
+                "bv*+ba",
             request.getOption("-f")
         )
     }
