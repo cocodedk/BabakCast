@@ -150,20 +150,18 @@ internal class YoutubeDlWrapper(
         private const val YOUTUBE_EXTRACTOR_ARGS = "youtube:player_client=default,-android_sdkless"
         private const val X_EXTRACTOR_ARGS = "twitter:api=syndication"
 
-        /** Muxed selector — the only one every platform needs while combined streams exist. */
-        private const val MUXED_FORMAT = "best[ext=mp4]/best"
-
-        // Muxed first, so this is a no-op whenever YouTube serves a combined stream — which
-        // it does today. The trailing alternatives are a safety net: yt-dlp's YouTube client
-        // chain shifts under us, and on a chain that returns only adaptive streams (observed
-        // on yt-dlp stable 2026.08.19, which resolves to the visionos client) MUXED_FORMAT
-        // matches nothing and the download aborts with "Requested format is not available"
-        // before a single byte moves. Falling back to a video-only + audio-only pair keeps
-        // downloads working through that. H.264 + m4a at <=720p rather than the bare best
-        // pair: unconstrained this picks AV1 at 4K, a size and codec regression for
-        // WhatsApp, the primary share target.
-        private const val YOUTUBE_FORMAT =
-            MUXED_FORMAT + "/" +
+        // A muxed (audio+video) stream wins whenever one exists, so this is a no-op for every
+        // download that works today. The rest is a safety net, and it is not YouTube-specific:
+        // yt-dlp's client chains shift under us, and on a chain that returns only adaptive
+        // streams (observed on yt-dlp stable 2026.08.19, which resolves to the visionos
+        // client) the muxed selector matches nothing and the download aborts with "Requested
+        // format is not available" before a single byte moves. Falling back to a video-only +
+        // audio-only pair keeps downloads working through that, on whichever platform drops
+        // muxed streams first. H.264 + m4a at <=720p rather than the bare best pair:
+        // unconstrained this picks AV1 at 4K, a size and codec regression for WhatsApp, the
+        // primary share target.
+        private const val DOWNLOAD_FORMAT =
+            "best[ext=mp4]/best/" +
                 "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
                 "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
                 "bv*+ba"
@@ -179,14 +177,11 @@ internal class YoutubeDlWrapper(
 
         internal fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)
-            if (platform == Platform.YOUTUBE) {
-                request.addOption("-f", YOUTUBE_FORMAT)
-                // Separate video/audio streams arrive in different containers; force the
-                // merged result back to mp4 so the output path's extension stays honest.
-                request.addOption("--merge-output-format", "mp4")
-            } else {
-                request.addOption("-f", MUXED_FORMAT)
-            }
+            request.addOption("-f", DOWNLOAD_FORMAT)
+            // Separate video/audio streams arrive in different containers; force the merged
+            // result back to mp4 so the output path's extension stays honest. yt-dlp ignores
+            // this when no merge is required, so it costs nothing on the muxed path.
+            request.addOption("--merge-output-format", "mp4")
             request.addOption("--no-warnings")
             applyPlatformExtractorArgs(request, platform)
             request.addOption("-o", outputPath)

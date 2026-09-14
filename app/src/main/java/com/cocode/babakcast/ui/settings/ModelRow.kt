@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import com.cocode.babakcast.util.isFreeModel
 
 /** A single model in the dropdown, with a FREE badge when the provider charges nothing for it. */
 @Composable
@@ -38,7 +39,7 @@ internal fun ModelRow(model: String, isSelected: Boolean) {
 }
 
 @Composable
-internal fun FreeBadge() {
+private fun FreeBadge() {
     Text(
         text = "FREE",
         style = MaterialTheme.typography.labelSmall.copy(

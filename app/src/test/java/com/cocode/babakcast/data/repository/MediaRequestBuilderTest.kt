@@ -54,59 +54,31 @@ class MediaRequestBuilderTest {
     // --- Download request ---
 
     /**
-     * A muxed stream must still win when YouTube offers one, so this stays a no-op for
-     * the downloads that work today.
+     * A muxed stream must still win when one exists, so this is a no-op for the downloads
+     * that work today; the video-only + audio-only pair is only a fallback for the day a
+     * client chain stops serving combined streams.
      */
     @Test
-    fun downloadRequestYouTubePrefersMuxedFormat() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertTrue(
-            "muxed selector must be tried first",
-            request.getOption("-f")!!.startsWith("best[ext=mp4]/best/")
-        )
-    }
-
-    /**
-     * When yt-dlp's client chain returns only adaptive streams, the muxed selector matches
-     * nothing and the download aborts with "Requested format is not available". A
-     * video-only + audio-only pair must be available as a fallback.
-     */
-    @Test
-    fun downloadRequestYouTubeFallsBackToMergedVideoAndAudio() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
-        )
-        assertEquals(
-            "best[ext=mp4]/best/" +
+    fun downloadRequestSelectsMuxedFirstThenFallsBackToMergedStreams() {
+        for (platform in Platform.entries) {
+            val request = MediaRepository.buildDownloadRequest(
+                "https://example.com/watch?v=abc123", platform, "/tmp/out.mp4"
+            )
+            assertTrue(request.hasOption("-f"))
+            assertEquals("best[ext=mp4]/best/" +
                 "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
                 "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
-                "bv*+ba",
-            request.getOption("-f")
-        )
+                "bv*+ba", request.getOption("-f"))
+        }
     }
 
+    /** Merging a video+audio pair needs a container; yt-dlp ignores this when nothing merges. */
     @Test
-    fun downloadRequestYouTubeMergesToMp4Container() {
+    fun downloadRequestMergesToMp4Container() {
         val request = MediaRepository.buildDownloadRequest(
             "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
         )
-        assertTrue(request.hasOption("--merge-output-format"))
         assertEquals("mp4", request.getOption("--merge-output-format"))
-    }
-
-    /** Other platforms still serve muxed formats; their selector must not change. */
-    @Test
-    fun downloadRequestNonYouTubeKeepsMuxedSelector() {
-        for (platform in listOf(Platform.X, Platform.INSTAGRAM, Platform.LINKEDIN)) {
-            val request = MediaRepository.buildDownloadRequest(
-                "https://example.com/post/1", platform, "/tmp/out.mp4"
-            )
-            assertEquals("best[ext=mp4]/best", request.getOption("-f"))
-            assertFalse(request.hasOption("--merge-output-format"))
-        }
     }
 
     @Test
@@ -152,7 +124,10 @@ class MediaRequestBuilderTest {
             "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
+        assertEquals("best[ext=mp4]/best/" +
+                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
+                "bv*+ba", request.getOption("-f"))
     }
 
     @Test
@@ -199,7 +174,10 @@ class MediaRequestBuilderTest {
             "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
+        assertEquals("best[ext=mp4]/best/" +
+                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
+                "bv*+ba", request.getOption("-f"))
     }
 
     @Test
@@ -254,7 +232,10 @@ class MediaRequestBuilderTest {
             "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
+        assertEquals("best[ext=mp4]/best/" +
+                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
+                "bv*+ba", request.getOption("-f"))
     }
 
     @Test

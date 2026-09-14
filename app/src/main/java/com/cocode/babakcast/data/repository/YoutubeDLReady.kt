@@ -60,7 +60,7 @@ object YoutubeDLReady {
                 // download fails at the merge step with "ffmpeg is not installed".
                 FFmpeg.getInstance().init(appContext)
             } catch (e: Exception) {
-                Log.e(TAG, "YoutubeDL init failed", e)
+                Log.e(TAG, "yt-dlp/ffmpeg init failed", e)
                 _status.value = YoutubeDLInitStatus.Failed(describeCauseChain(e))
                 return@launch
             }

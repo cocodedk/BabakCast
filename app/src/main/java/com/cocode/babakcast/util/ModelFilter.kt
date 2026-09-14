@@ -1,4 +1,4 @@
-package com.cocode.babakcast.ui.settings
+package com.cocode.babakcast.util
 
 private const val FREE_MODEL_SUFFIX = ":free"
 
@@ -24,11 +24,13 @@ internal object ModelFilter {
      */
     fun filter(query: String, models: List<String>): List<String> {
         val trimmed = query.trim()
-        val browsing = trimmed.isEmpty() || models.any { it.equals(trimmed, ignoreCase = true) }
-        val matches = if (browsing) models else models.filter { it.matchesAllTokens(trimmed) }
+        val browsing = models.any { it.equals(trimmed, ignoreCase = true) }
+        val tokens = trimmed.split(' ', '\t').filter { it.isNotEmpty() }
+        val matches = if (browsing) models else models.filter { it.containsAll(tokens) }
         return matches.sortedByDescending(String::isFreeModel)
     }
 
-    private fun String.matchesAllTokens(query: String): Boolean =
-        query.split(' ', '\t').filter { it.isNotEmpty() }.all { contains(it, ignoreCase = true) }
+    /** A blank query has no tokens, so everything matches — the list opens unfiltered. */
+    private fun String.containsAll(tokens: List<String>): Boolean =
+        tokens.all { contains(it, ignoreCase = true) }
 }

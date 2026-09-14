@@ -188,9 +188,7 @@ fun SettingsScreen(
             onApiKeyChange = viewModel::updateEditingApiKey,
             onApiUrlChange = viewModel::updateEditingApiUrl,
             onModelChange = viewModel::updateEditingModel,
-            onModelQueryChange = viewModel::updateModelQuery,
-            onToggleModelDropdown = viewModel::toggleModelDropdown,
-            onDismissModelDropdown = viewModel::dismissModelDropdown,
+            onModelDropdownVisibleChange = viewModel::setModelDropdownVisible,
             onSave = viewModel::saveProviderConfig,
             onDelete = { viewModel.deleteProviderApiKey(selectedProvider.id) },
             onDismiss = viewModel::dismissProviderDialog,
@@ -214,9 +212,7 @@ private fun ProviderConfigDialog(
     onApiKeyChange: (String) -> Unit,
     onApiUrlChange: (String) -> Unit,
     onModelChange: (String) -> Unit,
-    onModelQueryChange: (String) -> Unit,
-    onToggleModelDropdown: () -> Unit,
-    onDismissModelDropdown: () -> Unit,
+    onModelDropdownVisibleChange: (Boolean) -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
@@ -258,9 +254,7 @@ private fun ProviderConfigDialog(
                     selectedModel = selectedModel,
                     showModelDropdown = showModelDropdown,
                     onModelChange = onModelChange,
-                    onModelQueryChange = onModelQueryChange,
-                    onToggleDropdown = onToggleModelDropdown,
-                    onDismissDropdown = onDismissModelDropdown
+                    onDropdownVisibleChange = onModelDropdownVisibleChange
                 )
 
                 Column(

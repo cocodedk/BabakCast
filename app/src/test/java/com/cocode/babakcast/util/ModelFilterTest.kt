@@ -1,4 +1,4 @@
-package com.cocode.babakcast.ui.settings
+package com.cocode.babakcast.util
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

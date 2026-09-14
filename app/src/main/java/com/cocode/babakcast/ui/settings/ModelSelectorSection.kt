@@ -13,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.key
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import com.cocode.babakcast.util.ModelFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,9 +26,7 @@ internal fun ModelSelectorSection(
     selectedModel: String,
     showModelDropdown: Boolean,
     onModelChange: (String) -> Unit,
-    onModelQueryChange: (String) -> Unit,
-    onToggleDropdown: () -> Unit,
-    onDismissDropdown: () -> Unit
+    onDropdownVisibleChange: (Boolean) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -55,11 +55,12 @@ internal fun ModelSelectorSection(
         }
         ExposedDropdownMenuBox(
             expanded = showModelDropdown,
-            onExpandedChange = { onToggleDropdown() }
+            onExpandedChange = onDropdownVisibleChange
         ) {
             OutlinedTextField(
                 value = selectedModel,
-                onValueChange = onModelQueryChange,
+                // Typing filters the list, so the dropdown has to open and stay open.
+                onValueChange = { onModelChange(it); onDropdownVisibleChange(true) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(MenuAnchorType.PrimaryEditable),
@@ -93,16 +94,15 @@ internal fun ModelSelectorSection(
                 }
                 ExposedDropdownMenu(
                     expanded = showModelDropdown,
-                    onDismissRequest = onDismissDropdown,
+                    onDismissRequest = { onDropdownVisibleChange(false) },
                     containerColor = MaterialTheme.colorScheme.surface
                 ) {
-                    if (matchingModels.isEmpty()) {
-                        NoMatchesRow()
-                    } else {
-                        matchingModels.forEach { model ->
+                    if (matchingModels.isEmpty()) NoMatchesRow()
+                    matchingModels.forEach { model ->
+                        key(model) {
                             DropdownMenuItem(
                                 text = { ModelRow(model = model, isSelected = model == selectedModel) },
-                                onClick = { onModelChange(model) },
+                                onClick = { onModelChange(model); onDropdownVisibleChange(false) },
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                             )
                         }
