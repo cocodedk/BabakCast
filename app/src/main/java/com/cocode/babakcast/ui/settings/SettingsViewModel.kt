@@ -168,20 +168,11 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateEditingModel(model: String) {
-        _uiState.value = _uiState.value.copy(
-            editingModel = model,
-            showModelDropdown = false
-        )
+        _uiState.value = _uiState.value.copy(editingModel = model)
     }
 
-    fun toggleModelDropdown() {
-        _uiState.value = _uiState.value.copy(
-            showModelDropdown = !_uiState.value.showModelDropdown
-        )
-    }
-
-    fun dismissModelDropdown() {
-        _uiState.value = _uiState.value.copy(showModelDropdown = false)
+    fun setModelDropdownVisible(visible: Boolean) {
+        _uiState.value = _uiState.value.copy(showModelDropdown = visible)
     }
 
     fun saveProviderConfig() {

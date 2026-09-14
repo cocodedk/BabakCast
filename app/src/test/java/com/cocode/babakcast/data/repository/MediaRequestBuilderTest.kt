@@ -53,13 +53,25 @@ class MediaRequestBuilderTest {
 
     // --- Download request ---
 
+    /**
+     * A muxed stream must still win when one exists, so this is a no-op for the downloads
+     * that work today; the video-only + audio-only pair is only a fallback for the day a
+     * client chain stops serving combined streams.
+     */
     @Test
-    fun downloadRequestYouTubeHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
+    fun downloadRequestSelectsMuxedFirstThenFallsBackToMergedStreams() {
+        for (platform in Platform.entries) {
+            val request = MediaRepository.buildDownloadRequest(
+                "https://example.com/watch?v=abc123", platform, "/tmp/out.mp4"
+            )
+            assertTrue(request.hasOption("-f"))
+            assertEquals("best[ext=mp4]/best/" +
+                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
+                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
+                "bv*+ba", request.getOption("-f"))
+            // Merging a pair needs a container; yt-dlp ignores it when nothing merges.
+            assertEquals("mp4", request.getOption("--merge-output-format"))
+        }
     }
 
     @Test
@@ -100,15 +112,6 @@ class MediaRequestBuilderTest {
     }
 
     @Test
-    fun downloadRequestXHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
-    }
-
-    @Test
     fun downloadRequestXSuppressesWarnings() {
         val request = MediaRepository.buildDownloadRequest(
             "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
@@ -145,15 +148,6 @@ class MediaRequestBuilderTest {
     }
 
     // --- Instagram download request ---
-
-    @Test
-    fun downloadRequestInstagramHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
-    }
 
     @Test
     fun downloadRequestInstagramNoExtractorArgs() {
@@ -200,15 +194,6 @@ class MediaRequestBuilderTest {
     }
 
     // --- LinkedIn download request ---
-
-    @Test
-    fun downloadRequestLinkedInHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best", request.getOption("-f"))
-    }
 
     @Test
     fun downloadRequestLinkedInNoExtractorArgs() {

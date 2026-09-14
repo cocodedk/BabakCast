@@ -2,6 +2,7 @@ package com.cocode.babakcast.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,8 +58,25 @@ object YoutubeDLReady {
                 _status.value = YoutubeDLInitStatus.Failed(describeCauseChain(e))
                 return@launch
             }
+            initFFmpeg(appContext)
             refreshYoutubeDlIfDue(appContext)
             _status.value = YoutubeDLInitStatus.Ready
+        }
+    }
+
+    /**
+     * Unpack yt-dlp's own ffmpeg, which it shells out to whenever a download falls through to
+     * a separate video + audio pair — see DOWNLOAD_FORMAT. It is a different binary from the
+     * FFmpegKit used for splitting, and is not unpacked unless initialised here.
+     *
+     * Best-effort on purpose: only the fallback path needs it, so a failure here must not gate
+     * the muxed downloads that never merge.
+     */
+    private fun initFFmpeg(appContext: Context) {
+        try {
+            FFmpeg.getInstance().init(appContext)
+        } catch (e: Exception) {
+            Log.w(TAG, "ffmpeg init failed; merged video+audio downloads will not work", e)
         }
     }
 
