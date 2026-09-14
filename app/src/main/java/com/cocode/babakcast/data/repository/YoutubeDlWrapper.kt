@@ -157,9 +157,9 @@ internal class YoutubeDlWrapper(
         // client) the muxed selector matches nothing and the download aborts with "Requested
         // format is not available" before a single byte moves. Falling back to a video-only +
         // audio-only pair keeps downloads working through that, on whichever platform drops
-        // muxed streams first. H.264 + m4a at <=720p rather than the bare best pair:
-        // unconstrained this picks AV1 at 4K, a size and codec regression for WhatsApp, the
-        // primary share target.
+        // muxed streams first. The fallback is capped at H.264 + m4a <=720p because adaptive
+        // streams reach 4K and 8K where muxed ones practically do not: unconstrained the pair
+        // picks AV1 at 4K, a size and codec regression for WhatsApp, the primary share target.
         private const val DOWNLOAD_FORMAT =
             "best[ext=mp4]/best/" +
                 "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +

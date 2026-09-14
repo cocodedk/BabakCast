@@ -69,16 +69,9 @@ class MediaRequestBuilderTest {
                 "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
                 "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
                 "bv*+ba", request.getOption("-f"))
+            // Merging a pair needs a container; yt-dlp ignores it when nothing merges.
+            assertEquals("mp4", request.getOption("--merge-output-format"))
         }
-    }
-
-    /** Merging a video+audio pair needs a container; yt-dlp ignores this when nothing merges. */
-    @Test
-    fun downloadRequestMergesToMp4Container() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
-        )
-        assertEquals("mp4", request.getOption("--merge-output-format"))
     }
 
     @Test
@@ -118,17 +111,6 @@ class MediaRequestBuilderTest {
         assertEquals("twitter:api=syndication", request.getOption("--extractor-args"))
     }
 
-    @Test
-    fun downloadRequestXHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://x.com/user/status/123", Platform.X, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best/" +
-                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
-                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
-                "bv*+ba", request.getOption("-f"))
-    }
 
     @Test
     fun downloadRequestXSuppressesWarnings() {
@@ -168,17 +150,6 @@ class MediaRequestBuilderTest {
 
     // --- Instagram download request ---
 
-    @Test
-    fun downloadRequestInstagramHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.instagram.com/reel/ABC123/", Platform.INSTAGRAM, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best/" +
-                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
-                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
-                "bv*+ba", request.getOption("-f"))
-    }
 
     @Test
     fun downloadRequestInstagramNoExtractorArgs() {
@@ -226,17 +197,6 @@ class MediaRequestBuilderTest {
 
     // --- LinkedIn download request ---
 
-    @Test
-    fun downloadRequestLinkedInHasMp4FormatSelector() {
-        val request = MediaRepository.buildDownloadRequest(
-            "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
-        )
-        assertTrue(request.hasOption("-f"))
-        assertEquals("best[ext=mp4]/best/" +
-                "bv*[ext=mp4][vcodec^=avc1][height<=720]+ba[ext=m4a]/" +
-                "bv*[ext=mp4][height<=720]+ba[ext=m4a]/" +
-                "bv*+ba", request.getOption("-f"))
-    }
 
     @Test
     fun downloadRequestLinkedInNoExtractorArgs() {

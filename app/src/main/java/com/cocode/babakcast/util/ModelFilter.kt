@@ -20,17 +20,17 @@ internal object ModelFilter {
      * The whole list comes back when [query] is blank, and also when it exactly matches a
      * model id: that is the state the dropdown opens in, where the field holds the model
      * already selected. Filtering on it would collapse the list to the single entry the
-     * user is trying to change.
+     * user is trying to change. A blank query has no tokens, so everything matches it.
      */
     fun filter(query: String, models: List<String>): List<String> {
         val trimmed = query.trim()
         val browsing = models.any { it.equals(trimmed, ignoreCase = true) }
-        val tokens = trimmed.split(' ', '\t').filter { it.isNotEmpty() }
-        val matches = if (browsing) models else models.filter { it.containsAll(tokens) }
+        val matches = if (browsing) {
+            models
+        } else {
+            val tokens = trimmed.split(' ', '\t').filter { it.isNotEmpty() }
+            models.filter { model -> tokens.all { model.contains(it, ignoreCase = true) } }
+        }
         return matches.sortedByDescending(String::isFreeModel)
     }
-
-    /** A blank query has no tokens, so everything matches — the list opens unfiltered. */
-    private fun String.containsAll(tokens: List<String>): Boolean =
-        tokens.all { contains(it, ignoreCase = true) }
 }

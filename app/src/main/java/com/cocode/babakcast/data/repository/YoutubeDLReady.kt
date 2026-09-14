@@ -53,11 +53,11 @@ object YoutubeDLReady {
         scope.launch(Dispatchers.IO) {
             try {
                 YoutubeDL.getInstance().init(appContext)
-                // yt-dlp shells out to its own ffmpeg to merge the separate video and
-                // audio streams YouTube now forces us to download. That binary is a
-                // different one from the FFmpegKit used for splitting, and it is not
-                // unpacked unless initialised here — without this, every YouTube
-                // download fails at the merge step with "ffmpeg is not installed".
+                // yt-dlp shells out to its own ffmpeg whenever a download falls through
+                // to a separate video + audio pair — see DOWNLOAD_FORMAT. That binary is
+                // a different one from the FFmpegKit used for splitting, and it is not
+                // unpacked unless initialised here, so without this the fallback fails
+                // with "ffmpeg is not installed".
                 FFmpeg.getInstance().init(appContext)
             } catch (e: Exception) {
                 Log.e(TAG, "yt-dlp/ffmpeg init failed", e)
