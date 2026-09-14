@@ -167,10 +167,22 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(editingApiUrl = apiUrl)
     }
 
+    /** A model was picked from the list — the choice is made, so close the dropdown. */
     fun updateEditingModel(model: String) {
         _uiState.value = _uiState.value.copy(
             editingModel = model,
             showModelDropdown = false
+        )
+    }
+
+    /**
+     * The user is typing in the model field, which filters the list. The dropdown has to stay
+     * open for that to be visible — closing it on each keystroke would hide the results.
+     */
+    fun updateModelQuery(query: String) {
+        _uiState.value = _uiState.value.copy(
+            editingModel = query,
+            showModelDropdown = true
         )
     }
 
