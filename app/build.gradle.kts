@@ -13,7 +13,13 @@ plugins {
     id("jacoco")
 }
 
-// Signing inputs come from env vars (CI) or local.properties (developer machines).
+// Signing inputs, in precedence order: env vars (CI), Gradle properties, then
+// local.properties. Gradle properties are the durable home on a developer machine:
+// ~/.gradle/gradle.properties sits outside the project, so Android Studio cannot
+// erase it the way it regenerates local.properties — which silently drops signing
+// values and makes every later build unsigned. local.properties is still read so
+// existing setups keep working.
+//
 // Both debug and release builds use the same keystore when configured, so update-
 // in-place between locally-built debug APKs and the published release APKs works
 // without uninstalling and losing app data.
@@ -23,17 +29,21 @@ val localSigningProps = Properties().apply {
 }
 fun signingValue(name: String): String? =
     System.getenv(name)?.takeIf { it.isNotBlank() }
+        ?: providers.gradleProperty(name).orNull?.takeIf { it.isNotBlank() }
         ?: localSigningProps.getProperty(name)?.takeIf { it.isNotBlank() }
 
-val signingKeystorePath = signingValue("KEYSTORE_PATH")
 val signingKeystorePassword = signingValue("KEYSTORE_PASSWORD")
 val signingKeyAlias = signingValue("KEY_ALIAS")
 val signingKeyPassword = signingValue("KEY_PASSWORD")
-val hasSigningConfig = signingKeystorePath != null &&
+// A relative KEYSTORE_PATH is resolved against the project root rather than the
+// working directory, so it means the same thing wherever gradle is invoked from.
+val signingKeystoreFile = signingValue("KEYSTORE_PATH")?.let { path ->
+    File(path).takeIf(File::isAbsolute) ?: rootProject.file(path)
+}
+val hasSigningConfig = signingKeystoreFile?.exists() == true &&
     signingKeyAlias != null &&
     signingKeystorePassword != null &&
-    signingKeyPassword != null &&
-    File(signingKeystorePath).exists()
+    signingKeyPassword != null
 
 android {
     namespace = "com.cocode.babakcast"
@@ -53,7 +63,7 @@ android {
     signingConfigs {
         if (hasSigningConfig) {
             create("release") {
-                storeFile = file(signingKeystorePath!!)
+                storeFile = signingKeystoreFile!!
                 storePassword = signingKeystorePassword
                 keyAlias = signingKeyAlias
                 keyPassword = signingKeyPassword

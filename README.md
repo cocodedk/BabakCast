@@ -117,6 +117,25 @@ Then encode it for `KEYSTORE_BASE64`: e.g. `base64 -w 0 release.keystore` (Linux
 
 If the secrets are not set, the workflow will fail at the build step; set all four to get a signed APK from the [Actions](https://github.com/cocodedk/BabakCast/actions) run.
 
+`./scripts/setup-signing.sh` does all of the above in one pass: it reuses an existing
+`release.keystore` (or generates one), verifies the password, uploads the four secrets, and
+stores the same values locally so your own builds are signed too.
+
+### Signing local builds
+
+Debug builds are signed with the release keystore when the four values are available, so a
+locally built APK can replace an installed release build with `adb install -r` — no uninstall,
+no data loss. They are read in this order:
+
+1. Environment variables — used by CI.
+2. Gradle properties, normally `~/.gradle/gradle.properties`.
+3. `local.properties` — still supported, but **Android Studio regenerates this file and will
+   erase anything added to it**, silently leaving later builds unsigned. Prefer option 2.
+
+`setup-signing.sh` writes to `~/.gradle/gradle.properties` (mode 600) for that reason, and
+clears any stale copies out of `local.properties`. A relative `KEYSTORE_PATH` is resolved
+against the project root.
+
 ---
 
 ## Development

@@ -1,9 +1,13 @@
 #!/bin/sh
 # setup-signing.sh
 # Generates or reuses the release keystore, writes the four signing values to
-# local.properties (so local debug builds can be release-signed and update the
-# published APK in place without losing user data), and uploads the same four
-# values + base64-encoded keystore to GitHub Secrets.
+# ~/.gradle/gradle.properties (so local debug builds can be release-signed and
+# update the published APK in place without losing user data), and uploads the
+# same four values + base64-encoded keystore to GitHub Secrets.
+#
+# These used to live in local.properties, which Android Studio regenerates from
+# scratch — silently erasing them and leaving every later build unsigned. The
+# Gradle home file sits outside the project, so the IDE never touches it.
 #
 # Run once from the project root: ./scripts/setup-signing.sh
 set -eu
@@ -16,6 +20,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 KEYSTORE="${KEYSTORE_FILE:-$PROJECT_ROOT/release.keystore}"
 ALIAS="${KEYSTORE_ALIAS:-android}"
 LOCAL_PROPS="$PROJECT_ROOT/local.properties"
+GRADLE_PROPS="${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
 
 echo ""
 echo "=== BabakCast Release Signing Setup ==="
@@ -81,26 +86,41 @@ keytool -list -keystore "$KEYSTORE" -alias "$ALIAS" \
 }
 echo "✓ Keystore valid"
 
-# ── Write to local.properties ─────────────────────────────────────────────────
-# local.properties is gitignored. Strip any prior signing entries before
-# appending so re-running the script doesn't accumulate stale lines.
-echo "Writing signing values to local.properties..."
-touch "$LOCAL_PROPS"
+# ── Write to ~/.gradle/gradle.properties ──────────────────────────────────────
+# Outside the project, so Android Studio cannot regenerate it away. Strip any
+# prior signing entries first so re-running doesn't accumulate stale lines.
+strip_signing_keys() {
+    grep -v '^KEYSTORE_PATH=' "$1" \
+        | grep -v '^KEYSTORE_PASSWORD=' \
+        | grep -v '^KEY_ALIAS=' \
+        | grep -v '^KEY_PASSWORD='
+}
+
+echo "Writing signing values to $GRADLE_PROPS..."
+mkdir -p "$(dirname "$GRADLE_PROPS")"
+touch "$GRADLE_PROPS"
 TMP="$(mktemp)"
-grep -v '^KEYSTORE_PATH=' "$LOCAL_PROPS" \
-    | grep -v '^KEYSTORE_PASSWORD=' \
-    | grep -v '^KEY_ALIAS=' \
-    | grep -v '^KEY_PASSWORD=' \
-    > "$TMP" || true
+strip_signing_keys "$GRADLE_PROPS" > "$TMP" || true
 {
     cat "$TMP"
     echo "KEYSTORE_PATH=$KEYSTORE"
     echo "KEYSTORE_PASSWORD=$KSPASS"
     echo "KEY_ALIAS=$ALIAS"
     echo "KEY_PASSWORD=$KEYPASS"
-} > "$LOCAL_PROPS"
+} > "$GRADLE_PROPS"
 rm -f "$TMP"
-echo "✓ local.properties updated"
+chmod 600 "$GRADLE_PROPS"
+echo "✓ gradle.properties updated (mode 600)"
+
+# Drop any copies left in local.properties so there is one source of truth and
+# no secret lingers in a file the IDE rewrites.
+if [ -f "$LOCAL_PROPS" ] && grep -q '^KEYSTORE_PATH=' "$LOCAL_PROPS" 2>/dev/null; then
+    TMP="$(mktemp)"
+    strip_signing_keys "$LOCAL_PROPS" > "$TMP" || true
+    cat "$TMP" > "$LOCAL_PROPS"
+    rm -f "$TMP"
+    echo "✓ removed stale signing values from local.properties"
+fi
 
 # ── Upload secrets ────────────────────────────────────────────────────────────
 KEYSTORE_B64=$(base64 "$KEYSTORE" | tr -d '\n')
