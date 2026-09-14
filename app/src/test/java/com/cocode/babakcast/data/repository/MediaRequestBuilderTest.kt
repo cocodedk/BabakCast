@@ -111,7 +111,6 @@ class MediaRequestBuilderTest {
         assertEquals("twitter:api=syndication", request.getOption("--extractor-args"))
     }
 
-
     @Test
     fun downloadRequestXSuppressesWarnings() {
         val request = MediaRepository.buildDownloadRequest(
@@ -149,7 +148,6 @@ class MediaRequestBuilderTest {
     }
 
     // --- Instagram download request ---
-
 
     @Test
     fun downloadRequestInstagramNoExtractorArgs() {
@@ -196,7 +194,6 @@ class MediaRequestBuilderTest {
     }
 
     // --- LinkedIn download request ---
-
 
     @Test
     fun downloadRequestLinkedInNoExtractorArgs() {
