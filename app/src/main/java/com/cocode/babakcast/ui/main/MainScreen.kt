@@ -289,7 +289,10 @@ fun MainScreen(
                     onSummarize = viewModel::generateSummary,
                     onSummaryLengthChange = viewModel::updateSummaryLength,
                     onTranslateToggle = viewModel::setTranslateBeforeShare,
-                    onShareNow = viewModel::cancelShareTranslation
+                    onShareNow = viewModel::cancelShareTranslation,
+                    onTrimToggle = viewModel::setTrimEnabled,
+                    onTrimStartChange = viewModel::updateTrimStart,
+                    onTrimEndChange = viewModel::updateTrimEnd
                 )
 
             // Progress Indicator
