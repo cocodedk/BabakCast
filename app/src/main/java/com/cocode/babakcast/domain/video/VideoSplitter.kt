@@ -9,6 +9,7 @@ import com.cocode.babakcast.domain.split.ChapterSplitEstimator
 import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
+import com.cocode.babakcast.domain.split.SplitRetry
 import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.util.DownloadFileParser
 import kotlinx.coroutines.Dispatchers
@@ -129,7 +130,7 @@ class VideoSplitter @Inject constructor() {
                     splitSuccess = true
                 } else {
                     outputFile.delete()
-                    segmentDuration *= 0.85
+                    segmentDuration = SplitRetry.nextDuration(segmentDuration, producedBytes, chunkSizeBytes)
                     attempt++
                 }
             }
