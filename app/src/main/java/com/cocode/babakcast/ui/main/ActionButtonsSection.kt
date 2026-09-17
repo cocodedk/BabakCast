@@ -138,7 +138,8 @@ internal fun ActionButtonsSection(
             val isXActionEnabled = !uiState.isLoading && uiState.url.isNotBlank() &&
                 !uiState.isTranslatingForShare
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val isAllMediaEnabled = uiState.downloadEngineReady && isXActionEnabled
+                val isAllMediaEnabled = uiState.downloadEngineReady && isXActionEnabled &&
+                    !uiState.trimBlocksAllMedia
                 OutlinedButton(
                     onClick = onDownloadAllMedia,
                     enabled = isAllMediaEnabled,

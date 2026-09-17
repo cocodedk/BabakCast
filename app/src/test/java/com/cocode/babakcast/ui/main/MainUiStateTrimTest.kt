@@ -40,4 +40,15 @@ class MainUiStateTrimTest {
         val state = MainUiState(trim = TrimInput(enabled = true, start = "1:23.4", end = "1:25.6"))
         assertFalse(state.trimBlocksDownload)
     }
+
+    @Test
+    fun mainUiState_trimBlocksAllMedia_isFalseWhenTrimIsOff() {
+        assertFalse(MainUiState().trimBlocksAllMedia)
+    }
+
+    @Test
+    fun mainUiState_trimBlocksAllMedia_isTrueEvenForAValidRange() {
+        val state = MainUiState(trim = TrimInput(enabled = true, start = "0:10", end = "0:20"))
+        assertTrue(state.trimBlocksAllMedia)
+    }
 }

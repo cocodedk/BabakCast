@@ -37,4 +37,7 @@ data class MainUiState(
 
     /** Downloads are blocked while the trim fields are on but unusable. */
     val trimBlocksDownload: Boolean get() = trim.resolve() is TrimResolution.Invalid
+
+    /** One cut range cannot apply to every item of an X post, so all-media waits for the cut to be off. */
+    val trimBlocksAllMedia: Boolean get() = trim.enabled
 }
