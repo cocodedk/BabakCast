@@ -47,7 +47,7 @@ val hasSigningConfig = signingKeystoreFile?.exists() == true &&
 
 android {
     namespace = "com.cocode.babakcast"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.cocode.babakcast"
