@@ -3,6 +3,8 @@ package com.cocode.babakcast.ui.main
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.domain.split.SplitSize
+import com.cocode.babakcast.domain.video.TrimInput
+import com.cocode.babakcast.domain.video.TrimResolution
 import com.cocode.babakcast.util.AppError
 
 data class MainUiState(
@@ -28,7 +30,11 @@ data class MainUiState(
     val isTranslatingForShare: Boolean = false,
     val splitSizeMb: Int = SplitSize.DEFAULT_MB,
     val summaryShareChunks: List<String>? = null,
-    val summaryShareIndex: Int = 0
+    val summaryShareIndex: Int = 0,
+    val trim: TrimInput = TrimInput()
 ) {
     val splitSizeBytes: Long get() = splitSizeMb * 1024L * 1024L
+
+    /** Downloads are blocked while the trim fields are on but unusable. */
+    val trimBlocksDownload: Boolean get() = trim.resolve() is TrimResolution.Invalid
 }

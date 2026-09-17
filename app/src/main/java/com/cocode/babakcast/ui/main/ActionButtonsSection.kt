@@ -44,7 +44,10 @@ internal fun ActionButtonsSection(
     onSummarize: () -> Unit,
     onSummaryLengthChange: (SummaryLength) -> Unit,
     onTranslateToggle: (Boolean) -> Unit,
-    onShareNow: () -> Unit
+    onShareNow: () -> Unit,
+    onTrimToggle: (Boolean) -> Unit,
+    onTrimStartChange: (String) -> Unit,
+    onTrimEndChange: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -52,8 +55,19 @@ internal fun ActionButtonsSection(
     ) {
         TranslateToggleRow(uiState, onTranslateToggle, onShareNow)
 
-        val downloadEnabled = uiState.downloadEngineReady && !uiState.isLoading &&
-            uiState.url.isNotBlank() && !uiState.isTranslatingForShare
+        val controlsEnabled = uiState.downloadEngineReady && !uiState.isLoading &&
+            !uiState.isTranslatingForShare
+
+        TrimSection(
+            trim = uiState.trim,
+            enabled = controlsEnabled,
+            onToggle = onTrimToggle,
+            onStartChange = onTrimStartChange,
+            onEndChange = onTrimEndChange
+        )
+
+        val downloadEnabled = controlsEnabled && uiState.url.isNotBlank() &&
+            !uiState.trimBlocksDownload
         Button(
             onClick = onDownloadVideo,
             enabled = downloadEnabled,

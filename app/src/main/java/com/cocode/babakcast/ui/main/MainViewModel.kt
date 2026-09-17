@@ -19,7 +19,9 @@ import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
+import com.cocode.babakcast.domain.video.TrimResolution
 import com.cocode.babakcast.domain.video.VideoSplitter
+import com.cocode.babakcast.domain.video.VideoTrimmer
 import com.cocode.babakcast.util.AppError
 import com.cocode.babakcast.util.AudioShareCaption
 import com.cocode.babakcast.util.AudioShareName
@@ -47,6 +49,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val videoSplitter: VideoSplitter,
+    private val videoTrimmer: VideoTrimmer,
     private val audioExtractor: AudioExtractor,
     private val audioSplitter: AudioSplitter,
     private val partTagger: AudioPartTagger,
@@ -109,6 +112,59 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(splitSizeMb = clamped)
     }
 
+    fun setTrimEnabled(enabled: Boolean) {
+        if (enabled == _uiState.value.trim.enabled) return
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(enabled = enabled))
+    }
+
+    fun updateTrimStart(text: String) {
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(start = text))
+    }
+
+    fun updateTrimEnd(text: String) {
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(end = text))
+    }
+
+    /**
+     * Cuts the requested segment out of a freshly downloaded video, or passes the
+     * download straight through when the trim toggle is off.
+     */
+    private suspend fun applyTrim(videoInfo: VideoInfo): Result<VideoInfo> {
+        val resolution = _uiState.value.trim.resolve()
+        if (resolution !is TrimResolution.Ready) return Result.success(videoInfo)
+
+        val sourceFile = videoInfo.file
+            ?: return Result.failure(IllegalStateException("Downloaded video file not found"))
+
+        _uiState.value = _uiState.value.copy(
+            loadingMessage = "Cutting segment...",
+            isProgressIndeterminate = true
+        )
+
+        return videoTrimmer.trim(sourceFile, resolution.range).map { clip ->
+            val clipSize = clip.length()
+            videoInfo.copy(
+                file = clip,
+                fileSizeBytes = clipSize,
+                needsSplitting = clipSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES,
+                // Chapter timestamps address the original timeline, so they no
+                // longer describe this file and must not reach a chapter split.
+                chapters = emptyList()
+            )
+        }
+    }
+
+    private fun failDownload(error: Throwable) {
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            error = ErrorHandler.handleException(error),
+            isDownloading = false,
+            isDownloadingAudio = false,
+            loadingMessage = null,
+            isProgressIndeterminate = false
+        )
+    }
+
     fun downloadVideo() = startVideoDownload("Downloading full video...") { videoInfo ->
         splitAndShareVideo(videoInfo, SplitMode.NONE)
     }
@@ -169,17 +225,16 @@ class MainViewModel @Inject constructor(
             mediaRepository.downloadVideo(url) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
-                onSuccess = { videoInfo -> onReady(videoInfo) },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = ErrorHandler.handleException(error),
-                        isDownloading = false,
-                        isDownloadingAudio = false,
-                        loadingMessage = null,
-                        isProgressIndeterminate = false
+                onSuccess = { videoInfo ->
+                    applyTrim(videoInfo).fold(
+                        onSuccess = { trimmed -> onReady(trimmed) },
+                        onFailure = { error ->
+                            Log.e(tag, "startVideoDownload trim failed", error)
+                            failDownload(error)
+                        }
                     )
-                }
+                },
+                onFailure = { error -> failDownload(error) }
             )
         }
     }
@@ -327,7 +382,26 @@ class MainViewModel @Inject constructor(
             mediaRepository.downloadVideo(url) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
-                onSuccess = { videoInfo ->
+                onSuccess = { downloadedInfo ->
+                    if (downloadedInfo.file?.exists() != true) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = AppError.DownloadFailed("Downloaded video file not found"),
+                            isDownloadingAudio = false,
+                            loadingMessage = null,
+                            isProgressIndeterminate = false
+                        )
+                        return@fold
+                    }
+
+                    // Trim first so the extracted audio covers the segment only.
+                    val trimResult = applyTrim(downloadedInfo)
+                    val videoInfo = trimResult.getOrElse { error ->
+                        Log.e(tag, "downloadAudio trim failed", error)
+                        downloadedInfo.file?.takeIf { it.exists() }?.delete()
+                        failDownload(error)
+                        return@fold
+                    }
                     val videoFile = videoInfo.file
                     if (videoFile == null || !videoFile.exists()) {
                         _uiState.value = _uiState.value.copy(

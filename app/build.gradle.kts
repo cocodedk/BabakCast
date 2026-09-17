@@ -216,6 +216,8 @@ dependencies {
     // Media playback
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
+    // Frame-accurate segment trimming (see VideoTrimmer)
+    implementation(libs.media3.transformer)
     
     // Testing
     testImplementation(libs.junit)
