@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
@@ -33,7 +34,7 @@ import kotlin.coroutines.resume
  * and falls back to a full export on its own when a source cannot be optimized.
  */
 @Singleton
-@androidx.annotation.OptIn(UnstableApi::class)
+@androidx.annotation.OptIn(UnstableApi::class, ExperimentalApi::class)
 class VideoTrimmer @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
