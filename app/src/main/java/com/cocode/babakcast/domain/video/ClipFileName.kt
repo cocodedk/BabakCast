@@ -15,6 +15,7 @@ object ClipFileName {
     private const val CLIP_MARKER = "_clip"
     private const val DEFAULT_EXTENSION = "mp4"
     private val trailingMediaId = Regex("(.+)([_-][A-Za-z0-9_-]{11})$")
+    private val bareMediaId = Regex("^[A-Za-z0-9_-]{11}$")
 
     fun forSource(sourceFile: File): String {
         val extension = sourceFile.extension.ifBlank { DEFAULT_EXTENSION }
@@ -22,7 +23,7 @@ object ClipFileName {
     }
 
     fun forBaseName(baseName: String): String {
-        if (baseName.contains(CLIP_MARKER)) return baseName
+        if (bareMediaId.matches(baseName)) return "clip_$baseName"
         val match = trailingMediaId.find(baseName)
             ?: return baseName + CLIP_MARKER
         return "${match.groupValues[1]}$CLIP_MARKER${match.groupValues[2]}"

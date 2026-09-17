@@ -12,14 +12,18 @@ class ClipFileNameTest {
     }
 
     @Test
+    fun `puts the marker before a bare media id so the id stays last`() {
+        assertEquals("clip_YE7VzlLtp-4", ClipFileName.forBaseName("YE7VzlLtp-4"))
+    }
+
+    @Test
     fun `appends the marker when there is no trailing media id`() {
         assertEquals("plain_name_clip", ClipFileName.forBaseName("plain_name"))
     }
 
     @Test
-    fun `is idempotent so a re-trim does not stack markers`() {
-        val once = ClipFileName.forBaseName("Some_Title_dQw4w9WgXcQ")
-        assertEquals(once, ClipFileName.forBaseName(once))
+    fun `marks a title that already contains the marker text`() {
+        assertEquals("Paper_clip_clip_dQw4w9WgXcQ", ClipFileName.forBaseName("Paper_clip_dQw4w9WgXcQ"))
     }
 
     @Test
