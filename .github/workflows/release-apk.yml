@@ -1,6 +1,11 @@
-# Build a signed release APK on push/merge to main.
+# Build signed release APKs on push/merge to main.
 # Requires GitHub secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
 # To create KEYSTORE_BASE64: base64 -w 0 your-release.keystore | pbcopy (mac) or base64 your-release.keystore (linux)
+#
+# Builds both distribution flavors (see app/build.gradle.kts) with the same key.
+# dependenciesInfo is off for every build, not just fdroid (android {} block, both flavors):
+#   - github: today's behaviour, yt-dlp self-update on -> BabakCast.apk
+#   - fdroid: yt-dlp self-update off -> BabakCast-fdroid.apk
 
 name: Build signed release APK
 
@@ -10,10 +15,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # create release and upload APK
+  contents: write  # create release and upload APKs
 
 env:
   KEYSTORE_PATH: ${{ github.workspace }}/app/release.keystore
+  KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
   KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
   KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
   KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -38,36 +44,50 @@ jobs:
       - name: Verify signing secrets
         run: |
           missing=0
-          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then echo "Missing or empty secret: KEYSTORE_BASE64"; missing=1; fi
-          if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then echo "Missing or empty secret: KEYSTORE_PASSWORD"; missing=1; fi
-          if [ -z "${{ secrets.KEY_ALIAS }}" ]; then echo "Missing or empty secret: KEY_ALIAS"; missing=1; fi
-          if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then echo "Missing or empty secret: KEY_PASSWORD"; missing=1; fi
+          if [ -z "$KEYSTORE_BASE64" ]; then echo "Missing or empty secret: KEYSTORE_BASE64"; missing=1; fi
+          if [ -z "$KEYSTORE_PASSWORD" ]; then echo "Missing or empty secret: KEYSTORE_PASSWORD"; missing=1; fi
+          if [ -z "$KEY_ALIAS" ]; then echo "Missing or empty secret: KEY_ALIAS"; missing=1; fi
+          if [ -z "$KEY_PASSWORD" ]; then echo "Missing or empty secret: KEY_PASSWORD"; missing=1; fi
           if [ "$missing" -ne 0 ]; then exit 1; fi
 
       - name: Decode keystore
+        run: echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
+
+      - name: Build signed release APKs (github + fdroid)
+        run: ./gradlew assembleGithubRelease assembleFdroidRelease --no-daemon --no-configuration-cache
+
+      - name: Copy APKs with fixed names for stable download URLs
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
-        env:
-          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          cp app/build/outputs/apk/github/release/app-github-release.apk BabakCast.apk
+          cp app/build/outputs/apk/fdroid/release/app-fdroid-release.apk BabakCast-fdroid.apk
 
-      - name: Build release APK
-        run: ./gradlew assembleRelease --no-daemon --no-configuration-cache
+      - name: Locate apksigner
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name apksigner | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then echo "apksigner not found under ANDROID_HOME/build-tools"; exit 1; fi
+          echo "APKSIGNER=$APKSIGNER" >> "$GITHUB_ENV"
 
-      - name: Upload APK artifact
+      - name: Verify APK signatures
+        run: |
+          "$APKSIGNER" verify --print-certs BabakCast.apk
+          "$APKSIGNER" verify --print-certs BabakCast-fdroid.apk
+
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v7
         with:
           name: app-release-signed
-          path: app/build/outputs/apk/release/app-release.apk
+          path: |
+            BabakCast.apk
+            BabakCast-fdroid.apk
 
-      - name: Copy APK with fixed name for stable download URL
-        run: cp app/build/outputs/apk/release/app-release.apk BabakCast.apk
-
-      - name: Create GitHub Release and upload APK
+      - name: Create GitHub Release and upload APKs
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ env.VERSION_NAME }}
           name: Release ${{ env.VERSION_NAME }}
-          files: BabakCast.apk
+          files: |
+            BabakCast.apk
+            BabakCast-fdroid.apk
           draft: false
           generate_release_notes: true
         env:

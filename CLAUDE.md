@@ -80,11 +80,19 @@ BabakCast/
 ## Build Commands
 
 ```bash
-./gradlew buildSmoke --no-daemon          # Smoke check (CI + pre-commit)
-./gradlew assembleDebug --no-daemon       # Build debug APK
-./gradlew testDebugUnitTest --no-daemon   # Unit tests
-./gradlew lintDebug --no-daemon           # Lint
+./gradlew buildSmoke --no-daemon                 # Smoke check (CI + pre-commit)
+./gradlew assembleDebug --no-daemon              # Build debug APK (both flavors)
+./gradlew testGithubDebugUnitTest --no-daemon    # Unit tests, github flavor
+./gradlew testFdroidDebugUnitTest --no-daemon    # Unit tests, fdroid flavor
+./gradlew lintGithubDebug --no-daemon            # Lint, github flavor
+./gradlew lintFdroidDebug --no-daemon            # Lint, fdroid flavor
 ```
+
+Two product flavors share the `distribution` dimension: `github` (yt-dlp self-updates at
+runtime, today's behaviour) and `fdroid` (self-update off — see
+`data/repository/YoutubeDLReady.kt`). Adding the dimension replaced the old bare
+`testDebugUnitTest`/`lintDebug` tasks with per-flavor ones; `assembleDebug` and
+`assembleRelease` still exist as aggregates over both flavors.
 
 ---
 

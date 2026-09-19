@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.openUrlOrToast
@@ -33,10 +32,6 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
-    LaunchedEffect(viewModel) {
-        viewModel.downloadEvents.collect { url -> context.openUrlOrToast(url) }
-    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -107,24 +102,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                UpdateCheckSection(
-                    state = uiState.updateState,
-                    installedVersion = viewModel.installedVersionName,
-                    onCheck = viewModel::checkForUpdate,
-                    onDownload = viewModel::requestDownload,
-                    onConfirmCellular = viewModel::confirmCellularDownload,
-                    onDismiss = viewModel::dismissUpdatePrompt
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
             // About Section
             SectionHeader(title = "About")
             
@@ -168,6 +145,25 @@ fun SettingsScreen(
                     ),
                     color = BabakCastColors.SecondaryAccent,
                     modifier = Modifier.clickable { context.openUrlOrToast("https://cocodedk.github.io/BabakCast") }
+                )
+
+                Text(
+                    text = "Version ${viewModel.installedVersionName}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "Releases on GitHub",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp
+                    ),
+                    color = BabakCastColors.SecondaryAccent,
+                    modifier = Modifier.clickable {
+                        context.openUrlOrToast("https://github.com/cocodedk/BabakCast/releases")
+                    }
                 )
             }
         }

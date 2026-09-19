@@ -53,11 +53,42 @@ android {
         applicationId = "com.cocode.babakcast"
         minSdk = 24
         targetSdk = 36
-        // CI sets VERSION_CODE and VERSION_NAME; local builds use defaults
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = System.getenv("VERSION_NAME") ?: "1.0"
+        // CI sets VERSION_CODE and VERSION_NAME; local builds use defaults.
+        // A reproducible build (F-Droid) sets VERSION_NAME as a Gradle property, which
+        // takes precedence over the env var so the build doesn't depend on shell state.
+        // Gradle property first, like versionName: F-Droid passes both as gradleprops.
+        versionCode = providers.gradleProperty("VERSION_CODE").orNull?.toIntOrNull()
+            ?: System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = providers.gradleProperty("VERSION_NAME").orNull
+            ?: System.getenv("VERSION_NAME")
+            ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // AGP otherwise adds a Google-encrypted dependency list to the APK signing block,
+    // and F-Droid rejects any release APK that carries it.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        // Today's GitHub release: yt-dlp keeps itself current via a runtime self-update
+        // (see YoutubeDLReady), since a GitHub release doesn't need to be reproducible.
+        create("github") {
+            dimension = "distribution"
+            buildConfigField("boolean", "YTDLP_SELF_UPDATE", "true")
+        }
+        // F-Droid forbids any code that downloads and runs another binary at runtime, so
+        // this flavor never calls updateYoutubeDL and ships only the yt-dlp binary bundled
+        // with youtubedl-android. Same applicationId as github: this is a build-time
+        // switch, not a different app.
+        create("fdroid") {
+            dimension = "distribution"
+            buildConfigField("boolean", "YTDLP_SELF_UPDATE", "false")
+        }
     }
 
     signingConfigs {
@@ -126,46 +157,70 @@ jacoco {
     toolVersion = "0.8.11"
 }
 
-tasks.register<JacocoReport>("jacocoTestReport") {
-    dependsOn("testDebugUnitTest")
+// The "distribution" flavor dimension means unit tests, and therefore coverage data,
+// are per flavor now (testGithubDebugUnitTest / testFdroidDebugUnitTest) — there is no
+// bare debug variant to report on. jacocoTestReportGithub/Fdroid report each flavor;
+// jacocoTestReport aggregates both for anyone still typing the pre-flavor task name.
+//
+// Paths below match this project's AGP 9 / Kotlin 2.4 layout, verified against an
+// actual build: javac output moved under intermediates/javac/<variant>/compile...,
+// and Kotlin's own K2 compiler ("built_in_kotlinc") replaced the older Kotlin Gradle
+// plugin's tmp/kotlin-classes/<variant> path this task used to point at.
+val jacocoExcludes = listOf(
+    "**/R.class",
+    "**/R$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    "**/*Test*.*",
+    "**/*_Impl.class",
+    "**/Hilt_*.*",
+    "**/*Hilt*.*",
+    "**/dagger/hilt/**",
+    "**/com/google/dagger/**",
+    "**/androidx/hilt/**",
+    "**/*\$Companion.class"
+)
 
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
+fun registerJacocoReport(flavor: String) {
+    val capitalizedFlavor = flavor.replaceFirstChar { it.uppercase() }
+    val variant = "${flavor}Debug"
+    val capitalizedVariant = "${capitalizedFlavor}Debug"
 
-    val excludes = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "**/*_Impl.class",
-        "**/Hilt_*.*",
-        "**/*Hilt*.*",
-        "**/dagger/hilt/**",
-        "**/com/google/dagger/**",
-        "**/androidx/hilt/**",
-        "**/*\$Companion.class"
-    )
+    tasks.register<JacocoReport>("jacocoTestReport$capitalizedFlavor") {
+        dependsOn("test${capitalizedVariant}UnitTest")
 
-    val javaClasses = fileTree("$buildDir/intermediates/javac/debug/classes") {
-        exclude(excludes)
-    }
-    val kotlinClasses = fileTree("$buildDir/tmp/kotlin-classes/debug") {
-        exclude(excludes)
-    }
-
-    classDirectories.setFrom(files(javaClasses, kotlinClasses))
-    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
-    executionData.setFrom(
-        fileTree(buildDir) {
-            include(
-                "jacoco/testDebugUnitTest.exec",
-                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
-            )
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
         }
-    )
+
+        val javaClasses = fileTree("$buildDir/intermediates/javac/$variant/compile${capitalizedVariant}JavaWithJavac/classes") {
+            exclude(jacocoExcludes)
+        }
+        val kotlinClasses = fileTree("$buildDir/intermediates/built_in_kotlinc/$variant/compile${capitalizedVariant}Kotlin/classes") {
+            exclude(jacocoExcludes)
+        }
+
+        classDirectories.setFrom(files(javaClasses, kotlinClasses))
+        sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+        executionData.setFrom(
+            fileTree(buildDir) {
+                include(
+                    "jacoco/test${capitalizedVariant}UnitTest.exec",
+                    "outputs/unit_test_code_coverage/${variant}UnitTest/test${capitalizedVariant}UnitTest.exec"
+                )
+            }
+        )
+    }
+}
+
+registerJacocoReport("github")
+registerJacocoReport("fdroid")
+
+tasks.register("jacocoTestReport") {
+    group = "verification"
+    description = "Coverage report for both distribution flavors."
+    dependsOn("jacocoTestReportGithub", "jacocoTestReportFdroid")
 }
 
 dependencies {
