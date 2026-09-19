@@ -12,6 +12,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+
+/**
+ * True when the yt-dlp binary that youtubedl-android already extracted should be deleted
+ * before init, so its own init_ytdlp() re-extracts the copy bundled with this build.
+ *
+ * youtubedl-android 0.18.1's init_ytdlp() only copies the raw resource into
+ * <noBackupFilesDir>/youtubedl-android/yt-dlp/yt-dlp when that file is ABSENT — it never
+ * compares versions. Left alone, the fdroid flavor (which never calls updateYoutubeDL)
+ * would keep running whichever yt-dlp got extracted by an older app version, or by a
+ * github-flavor install this one replaced. A plain versionCode mismatch is enough to
+ * decide "stale, re-extract": it catches both an app update carrying a newer bundled
+ * yt-dlp, and an install that replaces a self-updating github build with this one.
+ * No recorded versionCode ([UNSET_VERSION_CODE]) means "never recorded" — that still
+ * compares unequal, but a delete on the not-yet-created directory is a harmless no-op.
+ */
+internal const val UNSET_VERSION_CODE = -1
+
+internal fun shouldReExtractYtdlp(recordedVersionCode: Int, currentVersionCode: Int): Boolean =
+    recordedVersionCode != currentVersionCode
 
 /**
  * Tracks YoutubeDL initialization. Start from Application.onCreate();
@@ -31,6 +51,7 @@ object YoutubeDLReady {
     private const val TAG = "YoutubeDLReady"
     private const val UPDATE_PREFS = "ytdlp_update"
     private const val KEY_LAST_UPDATE_DAY = "last_update_day"
+    private const val KEY_LAST_INIT_VERSION_CODE = "last_init_version_code"
     private const val MILLIS_PER_DAY = 86_400_000L
 
     sealed class YoutubeDLInitStatus {
@@ -52,6 +73,9 @@ object YoutubeDLReady {
         if (_status.value is YoutubeDLInitStatus.Ready) return
         val appContext = context.applicationContext
         scope.launch(Dispatchers.IO) {
+            // github self-updates yt-dlp at runtime, so a stale extracted binary there is
+            // expected to be replaced by refreshYoutubeDlIfDue(); only fdroid needs this.
+            if (!BuildConfig.YTDLP_SELF_UPDATE) reExtractYtdlpIfStale(appContext)
             try {
                 YoutubeDL.getInstance().init(appContext)
             } catch (e: Exception) {
@@ -59,10 +83,32 @@ object YoutubeDLReady {
                 _status.value = YoutubeDLInitStatus.Failed(describeCauseChain(e))
                 return@launch
             }
+            if (!BuildConfig.YTDLP_SELF_UPDATE) recordYtdlpInitVersion(appContext)
             initFFmpeg(appContext)
             refreshYoutubeDlIfDue(appContext)
             _status.value = YoutubeDLInitStatus.Ready
         }
+    }
+
+    /**
+     * fdroid only (see [shouldReExtractYtdlp]): delete the yt-dlp youtubedl-android already
+     * extracted when it doesn't match this build's versionCode, so init_ytdlp() re-extracts
+     * the one bundled here instead of silently keeping an older binary.
+     */
+    private fun reExtractYtdlpIfStale(appContext: Context) {
+        val prefs = appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+        val recorded = prefs.getInt(KEY_LAST_INIT_VERSION_CODE, UNSET_VERSION_CODE)
+        if (!shouldReExtractYtdlp(recorded, BuildConfig.VERSION_CODE)) return
+        // Matches youtubedl-android's own baseDir/"yt-dlp" layout (YoutubeDL.init()/
+        // init_ytdlp() in library 0.18.1); deleting the directory is what that library
+        // itself does on a failed extraction, so init_ytdlp() starts from a clean slate.
+        File(File(appContext.noBackupFilesDir, "youtubedl-android"), "yt-dlp").deleteRecursively()
+    }
+
+    /** fdroid only: called after a successful init, so a failed one is retried next launch. */
+    private fun recordYtdlpInitVersion(appContext: Context) {
+        appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+            .edit().putInt(KEY_LAST_INIT_VERSION_CODE, BuildConfig.VERSION_CODE).apply()
     }
 
     /**
