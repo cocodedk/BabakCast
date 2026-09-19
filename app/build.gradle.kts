@@ -157,46 +157,70 @@ jacoco {
     toolVersion = "0.8.11"
 }
 
-tasks.register<JacocoReport>("jacocoTestReport") {
-    dependsOn("testDebugUnitTest")
+// The "distribution" flavor dimension means unit tests, and therefore coverage data,
+// are per flavor now (testGithubDebugUnitTest / testFdroidDebugUnitTest) — there is no
+// bare debug variant to report on. jacocoTestReportGithub/Fdroid report each flavor;
+// jacocoTestReport aggregates both for anyone still typing the pre-flavor task name.
+//
+// Paths below match this project's AGP 9 / Kotlin 2.4 layout, verified against an
+// actual build: javac output moved under intermediates/javac/<variant>/compile...,
+// and Kotlin's own K2 compiler ("built_in_kotlinc") replaced the older Kotlin Gradle
+// plugin's tmp/kotlin-classes/<variant> path this task used to point at.
+val jacocoExcludes = listOf(
+    "**/R.class",
+    "**/R$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    "**/*Test*.*",
+    "**/*_Impl.class",
+    "**/Hilt_*.*",
+    "**/*Hilt*.*",
+    "**/dagger/hilt/**",
+    "**/com/google/dagger/**",
+    "**/androidx/hilt/**",
+    "**/*\$Companion.class"
+)
 
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
+fun registerJacocoReport(flavor: String) {
+    val capitalizedFlavor = flavor.replaceFirstChar { it.uppercase() }
+    val variant = "${flavor}Debug"
+    val capitalizedVariant = "${capitalizedFlavor}Debug"
 
-    val excludes = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "**/*_Impl.class",
-        "**/Hilt_*.*",
-        "**/*Hilt*.*",
-        "**/dagger/hilt/**",
-        "**/com/google/dagger/**",
-        "**/androidx/hilt/**",
-        "**/*\$Companion.class"
-    )
+    tasks.register<JacocoReport>("jacocoTestReport$capitalizedFlavor") {
+        dependsOn("test${capitalizedVariant}UnitTest")
 
-    val javaClasses = fileTree("$buildDir/intermediates/javac/debug/classes") {
-        exclude(excludes)
-    }
-    val kotlinClasses = fileTree("$buildDir/tmp/kotlin-classes/debug") {
-        exclude(excludes)
-    }
-
-    classDirectories.setFrom(files(javaClasses, kotlinClasses))
-    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
-    executionData.setFrom(
-        fileTree(buildDir) {
-            include(
-                "jacoco/testDebugUnitTest.exec",
-                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
-            )
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
         }
-    )
+
+        val javaClasses = fileTree("$buildDir/intermediates/javac/$variant/compile${capitalizedVariant}JavaWithJavac/classes") {
+            exclude(jacocoExcludes)
+        }
+        val kotlinClasses = fileTree("$buildDir/intermediates/built_in_kotlinc/$variant/compile${capitalizedVariant}Kotlin/classes") {
+            exclude(jacocoExcludes)
+        }
+
+        classDirectories.setFrom(files(javaClasses, kotlinClasses))
+        sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+        executionData.setFrom(
+            fileTree(buildDir) {
+                include(
+                    "jacoco/test${capitalizedVariant}UnitTest.exec",
+                    "outputs/unit_test_code_coverage/${variant}UnitTest/test${capitalizedVariant}UnitTest.exec"
+                )
+            }
+        )
+    }
+}
+
+registerJacocoReport("github")
+registerJacocoReport("fdroid")
+
+tasks.register("jacocoTestReport") {
+    group = "verification"
+    description = "Coverage report for both distribution flavors."
+    dependsOn("jacocoTestReportGithub", "jacocoTestReportFdroid")
 }
 
 dependencies {
