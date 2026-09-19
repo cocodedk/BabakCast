@@ -56,7 +56,9 @@ android {
         // CI sets VERSION_CODE and VERSION_NAME; local builds use defaults.
         // A reproducible build (F-Droid) sets VERSION_NAME as a Gradle property, which
         // takes precedence over the env var so the build doesn't depend on shell state.
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        // Gradle property first, like versionName: F-Droid passes both as gradleprops.
+        versionCode = providers.gradleProperty("VERSION_CODE").orNull?.toIntOrNull()
+            ?: System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = providers.gradleProperty("VERSION_NAME").orNull
             ?: System.getenv("VERSION_NAME")
             ?: "1.0"
