@@ -2,6 +2,7 @@ package com.cocode.babakcast.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.cocode.babakcast.BuildConfig
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.CoroutineScope
@@ -84,8 +85,12 @@ object YoutubeDLReady {
      * Refresh the bundled yt-dlp to the latest nightly at most once per calendar day.
      * Best-effort: on any failure (offline, GitHub unreachable) the bundled binary is
      * kept and the check is retried on the next launch.
+     *
+     * Gated on [BuildConfig.YTDLP_SELF_UPDATE]: the fdroid flavor must never download and
+     * run a binary at runtime, so it keeps whatever yt-dlp ships inside youtubedl-android.
      */
     private fun refreshYoutubeDlIfDue(appContext: Context) {
+        if (!BuildConfig.YTDLP_SELF_UPDATE) return
         try {
             val prefs = appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
             val today = System.currentTimeMillis() / MILLIS_PER_DAY

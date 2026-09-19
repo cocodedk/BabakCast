@@ -18,6 +18,5 @@ data class SettingsUiState(
     val defaultLanguage: String = "en",
     val adaptiveSummaryLength: Boolean = true,
     val defaultSummaryLength: SummaryLength = SummaryLength.MEDIUM,
-    val autoPlayNext: Boolean = false,
-    val updateState: UpdateUiState = UpdateUiState.Idle
+    val autoPlayNext: Boolean = false
 )

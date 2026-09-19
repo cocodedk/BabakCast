@@ -1,0 +1,5 @@
+BabakCast downloads videos from YouTube, X (Twitter), Instagram, and LinkedIn, and can extract the audio as an MP3 file. It can also copy or share the text of an X/Twitter post without downloading any media. A download can optionally be trimmed to a specific start and end time before it is saved.
+
+For YouTube videos, it extracts the transcript and summarizes it with an AI provider you configure yourself, such as OpenAI, Azure OpenAI, Anthropic, Google Gemini, or OpenRouter. Downloads larger than 16 MB can be split into numbered parts for sharing.
+
+Everything runs on the device: there is no backend, no accounts, and no analytics, and API keys are stored locally with Android's EncryptedSharedPreferences.

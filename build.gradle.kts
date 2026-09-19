@@ -10,9 +10,15 @@ plugins {
 tasks.register("buildSmoke") {
     group = "verification"
     description = "Build debug, run unit tests, and lint to ensure a clean build."
+    // The "distribution" flavor dimension (github/fdroid) means there is no bare
+    // testDebugUnitTest/lintDebug task anymore; both flavors are named explicitly so
+    // CI keeps covering both, not just whichever one happens to configure first.
     dependsOn(
-        ":app:assembleDebug",
-        ":app:testDebugUnitTest",
-        ":app:lintDebug"
+        ":app:assembleGithubDebug",
+        ":app:assembleFdroidDebug",
+        ":app:testGithubDebugUnitTest",
+        ":app:testFdroidDebugUnitTest",
+        ":app:lintGithubDebug",
+        ":app:lintFdroidDebug"
     )
 }

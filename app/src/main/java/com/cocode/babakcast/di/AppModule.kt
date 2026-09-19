@@ -4,11 +4,6 @@ import android.content.Context
 import com.cocode.babakcast.BuildConfig
 import com.cocode.babakcast.data.local.SecureStorage
 import com.cocode.babakcast.data.local.SettingsRepository
-import com.cocode.babakcast.data.network.AndroidNetworkTypeProvider
-import com.cocode.babakcast.data.remote.GitHubReleaseClient
-import com.cocode.babakcast.data.repository.UpdateRepository
-import com.cocode.babakcast.domain.network.NetworkTypeProvider
-import com.cocode.babakcast.domain.update.UpdateChecker
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,18 +41,6 @@ object AppModule {
     }
 
     @Provides
-    @Singleton
-    fun provideNetworkTypeProvider(@ApplicationContext context: Context): NetworkTypeProvider =
-        AndroidNetworkTypeProvider(context)
-
-    @Provides
     @Named("installedVersionName")
     fun provideInstalledVersionName(): String = BuildConfig.VERSION_NAME
-
-    @Provides
-    @Singleton
-    fun provideUpdateChecker(
-        client: GitHubReleaseClient,
-        @Named("installedVersionName") installedVersionName: String
-    ): UpdateChecker = UpdateRepository.fromClient(installedVersionName, client)
 }
