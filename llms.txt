@@ -26,5 +26,5 @@ BabakCast is a modern Android podcast player with clean UI, podcast discovery, e
 
 - `app/src/main/java/` — Application source code
 - `build.gradle.kts` — Build configuration
-- `version.txt` — Semantic version
+- `gradle.properties` — Also where `VERSION_NAME`/`VERSION_CODE` live
 - `CLAUDE.md` — AI session instructions

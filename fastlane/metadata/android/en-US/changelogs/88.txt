@@ -1,0 +1,1 @@
+Release builds are now optimised with R8.

@@ -39,7 +39,7 @@ BabakCast/
 │       │   └── ui/         ← Compose screens, ViewModels
 │       └── res/            ← Resources
 ├── build.gradle.kts        ← App build config
-└── version.txt             ← Semantic version
+└── gradle.properties       ← VERSION_NAME / VERSION_CODE, the only place the version is set
 ```
 
 ### Layer Rules
@@ -86,6 +86,7 @@ BabakCast/
 ./gradlew testFdroidDebugUnitTest --no-daemon    # Unit tests, fdroid flavor
 ./gradlew lintGithubDebug --no-daemon            # Lint, github flavor
 ./gradlew lintFdroidDebug --no-daemon            # Lint, fdroid flavor
+gh workflow run release-apk.yml                  # after a PR bumps VERSION_NAME/VERSION_CODE in gradle.properties
 ```
 
 Two product flavors share the `distribution` dimension: `github` (yt-dlp self-updates at
@@ -101,7 +102,7 @@ runtime, today's behaviour) and `fdroid` (self-update off — see
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | This file |
-| `version.txt` | Semantic version (MAJOR.MINOR.PATCH) |
+| `gradle.properties` | Also where `VERSION_NAME`/`VERSION_CODE` live — bump both in the PR before a release |
 | `.github/workflows/` | CI, release APK, Pages |
 | `.githooks/` | Pre-commit and commit-msg hooks |
 | `scripts/install-hooks.sh` | One-time hook installer |

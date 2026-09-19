@@ -53,15 +53,10 @@ android {
         applicationId = "com.cocode.babakcast"
         minSdk = 24
         targetSdk = 36
-        // CI sets VERSION_CODE and VERSION_NAME; local builds use defaults.
-        // A reproducible build (F-Droid) sets VERSION_NAME as a Gradle property, which
-        // takes precedence over the env var so the build doesn't depend on shell state.
-        // Gradle property first, like versionName: F-Droid passes both as gradleprops.
-        versionCode = providers.gradleProperty("VERSION_CODE").orNull?.toIntOrNull()
-            ?: System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = providers.gradleProperty("VERSION_NAME").orNull
-            ?: System.getenv("VERSION_NAME")
-            ?: "1.0"
+        // The version lives in gradle.properties, where the release workflow and
+        // F-Droid's checkupdates both read it. See the comment there before bumping it.
+        versionCode = providers.gradleProperty("VERSION_CODE").get().toInt()
+        versionName = providers.gradleProperty("VERSION_NAME").get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
