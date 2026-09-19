@@ -100,6 +100,7 @@ You can pick from suggested models or enter a custom model name.
 ## Release build (CI)
 
 On every **push or merge to `main`**, GitHub Actions builds a **signed release APK** and uploads it as a workflow artifact.
+When several merges land close together, a newer push cancels the older build, so only the newest commit is released; version numbers can therefore skip.
 
 To enable signing, add these **repository secrets** (Settings → Secrets and variables → Actions):
 

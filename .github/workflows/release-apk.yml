@@ -12,6 +12,12 @@ on:
 permissions:
   contents: write  # create release and upload APK
 
+# One release per burst of merges: a newer push cancels the build in progress,
+# so only the newest commit is released and it is the one marked Latest.
+concurrency:
+  group: release-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   KEYSTORE_PATH: ${{ github.workspace }}/app/release.keystore
   KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -66,6 +72,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ env.VERSION_NAME }}
+          target_commitish: ${{ github.sha }}  # tag the commit that was built, not main's HEAD
           name: Release ${{ env.VERSION_NAME }}
           files: BabakCast.apk
           draft: false
