@@ -113,7 +113,11 @@ android {
             if (hasSigningConfig) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            isMinifyEnabled = false
+            // R8 shrinks and optimises the release build. The keep rules it needs
+            // (youtubedl-android's Jackson mapper, Jackson, commons-compress) are in
+            // proguard-rules.pro, each with a comment on why it's there.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
