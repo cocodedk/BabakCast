@@ -145,9 +145,15 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-        // youtubedl-android needs native libs extracted to filesystem (not compressed in APK)
         jniLibs {
+            // youtubedl-android needs native libs extracted to filesystem (not compressed in APK)
             useLegacyPackaging = true
+            // The prebuilt .so files (Python, ffmpeg, aria2c) come from youtubedl-android
+            // and ffmpeg-kit. AGP strips them with whatever NDK it finds, so a rebuild
+            // without that exact NDK produces different bytes -- F-Droid's builder has
+            // none unless its recipe pins one. Keeping the symbols leaves the libraries
+            // exactly as their AARs ship them, which rebuilds identically anywhere.
+            keepDebugSymbols += "**/*.so"
         }
     }
 }
