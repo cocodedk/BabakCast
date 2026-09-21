@@ -5,7 +5,7 @@
 **Last updated:** 14 July 2026
 
 > The canonical, always-current version of this policy is published at
-> **https://cocodedk.github.io/BabakCast/privacy.html**
+> **https://cast.cocode.dk/privacy.html**
 
 **BabakCast is a local-first tool with no backend of its own: the developer operates no server and receives no data about you. However, BabakCast is not an offline app — when you ask it to download media or summarize a transcript, it sends the content and links you provide directly to the third-party services you choose, over the internet.**
 
