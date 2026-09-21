@@ -9,8 +9,8 @@ BabakCast is a modern Android podcast player with clean UI, podcast discovery, e
 ## Links
 
 - GitHub: https://github.com/cocodedk/BabakCast
-- Website (EN): https://cocodedk.github.io/BabakCast/
-- Website (FA): https://cocodedk.github.io/BabakCast/fa/
+- Website (EN): https://cast.cocode.dk/
+- Website (FA): https://cast.cocode.dk/fa/
 - Author: https://cocode.dk
 - LinkedIn: https://linkedin.com/in/babakbandpey
 

@@ -8,8 +8,8 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 ![BYO-AI](https://img.shields.io/badge/BYO--AI-FFB860?style=flat)
 
 ## Website
-- [English](https://cocodedk.github.io/BabakCast/)
-- [فارسی (Persian)](https://cocodedk.github.io/BabakCast/fa/)
+- [English](https://cast.cocode.dk/)
+- [فارسی (Persian)](https://cast.cocode.dk/fa/)
 
 ---
 
