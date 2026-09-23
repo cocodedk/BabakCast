@@ -32,29 +32,14 @@ body {
 .orb-b { background: radial-gradient(circle, rgba(255, 78, 220, 0.55), transparent 66%); transform: translate(48%, 8%); }
 
 .shell { width: min(1100px, 92vw); margin: 0 auto; }
-.site-header { display: flex; justify-content: space-between; align-items: center; padding: 22px 0 14px; }
-.brand { display: flex; align-items: center; gap: 10px; font-family: "Space Grotesk", "IBM Plex Sans", sans-serif; font-size: 1.1rem; letter-spacing: 0.02em; }
-.brand-logo { width: 30px; height: 30px; }
-nav { display: flex; gap: 16px; align-items: center; }
 a { color: var(--text); text-decoration: none; }
-main a:not(.btn):not(.lang-switch) { text-decoration: underline; text-underline-offset: 2px; }
-nav a { color: var(--muted); font-size: 0.95rem; }
-nav a:hover { color: var(--neon-blue); }
+main a:not(.btn) { text-decoration: underline; text-underline-offset: 2px; }
 
-/* Language switcher */
-.lang-switch {
-  margin-inline-start: 8px;
-  padding: 3px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: var(--muted);
-  transition: color .18s ease, border-color .18s ease;
-}
-.lang-switch:hover {
-  color: var(--neon-blue);
-  border-color: var(--neon-blue);
-}
+/* The cocode.dk frame lines up with this column (.shell); keep the gutters in step.
+   .shell has no side padding of its own -- it is min(1100px, 92vw) -- so the frame's
+   own box-sizing:border-box max-width+padding box works out to the same edge at every
+   viewport width when --cocode-max tracks the 92vw term as well as the 1100px cap. */
+cocode-head, cocode-foot { --cocode-max: calc(1100px + 8vw); --cocode-gutter: 4vw; position: relative; z-index: 1; }
 
 .hero { padding: 52px 0 40px; }
 .kicker { color: var(--neon-blue); font-size: 0.88rem; letter-spacing: 0.13em; text-transform: uppercase; margin: 0; }
@@ -171,8 +156,6 @@ p { margin: 0; color: var(--muted); line-height: 1.65; }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 720px) {
-  .site-header { flex-direction: column; gap: 12px; }
-  nav { flex-wrap: wrap; justify-content: center; }
   .hero { padding-top: 34px; }
   .card { padding: 18px; }
   .philosophy-block { padding: 20px; }
@@ -187,10 +170,6 @@ p { margin: 0; color: var(--muted); line-height: 1.65; }
 [dir="rtl"] h1,
 [dir="rtl"] h2,
 [dir="rtl"] h3 {
-  font-family: Vazirmatn, "Space Grotesk", "IBM Plex Sans", sans-serif;
-}
-
-[dir="rtl"] .brand {
   font-family: Vazirmatn, "Space Grotesk", "IBM Plex Sans", sans-serif;
 }
 
