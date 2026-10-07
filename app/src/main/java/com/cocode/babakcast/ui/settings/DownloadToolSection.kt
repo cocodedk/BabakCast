@@ -26,8 +26,10 @@ import com.cocode.babakcast.data.repository.YtDlpUpdateResult
 
 /**
  * The fdroid flavour never updates yt-dlp on its own, so this is where the user does it:
- * one button, and a line that says how it went. The github flavour updates by itself and
- * shows nothing here.
+ * what yt-dlp is, what the button does and that F-Droid has not checked what it fetches
+ * (F-Droid's policy asks for exactly that), the button, and a line that says how it went.
+ * The user may simply leave: there is no dialog and nothing else to dismiss. The github
+ * flavour updates by itself and shows nothing here.
  */
 @Composable
 internal fun DownloadToolSection(viewModel: DownloadToolViewModel = hiltViewModel()) {
@@ -45,6 +47,11 @@ internal fun DownloadToolSection(viewModel: DownloadToolViewModel = hiltViewMode
             text = stringResource(R.string.settings_downloader_hint),
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(R.string.settings_downloader_warning),
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+            color = MaterialTheme.colorScheme.onSurface
         )
         OutlinedButton(
             onClick = viewModel::update,

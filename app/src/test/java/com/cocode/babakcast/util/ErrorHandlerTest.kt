@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.yausername.youtubedl_android.YoutubeDLException
 import java.io.IOException
 
 class ErrorHandlerTest {
@@ -108,5 +109,29 @@ class ErrorHandlerTest {
             AppError.NetworkError(messageRes = R.string.error_download_failed)
         )
         assertNotEquals(AppError.NetworkError(), AppError.UnknownError())
+    }
+
+    @Test
+    fun handleException_aYtDlpFailureIsAYtDlpError_withItsOwnTextAsDetail() {
+        val text = "ERROR: [youtube] jNQXAC9IVRw: No video formats found!"
+        val error = ErrorHandler.handleException(YoutubeDLException(text))
+        assertTrue(error is AppError.YtDlpFailed)
+        assertEquals(text, error.detail)
+        assertEquals(R.string.error_hint_ytdlp_failed, error.fixHintRes)
+    }
+
+    @Test
+    fun handleException_aYtDlpFailureAboutATranscriptStaysATranscriptError() {
+        val error = ErrorHandler.handleException(YoutubeDLException("Transcript not available"))
+        assertTrue(error is AppError.TranscriptNotAvailable)
+    }
+
+    @Test
+    fun handleException_aRunRefusedDuringAnUpdate_tellsTheUserToTryAgain() {
+        val refused = AppErrorException(AppError.ToolUpdating(), "yt-dlp is being updated")
+        val error = ErrorHandler.handleException(refused)
+        assertTrue(error is AppError.ToolUpdating)
+        assertEquals(R.string.error_tool_updating, error.messageRes)
+        assertEquals(R.string.error_hint_tool_updating, error.fixHintRes)
     }
 }

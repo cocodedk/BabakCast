@@ -1,6 +1,7 @@
 package com.cocode.babakcast.util
 
 import com.cocode.babakcast.domain.split.ChapterTooLargeException
+import com.yausername.youtubedl_android.YoutubeDLException
 import java.io.IOException
 
 /**
@@ -49,6 +50,7 @@ object ErrorHandler {
                         AppError.TranscriptNotAvailable(msg)
                     msg.contains("not initialized", ignoreCase = true) ->
                         AppError.NotInitialized()
+                    exception is YoutubeDLException -> AppError.YtDlpFailed(msg)
                     // The technical text (an ffmpeg log) goes to the log, not to the screen.
                     msg.contains("audio extraction", ignoreCase = true) ->
                         AppError.AudioExtractFailed()
