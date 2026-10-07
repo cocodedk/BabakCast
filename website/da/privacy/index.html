@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privatlivspolitik | BabakCast</title>
+  <meta name="description" content="Privatlivspolitik for BabakCast (com.cocode.babakcast): en Android-app, der kører lokalt. Den sender det indhold, du vælger at opsummere, til den tredjeparts AI-udbyder, du selv har sat op, og ingen data til udvikleren." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://cast.cocode.dk/da/privacy/" />
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg" />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../blocks.css" />
+  <link rel="stylesheet" href="https://brand.cocode.dk/v1.css">
+  <script type="module" src="https://brand.cocode.dk/v1.js"></script>
+  <style>
+    /* The cocode.dk frame lines up with this page's own (narrower) column. */
+    cocode-head, cocode-foot { --cocode-max: calc(820px + 8vw); --cocode-gutter: 4vw; }
+    :root {
+      --column: 820px;
+      --bg: #080b16; --bg-2: #0f1730;
+      --surface: rgba(16, 22, 42, 0.76);
+      --line: rgba(96, 193, 255, 0.45);
+      --text: #eef3ff; --muted: #abc1e6;
+      --neon-blue: #44bfff; --neon-pink: #ff4edc; --neon-amber: #f7c164;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text); line-height: 1.7;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: radial-gradient(1400px 900px at 15% -10%, #273d72 0%, transparent 60%),
+                  radial-gradient(1200px 800px at 95% 0%, #3c1d6a 0%, transparent 58%),
+                  linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed; overflow-x: hidden;
+    }
+    .shell { width: min(820px, 92vw); margin: 0 auto; padding: 40px 0 64px; }
+    a { color: var(--neon-blue); text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { color: var(--neon-pink); }
+    .back { display: inline-block; margin-bottom: 22px; color: var(--muted); font-size: 0.92rem; text-decoration: none; }
+    .back:hover { color: var(--neon-blue); }
+    .card {
+      border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--surface); backdrop-filter: blur(10px);
+      box-shadow: 0 0 36px rgba(16, 32, 66, 0.48);
+      padding: clamp(22px, 5vw, 44px);
+    }
+    h1, h2 { font-family: "Space Grotesk", "IBM Plex Sans", sans-serif; margin: 0; line-height: 1.2; }
+    h1, .page-title { font-size: clamp(1.8rem, 5vw, 2.5rem); color: var(--text); margin: 0 0 6px; }
+    h2 { font-size: 1.2rem; color: var(--neon-amber); margin: 30px 0 8px; }
+    .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 4px; }
+    code { background: rgba(11, 17, 33, 0.6); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.86em; overflow-wrap: anywhere; }
+    p, li { color: var(--muted); }
+    strong { color: var(--text); }
+    ul { padding-inline-start: 1.2em; }
+    li { margin: 6px 0; }
+    .lede { color: var(--text); font-size: 1.05rem; }
+    footer { color: var(--muted); font-size: 0.85rem; margin-top: 40px; text-align: center; }
+  </style>
+</head>
+<body>
+  <!-- The cocode.dk family frame. Without JavaScript its children show instead: a way home. -->
+  <cocode-head project="BabakCast" accent="#44bfff" on-accent="#040811" dark>
+    <a href="https://cocode.dk">cocode.dk</a>
+  </cocode-head>
+
+  <header class="site-header">
+    <!-- cocode-apps:nav:start -->
+<link rel="stylesheet" href="/css/cocode-nav.css">
+<a class="skip" href="#main">Spring til indhold</a>
+<nav class="cocode-nav" aria-label="BabakCast">
+  <a class="brand" href="/da/" data-nav="home"><img src="/img/icon.png" alt="" width="32" height="32">BabakCast</a>
+  <a href="/da/#how" data-nav="how">Sådan virker det</a>
+  <a href="/da/#install" data-nav="install">Installér</a>
+  <a href="/da/privacy/" data-nav="privacy" aria-current="page">Privatliv</a>
+  <a href="https://cocode.dk/" data-nav="more">Flere apps</a>
+</nav>
+<!-- cocode-apps:nav:end -->
+  </header>
+
+  <main class="shell" id="main" tabindex="-1">
+    <a class="back" href="../">&larr; BabakCast</a>
+    <div class="card">
+
+      <section lang="da">
+        <h1>Privatlivspolitik</h1>
+        <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
+        <p class="meta">Senest opdateret: 14. juli 2026</p>
+
+        <p class="lede"><strong>BabakCast kører lokalt og har ingen egen backend: udvikleren driver ingen server og modtager ingen data om dig. BabakCast er dog ikke en offline-app. Når du beder den hente medier eller opsummere en transskription, sender den det indhold og de links, du giver den, direkte over internettet til de tredjepartstjenester, du selv vælger.</strong></p>
+
+        <p>Denne politik forklarer præcis, hvad der forlader din enhed, hvor det havner, og hvad der bliver på din telefon. BabakCast har ingen brugerkonti, ingen analyseværktøjer, ingen reklamer og ingen sporing, og den leveres ikke med nogen API-nøgler.</p>
+
+        <h2>1. Indhold, du sender til AI-udbydere</h2>
+        <p>Når du bruger funktionerne til at <strong>opsummere</strong> eller oversætte, sender BabakCast den tekst, du behandler, til den <strong>AI-udbyder, du har sat op under Settings</strong>. Det er videoens transskription (for eksempel undertekster fra YouTube) eller anden tekst sammen med en fast instruktion. Indholdet forlader din enhed og sendes over HTTPS til udbyderens servere. Dér behandles det efter <em>deres</em> privatlivspolitik og deres praksis for opbevaring af data.</p>
+        <p>Du vælger udbyderen. BabakCast understøtter følgende og sender kun dit indhold til den, du har valgt:</p>
+        <ul>
+          <li><strong>OpenAI</strong>: <code>api.openai.com</code></li>
+          <li><strong>Azure OpenAI</strong> (Microsoft): din egen <code>*.openai.azure.com</code>-ressource</li>
+          <li><strong>Anthropic</strong>: <code>api.anthropic.com</code></li>
+          <li><strong>Google Gemini</strong>: <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>OpenRouter</strong>: <code>openrouter.ai</code></li>
+        </ul>
+        <p>Disse udbydere er selvstændigt dataansvarlige. Deres håndtering af dit indhold styres af deres egne politikker:
+        <a href="https://www.anthropic.com/legal/privacy" rel="noopener" target="_blank">Anthropic</a>,
+        <a href="https://openai.com/policies/privacy-policy" rel="noopener" target="_blank">OpenAI</a>,
+        <a href="https://privacy.microsoft.com/privacystatement" rel="noopener" target="_blank">Microsoft (Azure)</a>,
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google</a> og
+        <a href="https://openrouter.ai/privacy" rel="noopener" target="_blank">OpenRouter</a>.
+        Læs politikken hos den udbyder, du bruger, før du sender følsomt indhold.</p>
+
+        <h2>2. Links, du indsætter, og hentning af medier</h2>
+        <p>For at hente en video, et billede, et lydspor eller en transskription kontakter BabakCast <strong>kildeplatformen direkte</strong> ved hjælp af det link, du indsætter. Det betyder, at din enhed forbinder til den af disse tjenester, som linket hører til, og at tjenesten får din IP-adresse og det emne, du beder om:</p>
+        <ul>
+          <li><strong>YouTube / Google</strong>: hentning af video, lyd og transskription</li>
+          <li><strong>X (Twitter)</strong>: hentning af medier og af tweet-tekst bruger X's offentlige syndikeringsendepunkt (<code>cdn.syndication.twimg.com</code>) og X's medieservere. Kun det offentlige tweet-id fra dit link sendes, uden login</li>
+          <li><strong>Instagram / Meta</strong>: hentning af video</li>
+          <li><strong>LinkedIn</strong>: hentning af video fra offentlige opslag</li>
+        </ul>
+        <p>Kun det offentlige link, du giver appen, bruges. BabakCast logger ikke ind på disse platforme og sender dem ikke dine loginoplysninger. Hver platform håndterer den resulterende forespørgsel efter sin egen privatlivspolitik:
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google/YouTube</a>,
+        <a href="https://x.com/en/privacy" rel="noopener" target="_blank">X</a>,
+        <a href="https://privacycenter.instagram.com/policy" rel="noopener" target="_blank">Instagram</a> og
+        <a href="https://www.linkedin.com/legal/privacy-policy" rel="noopener" target="_blank">LinkedIn</a>.</p>
+
+        <h2>3. Dine API-nøgler</h2>
+        <p>Du angiver selv en API-nøgle til hver AI-udbyder, du slår til. Nøglerne gemmes <strong>kun på din enhed</strong>, krypteret med Androids <code>EncryptedSharedPreferences</code> (AES-256, med hovednøglen i Android Keystore). En nøgle <strong>sendes aldrig til udvikleren</strong>. Den sendes kun til sin egen udbyders API, som autorisation og over HTTPS, når du henter en liste over modeller eller sender en forespørgsel. Nøglerne vises skjult i appen og kan slettes når som helst under Settings.</p>
+
+        <h2>4. Opdateringstjek</h2>
+        <p>BabakCast kan tjekke, om der findes en nyere version, ved at hente den seneste udgivelse fra GitHubs API (<code>api.github.com</code>). Forespørgslen indeholder ingen personlige oplysninger ud over de almindelige forbindelsesoplysninger (for eksempel din IP-adresse), som enhver webforespørgsel indeholder. GitHubs håndtering er beskrevet i
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">GitHubs privatlivserklæring</a>.</p>
+
+        <h2>5. Hvad der bliver på telefonen</h2>
+        <p>Alt, hvad BabakCast opretter, gemmes lokalt i appens eget lager og fjernes, når du afinstallerer appen eller rydder dens data:</p>
+        <ul>
+          <li><strong>Hentede medier og transskriptioner</strong>: videoer, billeder, lyd og udtrukne transskriptionsfiler, gemt i appens private eksterne filmappe.</li>
+          <li><strong>Indstillinger</strong>: dine valg (standardudbyder, sprog, resuméets stil og længde, tema, temperatur) i et lokalt lager til indstillinger. De indeholder intet personligt indhold.</li>
+          <li><strong>API-nøgler</strong>: krypteret, som beskrevet ovenfor.</li>
+        </ul>
+        <p>BabakCast har ingen analysedatabase og ingen brugshistorik, og den læser ikke filer andre steder på din enhed, bortset fra de links og den delte tekst, du selv giver den.</p>
+
+        <h2>6. Tilladelser</h2>
+        <ul>
+          <li><strong>Internet</strong> og <strong>netværksstatus</strong>: kræves for at nå tjenesterne ovenfor og for at se, hvilken type forbindelse du har.</li>
+          <li><strong>Læs/skriv eksternt lager</strong> (kun Android 12 / API 32 og ældre): en ældre tilladelse, der bruges til at gemme og dele hentede filer på ældre enheder. Den bliver ikke anmodet om på nyere Android-versioner.</li>
+          <li>Der anmodes ikke om tilladelser til lokation, kontakter, kamera eller mikrofon.</li>
+        </ul>
+
+        <h2>7. Ingen sporing, ingen konti, ingen reklamer</h2>
+        <ul>
+          <li>Der er ingen analyse-, fejlrapporterings- eller reklame-SDK'er i appen.</li>
+          <li>Ingen cookies, ingen reklame-id'er og ingen brugerkonti.</li>
+          <li>Udvikleren driver ingen server og modtager ingen af dine data.</li>
+        </ul>
+
+        <h2>8. Sikkerhedskopiering af enheden</h2>
+        <p>Hvis du har slået Androids automatiske sikkerhedskopiering eller sikkerhedskopiering til Google-kontoen til, kan operativsystemet tage appens lokale data med i din egen personlige Google-sikkerhedskopi. Det styrer du og Google helt selv, og udvikleren har ikke adgang til den. Se
+        <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Googles privatlivspolitik</a> for flere oplysninger.</p>
+
+        <h2>9. Eksterne links</h2>
+        <p>Appen indeholder links til udviklerens websted (<a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>) og projektets side på GitHub. Når du vælger dem, åbnes din browser, og de websteder styres af deres egne privatlivspolitikker.</p>
+
+        <h2>10. Børn</h2>
+        <p>Appen indsamler ikke bevidst data fra nogen, heller ikke fra børn.</p>
+
+        <h2>11. Ændringer</h2>
+        <p>Hvis politikken ændres, bliver den opdaterede version lagt på denne side med en ny dato for seneste opdatering.</p>
+
+        <h2>12. Kontakt</h2>
+        <p>Spørgsmål om denne politik kan sendes til
+        <a href="mailto:bb@cocode.dk">bb@cocode.dk</a> (CoCode.dk, udvikler: Babak Bandpey).</p>
+      </section>
+
+    </div>
+  </main>
+
+  <div class="site-footer">
+    <!-- cocode-apps:footer:start -->
+<footer class="cocode-footer">
+  <a href="https://github.com/cocodedk/BabakCast">Kildekode</a> ·
+  <a href="/da/privacy/">Privatliv</a> ·
+  Licens: Apache-2.0 ·
+  <a href="https://cocode.dk/">Lavet af Cocode (cocode.dk)</a>
+</footer>
+<!-- cocode-apps:footer:end -->
+  </div>
+
+  <cocode-foot repo="cocodedk/BabakCast" dark>
+    <a href="https://cocode.dk">cocode.dk</a>
+  </cocode-foot>
+</body>
+</html>

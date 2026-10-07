@@ -1,0 +1,5 @@
+BabakCast henter videoer fra YouTube, X (Twitter), Instagram og LinkedIn og kan udtrække lyden som en MP3-fil. Appen kan også kopiere eller dele teksten fra et opslag på X/Twitter uden at hente nogen medier. Du kan eventuelt klippe en hentning til et bestemt start- og sluttidspunkt, før den gemmes.
+
+Til YouTube-videoer udtrækker appen transskriptionen og opsummerer den med en AI-udbyder, som du selv sætter op, for eksempel OpenAI, Azure OpenAI, Anthropic, Google Gemini eller OpenRouter. Hentninger på over 16 MB kan deles op i nummererede dele, så de er nemme at dele.
+
+Alt kører på enheden: der er ingen backend, ingen konti og ingen analyseværktøjer, og API-nøgler gemmes lokalt med Androids EncryptedSharedPreferences.
