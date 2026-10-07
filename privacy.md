@@ -54,7 +54,7 @@ You supply your own API key for each AI provider you enable. Keys are stored **o
 
 BabakCast does not check for updates to itself. The **See the latest version** button on the About screen only opens a web page in your browser when you tap it (see section 9).
 
-The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It asks GitHub for a newer yt-dlp only when you tap **Update yt-dlp** in Settings, and the request carries the same standard connection information and nothing else. Without that tap, its downloader stays the one that came with the app. GitHub's handling is covered by the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It changes its downloader only when you tap **Update yt-dlp** in Settings. Then it downloads a new copy of yt-dlp from GitHub, the newest test build (called "nightly"), and runs it on your phone. F-Droid has not checked that copy, so tapping the button means you skip F-Droid's checks. The request to GitHub carries the same standard connection information and nothing else. When the app itself is updated, BabakCast keeps the copy you installed if it is newer than the one inside the app, and puts the one inside the app back if that one is newer. GitHub's handling is covered by the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ## 5. Data stored on your device
 
@@ -81,7 +81,7 @@ When you share a file, BabakCast gives the app you pick permission to read it. T
 
 ## 8. Device backup
 
-BabakCast does not switch Android backup off or leave anything out of it. If backup is on for your phone, Android may include the app's settings, the encrypted file that holds your API keys, and the downloaded media and transcripts in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See [Google's Privacy Policy](https://policies.google.com/privacy) for details.
+BabakCast does not switch Android backup off. It leaves out only two small files that record which yt-dlp is installed, because the yt-dlp file itself is not backed up. If backup is on for your phone, Android may include the app's settings, the encrypted file that holds your API keys, and the downloaded media and transcripts in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See [Google's Privacy Policy](https://policies.google.com/privacy) for details.
 
 ## 9. External links
 

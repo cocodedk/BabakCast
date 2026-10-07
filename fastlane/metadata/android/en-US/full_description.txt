@@ -2,4 +2,6 @@ BabakCast downloads videos from YouTube, X (Twitter), Instagram and LinkedIn, an
 
 For a YouTube video, BabakCast gets the transcript (the written text of what is said) and summarizes it with an AI provider you set up yourself. OpenAI and OpenRouter work in this version. Azure OpenAI, Anthropic and Google Gemini are listed in Settings but are not finished yet. You can split a video or audio download into numbered parts of a size you choose (16 MB by default), which helps with sharing limits.
 
+Before your first YouTube download, open Settings and tap "Update yt-dlp": YouTube downloads need a current yt-dlp (the program that does the downloading), and this fetches it from GitHub without F-Droid's checks.
+
 Downloading, splitting and cutting run on your phone. Summaries and translations send text to the AI provider you set up. BabakCast has no developer server, no accounts and no analytics. Your API keys are stored encrypted on your phone.

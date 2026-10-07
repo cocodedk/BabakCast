@@ -135,7 +135,7 @@
 
         <h2>4. Updates</h2>
         <p>BabakCast does not check for updates to itself. The <strong>See the latest version</strong> button on the About screen only opens a web page in your browser when you tap it (see section 9).</p>
-        <p>The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It asks GitHub for a newer yt-dlp only when you tap <strong>Update yt-dlp</strong> in Settings, and the request carries the same standard connection information and nothing else. Without that tap, its downloader stays the one that came with the app. GitHub's handling is covered by the
+        <p>The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It changes its downloader only when you tap <strong>Update yt-dlp</strong> in Settings. Then it downloads a new copy of yt-dlp from GitHub, the newest test build (called "nightly"), and runs it on your phone. F-Droid has not checked that copy, so tapping the button means you skip F-Droid's checks. The request to GitHub carries the same standard connection information and nothing else. When the app itself is updated, BabakCast keeps the copy you installed if it is newer than the one inside the app, and puts the one inside the app back if that one is newer. GitHub's handling is covered by the
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">GitHub Privacy Statement</a>.</p>
 
         <h2>5. Data stored on your device</h2>
@@ -162,7 +162,7 @@
         </ul>
 
         <h2>8. Device backup</h2>
-        <p>BabakCast does not switch Android backup off or leave anything out of it. If backup is on for your phone, Android may include the app's settings, the encrypted file that holds your API keys, and the downloaded media and transcripts in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See
+        <p>BabakCast does not switch Android backup off. It leaves out only two small files that record which yt-dlp is installed, because the yt-dlp file itself is not backed up. If backup is on for your phone, Android may include the app's settings, the encrypted file that holds your API keys, and the downloaded media and transcripts in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See
         <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google's Privacy Policy</a> for details.</p>
 
         <h2>9. External links</h2>
@@ -228,7 +228,7 @@
 
         <h2>۴. به‌روزرسانی‌ها</h2>
         <p>BabakCast برای به‌روزرسانی خودش چیزی بررسی نمی‌کند. دکمهٔ <strong>See the latest version</strong> در صفحهٔ About فقط وقتی آن را می‌زنید یک صفحهٔ وب را در مرورگرتان باز می‌کند (بخش ۹).</p>
-        <p>نسخه‌ای که از گیت‌هاب دانلود می‌کنید ابزار دانلود ویدیو را هم به‌روز نگه می‌دارد. این ابزار yt-dlp است، همان ابزار متن‌بازی که ویدیوها را می‌گیرد. هنگام اجرای برنامه، BabakCast از گیت‌هاب می‌پرسد نسخهٔ جدیدتری از yt-dlp هست یا نه و ممکن است آن را دانلود کند. بعد از یک بررسی موفق تا روز بعد دوباره نمی‌پرسد. این درخواست هیچ پیوند، محتوا یا داده شخصی‌ای ندارد و فقط شامل اطلاعات اتصال معمولی (مانند نشانی IP شما) است که هر درخواست وب دارد. نسخهٔ F-Droid هرگز این کار را خودش انجام نمی‌دهد. فقط وقتی در تنظیمات (Settings) روی <strong>Update yt-dlp</strong> بزنید، از گیت‌هاب نسخهٔ جدیدتر yt-dlp را می‌خواهد و فقط همان اطلاعات اتصال معمولی را می‌فرستد. بدون این کار، ابزار دانلودش همان نسخه‌ای می‌ماند که همراه برنامه آمده است. رفتار گیت‌هاب تحت
+        <p>نسخه‌ای که از گیت‌هاب دانلود می‌کنید ابزار دانلود ویدیو را هم به‌روز نگه می‌دارد. این ابزار yt-dlp است، همان ابزار متن‌بازی که ویدیوها را می‌گیرد. هنگام اجرای برنامه، BabakCast از گیت‌هاب می‌پرسد نسخهٔ جدیدتری از yt-dlp هست یا نه و ممکن است آن را دانلود کند. بعد از یک بررسی موفق تا روز بعد دوباره نمی‌پرسد. این درخواست هیچ پیوند، محتوا یا داده شخصی‌ای ندارد و فقط شامل اطلاعات اتصال معمولی (مانند نشانی IP شما) است که هر درخواست وب دارد. نسخهٔ F-Droid هرگز این کار را خودش انجام نمی‌دهد. ابزار دانلودش را فقط وقتی عوض می‌کند که در تنظیمات (Settings) روی <strong>Update yt-dlp</strong> بزنید. آن‌وقت یک نسخهٔ تازه از yt-dlp را از گیت‌هاب می‌گیرد، یعنی جدیدترین نسخهٔ آزمایشی (nightly)، و روی گوشی شما اجرا می‌کند. F-Droid این نسخه را بررسی نکرده است، پس با زدن این دکمه از بررسی‌های F-Droid می‌گذرید. درخواست به گیت‌هاب فقط همان اطلاعات اتصال معمولی را دارد. وقتی خود برنامه به‌روز می‌شود، BabakCast نسخه‌ای را که گرفته‌اید نگه می‌دارد اگر از نسخهٔ داخل برنامه تازه‌تر باشد، و اگر نسخهٔ داخل برنامه تازه‌تر باشد آن را جایگزین می‌کند. رفتار گیت‌هاب تحت
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">بیانیهٔ حریم خصوصی گیت‌هاب</a> است.</p>
 
         <h2>۵. داده‌های ذخیره‌شده روی دستگاه شما</h2>
@@ -255,7 +255,7 @@
         </ul>
 
         <h2>۸. پشتیبان‌گیری دستگاه</h2>
-        <p>BabakCast پشتیبان‌گیری اندروید را خاموش نمی‌کند و چیزی را هم از آن بیرون نمی‌گذارد. اگر پشتیبان‌گیری روی گوشی شما روشن باشد، اندروید ممکن است تنظیمات برنامه، فایل رمزگذاری‌شدهٔ کلیدهای API و رسانه‌ها و رونوشت‌های دانلودشده را در پشتیبان شخصی گوگل شما بگنجاند. این کار کاملاً توسط شما و گوگل کنترل می‌شود و توسعه‌دهنده به آن دسترسی ندارد. برای جزئیات به
+        <p>BabakCast پشتیبان‌گیری اندروید را خاموش نمی‌کند. فقط دو فایل کوچک را بیرون از آن نگه می‌دارد، همان دو فایلی که ثبت می‌کنند کدام نسخهٔ yt-dlp نصب است، چون خودِ فایل yt-dlp پشتیبان‌گیری نمی‌شود. اگر پشتیبان‌گیری روی گوشی شما روشن باشد، اندروید ممکن است تنظیمات برنامه، فایل رمزگذاری‌شدهٔ کلیدهای API و رسانه‌ها و رونوشت‌های دانلودشده را در پشتیبان شخصی گوگل شما بگنجاند. این کار کاملاً توسط شما و گوگل کنترل می‌شود و توسعه‌دهنده به آن دسترسی ندارد. برای جزئیات به
         <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">سیاست حریم خصوصی گوگل</a> مراجعه کنید.</p>
 
         <h2>۹. پیوندهای بیرونی</h2>

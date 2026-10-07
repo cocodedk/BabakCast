@@ -36,6 +36,8 @@
     <string name="error_hint_download_retry">Prøv igen, eller tjek, at videoen stadig findes.</string>
     <string name="error_title_wait">Vent lidt</string>
     <string name="error_not_initialized">BabakCast gør sig stadig klar til at hente.</string>
+    <string name="error_tool_updating">yt-dlp bliver opdateret.</string>
+    <string name="error_hint_tool_updating">Prøv igen, når den er færdig.</string>
     <string name="error_hint_wait">Vent et par sekunder, og prøv igen.</string>
     <string name="error_title_processing">Problem med videoen</string>
     <string name="error_video_split_failed">Videoen kunne ikke opdeles.</string>
@@ -100,7 +102,8 @@
     <string name="settings_summary_length">Resuméets længde (bruges ikke endnu)</string>
     <string name="settings_summary_length_automatic">Automatisk</string>
     <string name="settings_downloader">Hentningsværktøj</string>
-    <string name="settings_downloader_hint">yt-dlp er det værktøj, BabakCast henter videoer med. Når YouTube ændrer sig, kan hentninger holde op med at virke, indtil yt-dlp er opdateret. Knappen nedenfor henter den nyeste yt-dlp fra GitHub. Det kræver internetforbindelse. BabakCast gør det kun, når du trykker på knappen.</string>
+    <string name="settings_downloader_hint">yt-dlp er det program, BabakCast henter videoer med. Når YouTube ændrer sig, kan hentninger holde op med at virke, indtil yt-dlp er opdateret.</string>
+    <string name="settings_downloader_warning">Opdater yt-dlp henter den nyeste testversion af yt-dlp fra GitHub og kører den på din telefon. F-Droid har ikke kontrolleret den kopi, så du vælger at gå uden om F-Droids kontrol. Det kræver internetforbindelse. BabakCast gør det kun, når du trykker på knappen.</string>
     <string name="settings_downloader_update">Opdater yt-dlp</string>
     <string name="settings_downloader_working">Opdaterer yt-dlp…</string>
     <string name="settings_downloader_done">yt-dlp er nu opdateret.</string>
