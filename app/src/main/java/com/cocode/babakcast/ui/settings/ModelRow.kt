@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.isFreeModel
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 /** A single model in the dropdown, with a FREE badge when the provider charges nothing for it. */
 @Composable
@@ -41,7 +43,7 @@ internal fun ModelRow(model: String, isSelected: Boolean) {
 @Composable
 private fun FreeBadge() {
     Text(
-        text = "FREE",
+        text = stringResource(R.string.model_free_badge),
         style = MaterialTheme.typography.labelSmall.copy(
             fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
@@ -58,7 +60,7 @@ private fun FreeBadge() {
 @Composable
 internal fun NoMatchesRow() {
     Text(
-        text = "No models match. Clear the field to see all, or keep typing to use this as a custom name.",
+        text = stringResource(R.string.model_no_matches),
         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier

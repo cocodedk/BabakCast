@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,7 +27,7 @@ fun ShareScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "Share",
+                        stringResource(R.string.action_share),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
@@ -40,7 +42,7 @@ fun ShareScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.action_back),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -58,7 +60,7 @@ fun ShareScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "CONTENT",
+                text = stringResource(R.string.share_content_label),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -99,7 +101,7 @@ fun ShareScreen(
                 )
             ) {
                 Text(
-                    "Share",
+                    stringResource(R.string.action_share),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp

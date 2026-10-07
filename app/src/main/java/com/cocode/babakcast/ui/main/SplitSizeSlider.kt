@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @Composable
 internal fun SplitSizeSlider(
@@ -30,7 +32,7 @@ internal fun SplitSizeSlider(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "SPLIT SIZE",
+                stringResource(R.string.split_size_label),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -39,7 +41,7 @@ internal fun SplitSizeSlider(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                "$valueMb MB",
+                stringResource(R.string.size_megabytes, valueMb),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold

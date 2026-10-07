@@ -8,6 +8,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import com.cocode.babakcast.R
 
 /**
  * Wraps a share flow with the translate-toggle lifecycle: sets the in-flight
@@ -63,7 +64,7 @@ internal class ShareTranslationRunner(
             is ShareTranslationResult.Cancelled -> result.originalText
             is ShareTranslationResult.Failed -> {
                 updateState {
-                    it.copy(error = AppError.NetworkError("Translation failed — sharing original text"))
+                    it.copy(error = AppError.NetworkError(messageRes = R.string.error_translation_failed))
                 }
                 result.originalText
             }

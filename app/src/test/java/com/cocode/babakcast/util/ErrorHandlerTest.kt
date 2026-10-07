@@ -1,6 +1,8 @@
 package com.cocode.babakcast.util
 
+import com.cocode.babakcast.R
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -11,7 +13,7 @@ class ErrorHandlerTest {
     fun handleException_invalidYouTubeUrl() {
         val error = ErrorHandler.handleException(IllegalArgumentException("Invalid YouTube URL"))
         assertTrue(error is AppError.InvalidYouTubeUrl)
-        assertEquals("Invalid Link", error.title)
+        assertEquals(R.string.error_title_invalid_link, error.titleRes)
     }
 
     @Test
@@ -42,7 +44,7 @@ class ErrorHandlerTest {
     fun handleException_invalidUrl() {
         val error = ErrorHandler.handleException(IllegalArgumentException("Unsupported URL"))
         assertTrue(error is AppError.InvalidUrl)
-        assertEquals("Invalid Link", error.title)
+        assertEquals(R.string.error_title_invalid_link, error.titleRes)
     }
 
     @Test
@@ -52,9 +54,40 @@ class ErrorHandlerTest {
     }
 
     @Test
-    fun fullErrorMessage_includesFixHint() {
-        val error = AppError.NetworkError("Network error")
-        val message = ErrorHandler.getFullErrorMessage(error)
-        assertTrue(message.contains("How to fix:"))
+    fun handleException_keepsTheExceptionTextAsDetail() {
+        val error = ErrorHandler.handleException(IOException("connection reset"))
+        assertTrue(error is AppError.NetworkError)
+        assertEquals("connection reset", error.detail)
+    }
+
+    @Test
+    fun handleException_withoutMessage_fallsBackToTheDefaultMessageResource() {
+        val error = ErrorHandler.handleException(IllegalStateException())
+        assertTrue(error is AppError.UnknownError)
+        assertEquals(null, error.detail)
+        assertEquals(R.string.error_unknown, error.messageRes)
+    }
+
+    @Test
+    fun everyErrorHasAFixHint() {
+        val errors = listOf(
+            AppError.InvalidYouTubeUrl(), AppError.InvalidUrl(), AppError.TranscriptNotAvailable(),
+            AppError.ProviderMisconfigured(), AppError.ApiQuotaExceeded(), AppError.ModelNotFound(),
+            AppError.NetworkError(), AppError.DownloadFailed(), AppError.NotInitialized(),
+            AppError.VideoSplitFailed(), AppError.AudioExtractFailed(), AppError.AudioSplitFailed(),
+            AppError.ChapterSplitTooLarge(), AppError.UnknownError()
+        )
+        errors.forEach { assertTrue("${it::class.simpleName} has a fix hint", it.fixHintRes != null) }
+    }
+
+    @Test
+    fun errorsWithTheSameKindMessageAndDetailAreEqual() {
+        assertEquals(AppError.NetworkError("x"), AppError.NetworkError("x"))
+        assertNotEquals(AppError.NetworkError("x"), AppError.NetworkError("y"))
+        assertNotEquals(
+            AppError.NetworkError(),
+            AppError.NetworkError(messageRes = R.string.error_translation_failed)
+        )
+        assertNotEquals(AppError.NetworkError(), AppError.UnknownError())
     }
 }

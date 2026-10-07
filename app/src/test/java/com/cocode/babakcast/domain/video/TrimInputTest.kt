@@ -1,5 +1,6 @@
 package com.cocode.babakcast.domain.video
 
+import com.cocode.babakcast.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,14 +30,14 @@ class TrimInputTest {
     fun `rejects a malformed start`() {
         val resolution = TrimInput(enabled = true, start = "nope", end = "10").resolve()
         assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("Start time"))
+        assertEquals(R.string.trim_error_start, (resolution as TrimResolution.Invalid).messageRes)
     }
 
     @Test
     fun `rejects a malformed end`() {
         val resolution = TrimInput(enabled = true, start = "10", end = "").resolve()
         assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("End time"))
+        assertEquals(R.string.trim_error_end, (resolution as TrimResolution.Invalid).messageRes)
     }
 
     @Test
@@ -49,7 +50,7 @@ class TrimInputTest {
     fun `rejects a segment shorter than a tenth of a second`() {
         val resolution = TrimInput(enabled = true, start = "10.00", end = "10.05").resolve()
         assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("tenth"))
+        assertEquals(R.string.trim_error_too_short, (resolution as TrimResolution.Invalid).messageRes)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.cocode.babakcast.ui.main
 
 import com.cocode.babakcast.data.ai.ShareTranslationResult
+import com.cocode.babakcast.R
 import com.cocode.babakcast.util.AppError
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
@@ -101,7 +102,7 @@ class ShareTranslationRunnerTest {
 
         assertEquals("hello", result)
         assertEquals(
-            AppError.NetworkError("Translation failed — sharing original text"),
+            AppError.NetworkError(messageRes = R.string.error_translation_failed),
             state.error
         )
     }

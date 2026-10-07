@@ -29,6 +29,9 @@ import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.urlparsing.XUrlExtractor
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
+import com.cocode.babakcast.ui.labelRes
 
 @Composable
 internal fun ActionButtonsSection(
@@ -83,7 +86,7 @@ internal fun ActionButtonsSection(
             )
         ) {
             Text(
-                "Download Video",
+                stringResource(R.string.download_video),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
@@ -121,7 +124,7 @@ internal fun ActionButtonsSection(
             )
         ) {
             Text(
-                "Download Split (${uiState.splitSizeMb} MB)",
+                stringResource(R.string.download_split_video, uiState.splitSizeMb),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
@@ -162,7 +165,7 @@ internal fun ActionButtonsSection(
                     )
                 ) {
                     Text(
-                        "Download All Media",
+                        stringResource(R.string.download_all_media),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp
@@ -194,7 +197,7 @@ internal fun ActionButtonsSection(
                             )
                         } else {
                             Text(
-                                "Copy Text",
+                                stringResource(R.string.copy_text),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 13.sp
@@ -223,7 +226,7 @@ internal fun ActionButtonsSection(
                             )
                         } else {
                             Text(
-                                "Share Text →",
+                                stringResource(R.string.share_text),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 13.sp
@@ -248,7 +251,7 @@ internal fun ActionButtonsSection(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "SUMMARY LENGTH",
+                    text = stringResource(R.string.summary_length_label),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -279,11 +282,7 @@ internal fun ActionButtonsSection(
                             )
                         ) {
                             Text(
-                                when (length) {
-                                    SummaryLength.SHORT -> "Short"
-                                    SummaryLength.MEDIUM -> "Medium"
-                                    SummaryLength.LONG -> "Long"
-                                },
+stringResource(length.labelRes()),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
@@ -334,11 +333,11 @@ internal fun ActionButtonsSection(
                 }
                 Text(
                     if (uiState.isSummarizing) {
-                        "Summarizing…"
+                        stringResource(R.string.summarize_in_progress)
                     } else if (!uiState.supportsSummarize) {
-                        "Summarize (YouTube only)"
+                        stringResource(R.string.summarize_youtube_only)
                     } else {
-                        "Summarize Transcript"
+                        stringResource(R.string.summarize_transcript)
                     },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,

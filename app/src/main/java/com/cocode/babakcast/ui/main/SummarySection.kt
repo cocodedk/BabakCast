@@ -16,6 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @Composable
 internal fun SummarySection(
@@ -28,9 +30,9 @@ internal fun SummarySection(
     onShareSummary: () -> Unit
 ) {
     val shareLabel = if (shareChunkCount > 1) {
-        "Send part ${shareChunkIndex + 1}/$shareChunkCount →"
+        stringResource(R.string.summary_send_part, shareChunkIndex + 1, shareChunkCount)
     } else {
-        "Share →"
+        stringResource(R.string.summary_share)
     }
     Surface(
         modifier = Modifier
@@ -44,7 +46,7 @@ internal fun SummarySection(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "SUMMARY",
+                text = stringResource(R.string.summary_title),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -73,7 +75,7 @@ internal fun SummarySection(
                     )
                 ) {
                     Text(
-                        "Copy",
+                        stringResource(R.string.action_copy),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -89,7 +91,7 @@ internal fun SummarySection(
                     )
                 ) {
                     Text(
-                        "Share as file",
+                        stringResource(R.string.summary_share_as_file),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium

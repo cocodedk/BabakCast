@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,11 +67,14 @@ import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.ShareHelper
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -80,6 +84,11 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    // Resolved here, in composition, so the lambdas below can use them.
+    val shareTitleLabel = stringResource(R.string.share_chooser_title)
+    val shareTweetTextLabel = stringResource(R.string.share_tweet_text_chooser)
+    val tweetTextCopiedMessage = stringResource(R.string.tweet_text_copied)
+    val copiedMessage = stringResource(R.string.copied_to_clipboard)
     val shareHelper = remember(context) { ShareHelper(context.applicationContext) }
     val audioShareLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -119,7 +128,7 @@ fun MainScreen(
                         // drops caption text when files are attached. The files follow on
                         // the next app-resume (ON_RESUME observer below); a background
                         // activity start would be blocked.
-                        val textIntent = shareHelper.buildShareTextChooser(request.caption, "Share title")
+                        val textIntent = shareHelper.buildShareTextChooser(request.caption, shareTitleLabel)
                         textShareLauncher.launch(textIntent)
                     }
                 }
@@ -133,12 +142,12 @@ fun MainScreen(
                 is TweetTextEvent.Copied -> {
                     clipboardManager.setPlainText(event.text)
                     snackbarHostState.showSnackbar(
-                        message = "Tweet text copied",
+                        message = tweetTextCopiedMessage,
                         duration = SnackbarDuration.Short
                     )
                 }
                 is TweetTextEvent.Share -> {
-                    val intent = shareHelper.buildShareTextChooser(event.text, "Share Tweet Text")
+                    val intent = shareHelper.buildShareTextChooser(event.text, shareTweetTextLabel)
                     textShareLauncher.launch(intent)
                 }
             }
@@ -177,7 +186,7 @@ fun MainScreen(
                 TopAppBar(
                     title = { 
                         Text(
-                            "BabakCast",
+                            stringResource(R.string.app_name),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 20.sp
@@ -189,10 +198,17 @@ fun MainScreen(
                         titleContentColor = MaterialTheme.colorScheme.onBackground
                     ),
                     actions = {
+                        IconButton(onClick = onNavigateToAbout) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = stringResource(R.string.action_about),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
                         IconButton(onClick = onNavigateToSettings) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
-                                contentDescription = "Settings",
+                                contentDescription = stringResource(R.string.action_settings),
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -212,12 +228,12 @@ fun MainScreen(
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        text = { Text("Home") }
+                        text = { Text(stringResource(R.string.tab_home)) }
                     )
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        text = { Text("Downloads") }
+                        text = { Text(stringResource(R.string.tab_downloads)) }
                     )
                 }
             }
@@ -246,7 +262,7 @@ fun MainScreen(
                 when {
                     uiState.downloadEngineError != null -> {
                         Text(
-                            text = "Download unavailable: ${uiState.downloadEngineError}",
+                            text = stringResource(R.string.engine_unavailable, uiState.downloadEngineError.orEmpty()),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier
@@ -268,7 +284,7 @@ fun MainScreen(
                                 color = BabakCastColors.PrimaryAccent
                             )
                             Text(
-                                text = "Preparing download engine…",
+                                text = stringResource(R.string.engine_preparing),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -337,7 +353,11 @@ fun MainScreen(
                         )
                     }
                     Text(
-                        text = if (uiState.isProgressIndeterminate) "Working..." else "${(safeProgress * 100).roundToInt()}%",
+                        text = if (uiState.isProgressIndeterminate) {
+                            stringResource(R.string.progress_working)
+                        } else {
+                            stringResource(R.string.progress_percent, (safeProgress * 100).roundToInt())
+                        },
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -363,7 +383,7 @@ fun MainScreen(
                             scope.launch {
                                 clipboardManager.setPlainText(summary)
                                 snackbarHostState.showSnackbar(
-                                    message = "Copied to clipboard",
+                                    message = copiedMessage,
                                     duration = SnackbarDuration.Short
                                 )
                             }

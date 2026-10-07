@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.cocode.babakcast.ui.about.AboutScreen
 import com.cocode.babakcast.ui.main.MainScreen
 import com.cocode.babakcast.ui.settings.SettingsScreen
 import com.cocode.babakcast.ui.share.ShareScreen
@@ -11,6 +12,7 @@ import com.cocode.babakcast.ui.share.ShareScreen
 sealed class Screen(val route: String) {
     object Main : Screen("main")
     object Settings : Screen("settings")
+    object About : Screen("about")
     object Share : Screen("share/{content}")
 }
 
@@ -24,12 +26,26 @@ fun NavGraph(navController: NavHostController) {
             MainScreen(
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToAbout = {
+                    navController.navigate(Screen.About.route)
                 }
             )
         }
 
         composable(Screen.Settings.route) {
             SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToAbout = {
+                    navController.navigate(Screen.About.route)
+                }
+            )
+        }
+
+        composable(Screen.About.route) {
+            AboutScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
