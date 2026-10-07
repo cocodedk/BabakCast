@@ -61,11 +61,6 @@ An Android app that downloads videos from YouTube, X (Twitter), Instagram and Li
 |-------------|-------------------|
 | [![Main screen](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png) | [![Cutting a segment](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png) |
 
--------------|---------|-------------------|
-| *Add screenshot* | *Add screenshot* | *Add screenshot* |
-
-*Dark theme. Add your own screenshots to `docs/screenshots/` and link here.*
-
 ---
 
 ## Usage
@@ -90,15 +85,6 @@ An Android app that downloads videos from YouTube, X (Twitter), Instagram and Li
 | Google Gemini | API key + model | Listed in Settings, not finished |
 
 You can pick from suggested models or type a model name of your own.
-
-----------------|----------------------------------------|
-| OpenAI         | API key + model (e.g. gpt-4o-mini)     |
-| Azure OpenAI  | API key + endpoint URL + model         |
-| Anthropic      | API key + model (e.g. Claude 3.5)      |
-| Google Gemini | API key + model (e.g. gemini-1.5-flash)|
-| OpenRouter     | API key + model (e.g. openai/gpt-4o)   |
-
-You can pick from suggested models or enter a custom model name.
 
 ---
 

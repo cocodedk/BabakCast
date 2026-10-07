@@ -169,7 +169,7 @@
     <string name="model_placeholder">Vælg eller skriv en model</string>
     <string name="model_filter_hint">Skriv for at filtrere listen, eller skriv et modelnavn selv</string>
     <string name="model_free_badge">GRATIS</string>
-    <string name="model_no_matches">Ingen modeller passer. Ryd feltet for at se dem alle, eller skriv videre for at bruge det som et eget navn.</string>
+    <string name="model_no_matches">Ingen modeller passer. Ryd feltet for at se dem alle, eller skriv videre for at bruge det som dit eget modelnavn.</string>
     <string name="provider_not_configured">Ikke sat op</string>
     <string name="browser_unavailable">Linket kunne ikke åbnes. Tjek, at der er en webbrowser på telefonen.</string>
     <string name="settings_title">Indstillinger</string>
@@ -200,7 +200,7 @@
     <string name="about_source">Se kildekoden på GitHub</string>
     <string name="about_report">Meld et problem på GitHub</string>
     <string name="about_credits">Tak og licenser</string>
-    <string name="about_license">BabakCast er gratis software, udgivet under Apache License 2.0.</string>
+    <string name="about_license">BabakCast er fri software, udgivet under Apache License 2.0.</string>
     <string name="about_credits_body">Bygget med Kotlin, Jetpack Compose og Hilt. Hentning og transskriptioner bygger på youtubedl-android, og opdeling af video og lyd bygger på FFmpegKit.</string>
     <string name="about_made_by_title">Lavet af Cocode</string>
     <string name="about_created_by">Skabt af Babak Bandpey.</string>

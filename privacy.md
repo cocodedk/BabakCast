@@ -15,12 +15,12 @@ This policy explains exactly what leaves your device, where it goes, and what st
 
 When you use the **summarize** or translate features, BabakCast sends the text you are processing — the video transcript (for example, YouTube captions) or other text, together with a fixed instruction prompt — to the **AI provider you have configured in Settings**. That content leaves your device and is transmitted, over HTTPS, to that provider's servers, where it is processed under *their* privacy policy and data-retention practices.
 
-You choose the provider. BabakCast supports the following, and sends your content only to the one you select:
+You choose the provider. BabakCast lists the following in Settings and sends your content only to the one you select. In this version OpenAI and OpenRouter work. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.
 
 - **OpenAI** — `api.openai.com`
-- **Azure OpenAI** (Microsoft) — your `*.openai.azure.com` resource
-- **Anthropic** — `api.anthropic.com`
-- **Google Gemini** — `generativelanguage.googleapis.com`
+- **Azure OpenAI** (Microsoft) — `*.openai.azure.com`. Not finished yet: this version cannot save the address of your own Azure resource, so the app uses a placeholder address instead.
+- **Anthropic** — `api.anthropic.com` (not finished yet)
+- **Google Gemini** — `generativelanguage.googleapis.com` (not finished yet)
 - **OpenRouter** — `openrouter.ai`
 
 These providers are independent data controllers. Their handling of your content is governed by their own policies:
@@ -66,7 +66,7 @@ Everything BabakCast creates is stored locally, in the app's own storage, and is
 
 BabakCast keeps no analytics database and no usage history. It writes diagnostic messages to Android's system log on your phone. These can include the media links you paste, tweet IDs, and short excerpts of the text sent to your AI provider and of its replies. BabakCast does not send them to anyone, and Android overwrites old entries as new ones arrive. BabakCast does not read files elsewhere on your device except the links and shared text you explicitly give it.
 
-Files you share with another app are copied to that app. They belong to it from then on, and BabakCast cannot remove them when you uninstall.
+When you share a file, BabakCast gives the app you pick permission to read it. That app may keep its own copy. BabakCast cannot delete that copy, and uninstalling BabakCast does not remove it.
 
 ## 6. Permissions
 

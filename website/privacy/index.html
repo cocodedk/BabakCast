@@ -100,12 +100,12 @@
 
         <h2>1. Content you send to AI providers</h2>
         <p>When you use the <strong>summarize</strong> or translate features, BabakCast sends the text you are processing &mdash; the video transcript (for example, YouTube captions) or other text, together with a fixed instruction prompt &mdash; to the <strong>AI provider you have configured in Settings</strong>. That content leaves your device and is transmitted, over HTTPS, to that provider's servers, where it is processed under <em>their</em> privacy policy and data-retention practices.</p>
-        <p>You choose the provider. BabakCast supports the following, and sends your content only to the one you select:</p>
+        <p>You choose the provider. BabakCast lists the following in Settings and sends your content only to the one you select. In this version OpenAI and OpenRouter work. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.</p>
         <ul>
           <li><strong>OpenAI</strong> &mdash; <code>api.openai.com</code></li>
-          <li><strong>Azure OpenAI</strong> (Microsoft) &mdash; your <code>*.openai.azure.com</code> resource</li>
-          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code></li>
-          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>Azure OpenAI</strong> (Microsoft) &mdash; <code>*.openai.azure.com</code>. Not finished yet: this version cannot save the address of your own Azure resource, so the app uses a placeholder address instead.</li>
+          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code> (not finished yet)</li>
+          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code> (not finished yet)</li>
           <li><strong>OpenRouter</strong> &mdash; <code>openrouter.ai</code></li>
         </ul>
         <p>These providers are independent data controllers. Their handling of your content is governed by their own policies:
@@ -146,7 +146,7 @@
           <li><strong>API keys</strong> &mdash; encrypted, as described above.</li>
         </ul>
         <p>BabakCast keeps no analytics database and no usage history. It writes diagnostic messages to Android's system log on your phone. These can include the media links you paste, tweet IDs, and short excerpts of the text sent to your AI provider and of its replies. BabakCast does not send them to anyone, and Android overwrites old entries as new ones arrive. BabakCast does not read files elsewhere on your device except the links and shared text you explicitly give it.</p>
-        <p>Files you share with another app are copied to that app. They belong to it from then on, and BabakCast cannot remove them when you uninstall.</p>
+        <p>When you share a file, BabakCast gives the app you pick permission to read it. That app may keep its own copy. BabakCast cannot delete that copy, and uninstalling BabakCast does not remove it.</p>
 
         <h2>6. Permissions</h2>
         <ul>
@@ -194,12 +194,12 @@
 
         <h2>۱. محتوایی که به ارائه‌دهندگان هوش مصنوعی ارسال می‌شود</h2>
         <p>هنگام استفاده از قابلیت‌های <strong>خلاصه‌سازی</strong> یا ترجمه، BabakCast متنی را که پردازش می‌کنید — رونوشت ویدیو (برای نمونه، زیرنویس‌های یوتیوب) یا متن دیگر، همراه با یک دستور ثابت — به <strong>ارائه‌دهندهٔ هوش مصنوعی‌ای که در تنظیمات پیکربندی کرده‌اید</strong> ارسال می‌کند. آن محتوا دستگاه شما را ترک می‌کند و از طریق HTTPS به سرورهای آن ارائه‌دهنده منتقل می‌شود و در آنجا تحت سیاست حریم خصوصی و رویه‌های نگهداری دادهٔ <em>خودِ آن‌ها</em> پردازش می‌شود.</p>
-        <p>انتخاب ارائه‌دهنده با شماست. BabakCast از موارد زیر پشتیبانی می‌کند و محتوای شما را فقط به همان موردی که برمی‌گزینید می‌فرستد:</p>
+        <p>انتخاب ارائه‌دهنده با شماست. BabakCast موارد زیر را در تنظیمات فهرست می‌کند و محتوای شما را فقط به همان موردی که برمی‌گزینید می‌فرستد. در این نسخه OpenAI و OpenRouter کار می‌کنند. Azure OpenAI، Anthropic و Gemini در فهرست هستند، اما هنوز کامل نشده‌اند.</p>
         <ul>
           <li><strong>OpenAI</strong> &mdash; <code>api.openai.com</code></li>
-          <li><strong>Azure OpenAI</strong> (مایکروسافت) &mdash; منبع <code>*.openai.azure.com</code> شما</li>
-          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code></li>
-          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>Azure OpenAI</strong> (مایکروسافت) &mdash; <code>*.openai.azure.com</code>. هنوز کامل نشده: این نسخه نشانی منبع Azure خودتان را نمی‌تواند ذخیره کند، پس برنامه به‌جای آن یک نشانی نمونه به کار می‌برد.</li>
+          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code> (هنوز کامل نشده)</li>
+          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code> (هنوز کامل نشده)</li>
           <li><strong>OpenRouter</strong> &mdash; <code>openrouter.ai</code></li>
         </ul>
         <p>این ارائه‌دهندگان کنترل‌کنندگان مستقل داده هستند و نحوهٔ رفتار آن‌ها با محتوای شما تابع سیاست‌های خودشان است:
@@ -240,7 +240,7 @@
           <li><strong>کلیدهای API</strong> &mdash; رمزگذاری‌شده، همان‌گونه که در بالا توضیح داده شد.</li>
         </ul>
         <p>BabakCast هیچ پایگاه‌دادهٔ تحلیلی و هیچ تاریخچهٔ استفاده‌ای نگه نمی‌دارد. پیام‌های عیب‌یابی را در گزارش سیستمی اندروید روی گوشی شما می‌نویسد. این پیام‌ها ممکن است شامل پیوندهای رسانه‌ای که وارد می‌کنید، شناسهٔ توییت‌ها و تکه‌های کوتاهی از متنِ ارسالی به ارائه‌دهندهٔ هوش مصنوعی و از پاسخ او باشند. BabakCast آن‌ها را برای کسی نمی‌فرستد و اندروید با آمدن پیام‌های تازه، قدیمی‌ها را بازنویسی می‌کند. BabakCast به‌جز پیوندها و متنی که آشکارا به آن می‌دهید، فایل‌های دیگر دستگاه شما را نمی‌خواند.</p>
-        <p>فایل‌هایی که با برنامهٔ دیگری به اشتراک می‌گذارید در آن برنامه کپی می‌شوند. از آن لحظه مال همان برنامه‌اند و BabakCast هنگام حذف نمی‌تواند آن‌ها را پاک کند.</p>
+        <p>وقتی فایلی را به اشتراک می‌گذارید، BabakCast به برنامه‌ای که انتخاب می‌کنید اجازهٔ خواندن آن را می‌دهد. آن برنامه ممکن است نسخهٔ خودش را نگه دارد. BabakCast نمی‌تواند آن نسخه را پاک کند و حذف BabakCast هم آن را پاک نمی‌کند.</p>
 
         <h2>۶. مجوزها</h2>
         <ul>

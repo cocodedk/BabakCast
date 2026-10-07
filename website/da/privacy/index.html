@@ -90,18 +90,18 @@
         <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
         <p class="meta">Senest opdateret: 7. oktober 2026</p>
 
-        <p class="lede"><strong>BabakCast gemmer dine filer på telefonen og har ingen server af sig selv: udvikleren driver ingen server og modtager ingen data om dig. BabakCast er dog ikke en offline-app. Når du beder den hente medier eller opsummere en transskription, sender den det indhold og de links, du giver den, direkte over internettet til de tredjepartstjenester, du selv vælger.</strong></p>
+        <p class="lede"><strong>BabakCast gemmer dine filer på telefonen og har ingen egen server: udvikleren driver ingen server og modtager ingen data om dig. BabakCast er dog ikke en offline-app. Når du beder den hente medier eller opsummere en transskription, sender den det indhold og de links, du giver den, direkte over internettet til de tredjepartstjenester, du selv vælger.</strong></p>
 
         <p>Denne politik forklarer præcis, hvad der forlader din enhed, hvor det havner, og hvad der bliver på din telefon. BabakCast har ingen brugerkonti, ingen analyseværktøjer, ingen reklamer og ingen sporing, og den leveres ikke med nogen API-nøgler.</p>
 
         <h2>1. Indhold, du sender til AI-udbydere</h2>
         <p>Når du bruger funktionerne til at <strong>opsummere</strong> eller oversætte, sender BabakCast den tekst, du behandler, til den <strong>AI-udbyder, du har sat op under Indstillinger</strong>. Det er videoens transskription (for eksempel undertekster fra YouTube) eller anden tekst sammen med en fast instruktion. Indholdet forlader din enhed og sendes over HTTPS til udbyderens servere. Dér behandles det efter <em>deres</em> privatlivspolitik og deres praksis for opbevaring af data.</p>
-        <p>Du vælger udbyderen. BabakCast understøtter følgende og sender kun dit indhold til den, du har valgt:</p>
+        <p>Du vælger udbyderen. BabakCast har følgende på listen under Indstillinger og sender kun dit indhold til den, du har valgt. I denne version virker OpenAI og OpenRouter. Azure OpenAI, Anthropic og Google Gemini står på listen, men er ikke færdige endnu.</p>
         <ul>
           <li><strong>OpenAI</strong>: <code>api.openai.com</code></li>
-          <li><strong>Azure OpenAI</strong> (Microsoft): din egen <code>*.openai.azure.com</code>-ressource</li>
-          <li><strong>Anthropic</strong>: <code>api.anthropic.com</code></li>
-          <li><strong>Google Gemini</strong>: <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>Azure OpenAI</strong> (Microsoft): <code>*.openai.azure.com</code>. Ikke færdig endnu: denne version kan ikke gemme adressen på din egen Azure-ressource, så appen bruger en pladsholderadresse i stedet.</li>
+          <li><strong>Anthropic</strong>: <code>api.anthropic.com</code> (ikke færdig endnu)</li>
+          <li><strong>Google Gemini</strong>: <code>generativelanguage.googleapis.com</code> (ikke færdig endnu)</li>
           <li><strong>OpenRouter</strong>: <code>openrouter.ai</code></li>
         </ul>
         <p>Disse udbydere er selvstændigt dataansvarlige. Deres håndtering af dit indhold styres af deres egne politikker:
@@ -142,7 +142,7 @@
           <li><strong>API-nøgler</strong>: krypteret, som beskrevet ovenfor.</li>
         </ul>
         <p>BabakCast har ingen analysedatabase og ingen brugshistorik. Appen skriver fejlsøgningsbeskeder til Androids systemlog på din telefon. De kan indeholde de medielinks, du indsætter, tweet-id'er og korte uddrag af den tekst, der sendes til din AI-udbyder, og af dens svar. BabakCast sender dem ikke til nogen, og Android overskriver gamle linjer, efterhånden som nye kommer til. BabakCast læser ikke filer andre steder på din enhed, bortset fra de links og den delte tekst, du selv giver den.</p>
-        <p>Filer, du deler med en anden app, bliver kopieret til den app. De tilhører den fra da af, og BabakCast kan ikke fjerne dem, når du afinstallerer.</p>
+        <p>Når du deler en fil, giver BabakCast den app, du vælger, lov til at læse den. Den app kan beholde sin egen kopi. BabakCast kan ikke slette den kopi, og den bliver ikke fjernet, når du afinstallerer BabakCast.</p>
 
         <h2>6. Tilladelser</h2>
         <ul>
