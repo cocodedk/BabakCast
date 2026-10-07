@@ -51,7 +51,7 @@ class YtDlpUpdaterTest {
     }
 
     private fun installer(timeoutMs: Long = 5_000) =
-        YtDlpInstaller(OkHttpClient(), github.releaseUrl, binary, github.policy, timeoutMs, timeoutMs)
+        YtDlpInstaller(OkHttpClient(), github.source, binary, timeoutMs, timeoutMs)
 
     @Test
     fun update_installsTheNewerRelease() {

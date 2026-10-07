@@ -2,12 +2,7 @@ package com.cocode.babakcast.data.repository
 
 import java.io.File
 import java.nio.file.Files
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -18,8 +13,9 @@ import org.junit.Test
 
 /**
  * The phone runs what [YtDlpInstaller] installs, so it must only take a file whose SHA-256 is the
- * one published with the same release, only talk to HTTPS addresses on GitHub, and never read
- * more than it should. Every failure leaves the installed file exactly as it was.
+ * one published with the same release, from addresses inside that release, and never read more
+ * than it should. Every failure leaves the installed file exactly as it was. (Which addresses
+ * the real policy allows is in [YtDlpAddressTest].)
  */
 class YtDlpInstallerTest {
 
@@ -27,6 +23,7 @@ class YtDlpInstallerTest {
     private lateinit var binary: File
     private lateinit var github: FakeGitHub
     private val tag = "2026.09.27.232945"
+    private val otherTag = "2025.01.01"
     private val oldFile = fakeYtDlp("2025.11.12")
 
     @Before
@@ -42,8 +39,7 @@ class YtDlpInstallerTest {
         dir.deleteRecursively()
     }
 
-    private fun update(): YtDlpUpdateResult =
-        YtDlpInstaller(OkHttpClient(), github.releaseUrl, binary, github.policy).update()
+    private fun update(): YtDlpUpdateResult = YtDlpInstaller(OkHttpClient(), github.source, binary).update()
 
     private fun withGitHub(g: FakeGitHub) {
         github.shutdown()
@@ -102,109 +98,45 @@ class YtDlpInstallerTest {
         // Not a zip at all, with the wrong checksum: refused for the checksum, which comes first.
         val junk = "#!/bin/sh\nrm -rf /\n".toByteArray()
         withGitHub(FakeGitHub(tag, file = junk, sums = "${sha256Hex(fakeYtDlp(tag))}  yt-dlp\n"))
-        val failure = runCatching { update() }.exceptionOrNull()
-        assertTrue(failure?.message.orEmpty().contains("checksum"))
-        assertArrayEquals(oldFile, binary.readBytes())
+        assertRefusedAndUntouched("a file that is not yt-dlp", reason = "checksum")
     }
 
-    // --- transport: HTTPS on GitHub only, every hop checked before it is requested ---
+    // --- the files must belong to the release named by tag_name ---
 
     @Test
-    fun theRealPolicy_allowsGitHubOverHttpsOnly() {
-        val ok = listOf(
-            "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest",
-            "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/1/yt-dlp",
-            "https://objects.githubusercontent.com/x",
-            "https://release-assets.githubusercontent.com/github-production-release-asset/1?sp=r"
-        )
-        val refused = listOf(
-            "http://api.github.com/repos/yt-dlp/yt-dlp/releases/latest",
-            "http://release-assets.githubusercontent.com/x",
-            "http://github.com:443/yt-dlp/x", // the right port, but not HTTPS
-            "https://evil.example/yt-dlp",
-            "https://github.com.evil.example/yt-dlp/x",
-            "https://github.com@evil.example/yt-dlp/x",
-            "https://evil.example/github.com/yt-dlp/x",
-            "https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/yt-dlp",
-            "https://github.com/someone-else/yt-dlp/releases/download/1/yt-dlp",
-            "https://github.com:8443/yt-dlp/x"
-        )
-        ok.forEach { UrlPolicy.GITHUB.require(it.toHttpUrl()) }
-        for (url in refused) {
-            val allowed = runCatching { UrlPolicy.GITHUB.require(url.toHttpUrl()) }.isSuccess
-            assertFalse("must refuse $url", allowed)
+    fun aChecksumFileFromAnotherRelease_isNotUsed_andNeverRequested() {
+        withGitHub(FakeGitHub(tag, sumsTag = otherTag))
+        assertRefusedAndUntouched("a SUMS address in another tag", reason = "points outside release")
+        assertFalse("the other release was requested", github.paths.any { it.contains(otherTag) })
+    }
+
+    @Test
+    fun aReleaseTagThatIsNotAVersion_isNotUsed() {
+        for (bad in listOf("latest", "2026.09.27.232945/../x", "v2026.09.27", "2026.9.27", "2026.09.27.")) {
+            withGitHub(FakeGitHub(bad))
+            assertRefusedAndUntouched("tag $bad", reason = "no valid version")
         }
     }
 
     @Test
+    fun aRedirectToAnotherRelease_isRefused_beforeItIsFollowed() {
+        github.fileRedirect = github.server.url("/download/$otherTag/yt-dlp").toString()
+        assertRefusedAndUntouched("a redirect to another tag")
+        assertFalse("the other release was requested", github.paths.any { it.contains(otherTag) })
+    }
+
+    @Test
     fun aRedirectToAnotherHost_isRefused_andNeverRequested() {
-        github.fileRedirect = "http://127.0.0.1:${github.server.port}/yt-dlp?elsewhere=1"
+        github.fileRedirect = "http://127.0.0.1:${github.server.port}/real?elsewhere=1"
         assertRefusedAndUntouched("a redirect to a host that is not on the list")
         assertFalse("the other host was requested", github.paths.any { it.contains("elsewhere") })
     }
 
     @Test
-    fun aRedirectWithinTheList_isFollowed() {
+    fun aRedirectWithinTheRelease_isFollowed() {
         github.fileRedirect = github.server.url("/real?second=1").toString()
         assertEquals(YtDlpUpdateResult.Updated, update())
         assertTrue(github.paths.any { it.contains("second") })
-    }
-
-    private fun network(handler: (String) -> Response.Builder.() -> Unit, seen: MutableList<String>) =
-        OkHttpClient.Builder().addInterceptor { chain ->
-            val url = chain.request().url.toString()
-            seen += url
-            Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).message("m")
-                .also(handler(url)).build()
-        }.build()
-
-    private fun answer(code: Int, text: String = "", location: String? = null): Response.Builder.() -> Unit = {
-        code(code)
-        body(text.toResponseBody("application/json".toMediaType()))
-        location?.let { header("Location", it) }
-    }
-
-    private val api = "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest"
-    private val base = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/$tag"
-
-    private fun releaseJson(fileUrl: String) = """{"tag_name":"$tag","assets":[
-        {"name":"SHA2-256SUMS","browser_download_url":"$base/SHA2-256SUMS"},
-        {"name":"yt-dlp","browser_download_url":"$fileUrl"}]}"""
-
-    @Test
-    fun aRedirectToPlainHttp_isRefused_withTheRealPolicy() {
-        val seen = mutableListOf<String>()
-        val client = network({ url ->
-            when (url) {
-                api -> answer(200, releaseJson("$base/yt-dlp"))
-                "$base/SHA2-256SUMS" -> answer(200, "${sha256Hex(fakeYtDlp(tag))}  yt-dlp\n")
-                "$base/yt-dlp" -> answer(302, location = "http://release-assets.githubusercontent.com/x")
-                else -> answer(404)
-            }
-        }, seen)
-
-        val failure = runCatching { YtDlpInstaller(client, api, binary).update() }.exceptionOrNull()
-
-        assertTrue("must refuse", failure != null)
-        assertFalse(seen.any { it.startsWith("http://") })
-        assertArrayEquals(oldFile, binary.readBytes())
-    }
-
-    @Test
-    fun aReleaseFileOnAnotherHost_isRefused_beforeAnythingIsSent_withTheRealPolicy() {
-        val seen = mutableListOf<String>()
-        val client = network({ url ->
-            when (url) {
-                api -> answer(200, releaseJson("https://evil.example/yt-dlp"))
-                "$base/SHA2-256SUMS" -> answer(200, "${sha256Hex(fakeYtDlp(tag))}  yt-dlp\n")
-                else -> answer(404)
-            }
-        }, seen)
-
-        val failure = runCatching { YtDlpInstaller(client, api, binary).update() }.exceptionOrNull()
-
-        assertTrue("must refuse", failure != null)
-        assertFalse(seen.any { it.contains("evil.example") })
     }
 
     // --- limits: nothing unbounded, nothing installed on an oversize answer ---
