@@ -38,6 +38,7 @@
     <string name="error_not_initialized">BabakCast gør sig stadig klar til at hente.</string>
     <string name="error_tool_updating">yt-dlp bliver opdateret.</string>
     <string name="error_hint_tool_updating">Prøv igen, når den er færdig.</string>
+    <string name="error_hint_ytdlp_failed">@string/error_hint_download_retry</string>
     <string name="error_hint_wait">Vent et par sekunder, og prøv igen.</string>
     <string name="error_title_processing">Problem med videoen</string>
     <string name="error_video_split_failed">Videoen kunne ikke opdeles.</string>
