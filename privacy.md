@@ -2,12 +2,12 @@
 
 **App:** BabakCast (`com.cocode.babakcast`)
 **Developer:** CoCode.dk — Babak Bandpey
-**Last updated:** 14 July 2026
+**Last updated:** 7 October 2026
 
 > The canonical, always-current version of this policy is published at
-> **https://cast.cocode.dk/privacy.html**
+> **https://cast.cocode.dk/privacy/**
 
-**BabakCast is a local-first tool with no backend of its own: the developer operates no server and receives no data about you. However, BabakCast is not an offline app — when you ask it to download media or summarize a transcript, it sends the content and links you provide directly to the third-party services you choose, over the internet.**
+**BabakCast keeps your files on your phone and has no server of its own: the developer operates no server and receives no data about you. However, BabakCast is not an offline app. When you ask it to download media or summarize a transcript, it sends the content and links you provide directly to the third-party services you choose, over the internet.**
 
 This policy explains exactly what leaves your device, where it goes, and what stays on your phone. BabakCast has no user accounts, no analytics, no advertising, and no tracking, and it does not ship with any API keys.
 
@@ -36,7 +36,7 @@ Please review the policy of the provider you use before sending sensitive conten
 To download a video, image, audio track, or transcript, BabakCast contacts the **source platform directly** using the link you paste. This means your device connects to, and reveals its IP address and the requested item to, whichever of these services the link belongs to:
 
 - **YouTube / Google** — video, audio, and transcript downloads
-- **X (Twitter)** — media downloads and tweet-text retrieval use X's public syndication endpoint (`cdn.syndication.twimg.com`) and X media servers; only the public tweet ID from your link is sent, with no login
+- **X (Twitter)** — media downloads and tweet-text retrieval use X's public service for embedded posts (`cdn.syndication.twimg.com`) and X media servers; only the public tweet ID from your link is sent, with no login
 - **Instagram / Meta** — video downloads
 - **LinkedIn** — video downloads from public posts
 
@@ -48,11 +48,13 @@ Only the public link you provide is used; BabakCast does not log in to these pla
 
 ## 3. Your API keys
 
-You supply your own API key for each AI provider you enable. Keys are stored **only on your device**, encrypted with Android's `EncryptedSharedPreferences` (AES-256, with the master key held in the Android Keystore). A key is **never sent to the developer**. It is transmitted only to its own provider's API, as the authorization credential, over HTTPS, when you list models or make a request. Keys are shown masked in the app and can be deleted at any time in Settings.
+You supply your own API key for each AI provider you enable. Keys are stored **on your device**, encrypted with Android's `EncryptedSharedPreferences` (AES-256, with the master key held in the Android Keystore). A key is **never sent to the developer**. It is transmitted only to its own provider's API, as the authorization credential, over HTTPS, when you list models or make a request. If Android backup is on, Android may also copy the encrypted preferences file into your own Google backup (see section 8). Keys are shown masked in the app and can be deleted at any time in Settings.
 
-## 4. Update checks
+## 4. Updates
 
-BabakCast can check for a newer version by requesting the latest release from the GitHub API (`api.github.com`). This request carries no personal data beyond the standard connection information (such as your IP address) that any web request includes. GitHub's handling is covered by the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+BabakCast does not check for updates to itself. The **See the latest version** button on the About screen only opens a web page in your browser when you tap it (see section 9).
+
+The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this: its downloader changes only when the app itself is updated. GitHub's handling is covered by the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ## 5. Data stored on your device
 
@@ -62,12 +64,14 @@ Everything BabakCast creates is stored locally, in the app's own storage, and is
 - **Settings** — your preferences (default provider, language, summary style and length, theme, temperature) in a local preferences store. These contain no personal content.
 - **API keys** — encrypted, as described above.
 
-BabakCast keeps no analytics database and no usage history, and it does not read files elsewhere on your device except the links and shared text you explicitly give it.
+BabakCast keeps no analytics database and no usage history. It writes diagnostic messages to Android's system log on your phone. These can include the media links you paste, tweet IDs, and short excerpts of the text sent to your AI provider and of its replies. BabakCast does not send them to anyone, and Android overwrites old entries as new ones arrive. BabakCast does not read files elsewhere on your device except the links and shared text you explicitly give it.
+
+Files you share with another app are copied to that app. They belong to it from then on, and BabakCast cannot remove them when you uninstall.
 
 ## 6. Permissions
 
 - **Internet** and **network state** — required to reach the services above and to detect your connection type.
-- **Read/write external storage** (Android 12 / API 32 and older only) — legacy permission used to save and share downloaded files on older devices. It is not requested on newer Android versions.
+- **Read/write external storage** (Android 12L / API 32 and older only) — legacy permission used to save and share downloaded files on older devices. It is not requested on newer Android versions.
 - No location, contacts, camera, or microphone permissions are requested.
 
 ## 7. No tracking, no accounts, no ads
@@ -78,11 +82,11 @@ BabakCast keeps no analytics database and no usage history, and it does not read
 
 ## 8. Device backup
 
-If you have enabled Android Auto Backup or Google account backup, the operating system may include this app's local data in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See [Google's Privacy Policy](https://policies.google.com/privacy) for details.
+BabakCast does not switch Android backup off or leave anything out of it. If backup is on for your phone, Android may include the app's settings, the encrypted file that holds your API keys, and the downloaded media and transcripts in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See [Google's Privacy Policy](https://policies.google.com/privacy) for details.
 
 ## 9. External links
 
-The app contains links to the developer's website ([cocode.dk](https://cocode.dk)) and the project's GitHub page. Selecting them opens your browser; those sites are governed by their own privacy policies.
+BabakCast opens a web page only when you tap a link in the app, and it hands the page to your web browser. The About screen has buttons for these pages: the latest version (the GitHub releases page, or the F-Droid page once the app is listed there), this privacy policy, the BabakCast website ([cast.cocode.dk](https://cast.cocode.dk)), the source code and the problem tracker on GitHub, and [cocode.dk](https://cocode.dk). BabakCast itself does not connect to these pages: your browser does, and each site is governed by its own privacy policy.
 
 ## 10. Children
 

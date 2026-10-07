@@ -1,1 +1,1 @@
-Release builds are now optimised with R8.
+Release builds now remove unused code and resources to make the app smaller.

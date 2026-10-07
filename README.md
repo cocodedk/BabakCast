@@ -1,6 +1,6 @@
 # BabakCast
 
-A **local-first** Android app to download YouTube, X (Twitter), Instagram, and LinkedIn videos, copy and share tweet text, summarize transcripts with your own AI provider, and share results instantly.
+An Android app that downloads videos from YouTube, X (Twitter), Instagram and LinkedIn, copies and shares tweet text, and summarizes YouTube transcripts (the written text of what is said) with your own AI provider. Your downloads stay on your phone. Only the text you send for a summary or translation goes to the AI provider you choose.
 
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=flat&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat&logo=kotlin&logoColor=white)
@@ -11,38 +11,39 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 
 <!-- cocode-apps:install:start -->
 - Coming to F-Droid
-- [Download the APK from GitHub](https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk)
-- [Auto-update the GitHub APK with Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cocodedk/BabakCast)
+- [Download the Android installation file (APK) from GitHub](https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk)
+- [Add the app to Obtainium, an app that keeps it up to date](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cocodedk/BabakCast)
 <!-- cocode-apps:install:end -->
 
 ### Requirements
 
-- Android 8.0 (API 26) or higher.
-- For summarization: an API key from at least one supported provider (OpenAI, Anthropic, Gemini, OpenRouter, or Azure OpenAI).
+- Android 7.0 (API 24) or higher.
+- For summaries and translations: an API key from an AI provider. In this version, OpenAI and OpenRouter work. Azure OpenAI, Anthropic and Google Gemini are listed in Settings but are not finished yet.
 
 ---
 
 ## Website
 - [English](https://cast.cocode.dk/)
+- [Dansk (Danish)](https://cast.cocode.dk/da/)
 - [فارسی (Persian)](https://cast.cocode.dk/fa/)
 
 ---
 
 ## Features
 
-- **YouTube video download** — Paste a URL, get shareable video files (auto-split at 16 MB for sharing limits).
-- **X (Twitter) video download** — Paste an X.com or Twitter.com post URL to download videos from public posts.
-- **X (Twitter) all-media download** — Download all photos, videos, and GIFs from an X/Twitter post in one tap and share them together. Supports multi-image tweets (up to 4), mixed media, and animated GIFs.
-- **X (Twitter) tweet text copy & share** — Paste an X/Twitter URL, tap *Copy Text* to copy the tweet text to clipboard, or *Share Text* to open the Android share sheet — no media download needed.
-- **Instagram video download** — Paste an Instagram post, reel, or IGTV URL to download videos.
-- **LinkedIn video download** — Paste a LinkedIn post or feed update URL to download videos from public posts.
-- **Audio download** — Extract audio (MP3) from YouTube, X, or Instagram videos. *Download Audio* shares one file; *Download Audio Split* splits at your chosen size (default 16 MB) for sharing limits and tags each part "Part n of N" so recipients can tell the order even when a messaging app reorders them.
-- **Optional segment cut** — flip the "Cut a segment" toggle, type a start and end time (`m:ss.s`, accurate to a tenth of a second) and only that segment is saved; the rest of the download is discarded. Works on every source, and on audio downloads too. Leave the toggle off and the whole video is kept as before.
-- **Transcript summarization** — Extract captions from YouTube videos and summarize with your chosen AI model (bullet points, paragraph, or TL;DR).
-- **Bring-your-own AI** — OpenAI, Azure OpenAI, Anthropic, Google Gemini, OpenRouter. Configure API key and model in Settings.
-- **No backend** — Everything runs on your device. No accounts, no analytics, no tracking.
-- **Encrypted API keys** — Stored locally with Android's EncryptedSharedPreferences.
-- **Optional Persian translation on share** — flip the "Translate to Persian" toggle and the next share (tweet text, captions, or summaries) includes an AI-generated Persian translation below the original. Slow providers get up to 3 minutes; while it runs, a **Share now** button lets you skip the wait and share the original immediately.
+- **YouTube video download**: paste a link and get a video file to share. Tap *Download Video* for one file, or *Download and split video* to divide a larger video into parts of the size you choose (16 MB by default, a common messaging limit).
+- **X (Twitter) video download**: paste an X.com or Twitter.com post link to download videos from public posts.
+- **X (Twitter) post media download**: tap *Download Post Media* to save a post's photos, videos and GIFs and share them together. A post can have up to 4 photos, and animated GIFs work too. A post that has both photos and videos saves the photos only.
+- **X (Twitter) tweet text copy and share**: paste an X or Twitter link, then tap *Copy Text* to copy the tweet text to the clipboard, or *Share Text* to open the Android share sheet. No media download is needed.
+- **Instagram video download**: paste an Instagram post, reel or IGTV link to download videos.
+- **LinkedIn video download**: paste a LinkedIn post or feed update link to download videos from public posts.
+- **Audio download**: extract the audio (MP3) from YouTube, X or Instagram videos. *Download Audio* gives you one file. *Download and split audio* splits it at the size you choose (16 MB by default) and tags each part "Part n of N", so recipients can tell the order even when a messaging app shows the parts in a different one.
+- **Optional segment cut**: turn on *Cut a segment*, type a start and end time (`m:ss.s`, accurate to a tenth of a second) and only that segment is saved. The rest of the download is discarded. This works on every source, and on audio downloads too. With the toggle off, the whole video is kept.
+- **Transcript summary**: for a YouTube video, BabakCast gets the captions and asks your AI model for a bullet-point summary. Choose Short, Medium or Long on the Home screen.
+- **Bring your own AI**: add your own API key and model under **Settings > AI Providers**. OpenAI and OpenRouter work in this version. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.
+- **No developer backend**: downloading, splitting and cutting run on your phone. Summaries and translations send text to the AI provider you set up. There are no accounts, no analytics and no tracking.
+- **Encrypted API keys**: stored on your phone with Android's EncryptedSharedPreferences.
+- **Optional Persian translation**: turn on *Translate to Persian* on the Home screen and BabakCast adds an AI-generated Persian translation below the original in the text you copy or share: tweet text, summaries, and the text that goes with audio and X media. A copied summary, shared video downloads and shares from the Downloads tab are not translated. Slow providers get up to 3 minutes. While it runs, *Use original text* skips the translation and shares the original, but if the provider has not answered yet, sharing can wait until that request ends.
 
 ---
 
@@ -56,8 +57,11 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 
 ## Screenshots
 
-| Main screen | Summary | Provider settings |
-|-------------|---------|-------------------|
+| Main screen | Cutting a segment |
+|-------------|-------------------|
+| [![Main screen](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png) | [![Cutting a segment](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png) |
+
+-------------|---------|-------------------|
 | *Add screenshot* | *Add screenshot* | *Add screenshot* |
 
 *Dark theme. Add your own screenshots to `docs/screenshots/` and link here.*
@@ -66,20 +70,28 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 
 ## Usage
 
-1. **Download video** — Paste a YouTube, X (Twitter), Instagram, or LinkedIn URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
-2. **Download all media (X/Twitter)** — Paste an X/Twitter URL, tap *Download All Media*. The app fetches all photos, videos, and GIFs from the post and opens the share sheet with everything in one go.
-3. **Copy or share tweet text** — Paste an X/Twitter URL, tap *Copy Text* to copy the tweet text to your clipboard (with a confirmation snackbar), or *Share Text* to open the Android share sheet.
-4. **Download audio** — Paste a YouTube, X, or Instagram URL. Tap *Download Audio* for a single MP3, or *Download Audio Split* to split it at your chosen size (default 16 MB). Split parts are tagged "Part n of N" and the share caption notes the count, so they play in order.
-5. **Summarize transcript** — Paste a YouTube URL, tap *Summarize Transcript*. Configure an AI provider and model in **Settings → AI Providers** first. Your API key is stored locally and never sent anywhere except the provider you choose. (Note: transcript summarization is available for YouTube only.)
-
-6. **Cut a segment** — turn on *Cut a segment*, enter the start and end times as `m:ss.s` (for example `1:23.4` to `1:25.6`). The download is cut to exactly that range before it is split or shared, and nothing outside it is kept.
+1. **Download a video**: paste a YouTube, X (Twitter), Instagram or LinkedIn link and tap *Download Video*. BabakCast saves one video file and opens the share sheet. To divide a larger video into parts, tap *Download and split video* instead.
+2. **Download a post's media (X/Twitter)**: paste an X or Twitter link and tap *Download Post Media*. BabakCast saves the post's photos, videos and GIFs and opens the share sheet with them. A post with both photos and videos saves the photos only.
+3. **Copy or share tweet text**: paste an X or Twitter link, then tap *Copy Text* to copy the tweet text to your clipboard (a message confirms it), or *Share Text* to open the Android share sheet.
+4. **Download audio**: paste a YouTube, X or Instagram link. Tap *Download Audio* for a single MP3, or *Download and split audio* to split it at your chosen size (16 MB by default). Each part is tagged "Part n of N" and the share caption notes the count, so recipients can tell the order. Sharing is in two steps: BabakCast first shares the title, then you come back to BabakCast to share the MP3 file or the numbered parts.
+5. **Summarize a transcript**: first open **Settings**, tap a provider under **AI Providers**, enter its API key, select a model and tap *Save and use this provider*. Then paste a YouTube link and tap *Summarize Transcript*. Your API key is sent only to the provider you choose. Summaries work for YouTube videos only.
+6. **Cut a segment**: turn on *Cut a segment* and enter the start and end times as `m:ss.s` (for example `1:23.4` to `1:25.6`). The download is cut to exactly that range before it is split or shared, and nothing outside it is kept.
 
 ---
 
-## Supported AI Providers
+## AI providers
 
-| Provider        | Config in app                          |
-|----------------|----------------------------------------|
+| Provider | Config in app | Status in this version |
+|----------|---------------|------------------------|
+| OpenAI | API key + model (e.g. gpt-4o-mini) | Works |
+| OpenRouter | API key + model (e.g. openai/gpt-4o) | Works |
+| Azure OpenAI | API key + endpoint URL + model | Listed in Settings, not finished: the endpoint is not saved |
+| Anthropic | API key + model | Listed in Settings, not finished |
+| Google Gemini | API key + model | Listed in Settings, not finished |
+
+You can pick from suggested models or type a model name of your own.
+
+----------------|----------------------------------------|
 | OpenAI         | API key + model (e.g. gpt-4o-mini)     |
 | Azure OpenAI  | API key + endpoint URL + model         |
 | Anthropic      | API key + model (e.g. Claude 3.5)      |
@@ -94,7 +106,7 @@ You can pick from suggested models or enter a custom model name.
 
 - **Kotlin** + **Jetpack Compose**
 - **Hilt** for dependency injection
-- **youtubedl-android** for YouTube, X/Twitter, Instagram, and LinkedIn download & transcript
+- **youtubedl-android** for media downloads from YouTube, X/Twitter, Instagram and LinkedIn, and for transcripts from YouTube
 - **FFmpegKit** for video splitting
 - **EncryptedSharedPreferences** for API key storage
 
@@ -106,7 +118,9 @@ BabakCast has no backend of its own: the developer runs no server and receives n
 the app has no accounts, no analytics, no ads and no tracking. It is not an offline app, though. When you
 ask it to download media or summarize a transcript, it sends the links and content you provide directly
 to the services involved: the source platform for a download, and only the AI provider you configure for a
-summary. API keys are stored on the device and are not sent anywhere except to the provider you choose.
+summary. API keys are stored encrypted on the device and are not sent anywhere except to the provider you
+choose. If Android backup is on, it may also copy them (still encrypted) with the rest of the app's data,
+including downloads and transcripts, into your own Google backup.
 
 Read the full policy at <https://cast.cocode.dk/privacy/> (also in [privacy.md](privacy.md)).
 
@@ -123,11 +137,11 @@ Needs Java 17 and the Android SDK (Android Studio).
    git clone https://github.com/cocodedk/BabakCast.git
    cd BabakCast
    ```
-2. Open in Android Studio and run on a device or emulator (API 26+).
+2. Open in Android Studio and run on a device or emulator (API 24+).
 
 ### Release build (CI)
 
-On every **push or merge to `main`**, GitHub Actions builds a **signed release APK** and uploads it as a workflow artifact.
+On a **push or merge to `main`**, GitHub Actions builds the signed release APKs and publishes them as a GitHub release when `VERSION_NAME` in `gradle.properties` names a version that is not released yet. If that version is already released, the workflow skips the build and finishes green.
 
 To enable signing, add these **repository secrets** (Settings → Secrets and variables → Actions):
 
@@ -146,7 +160,7 @@ keytool -genkey -v -keystore release.keystore -alias my-key -keyalg RSA -keysize
 
 Then encode it for `KEYSTORE_BASE64`: e.g. `base64 -w 0 release.keystore` (Linux) or `base64 -i release.keystore` (macOS). Do **not** commit the keystore file.
 
-If the secrets are not set, the workflow will fail at the build step; set all four to get a signed APK from the [Actions](https://github.com/cocodedk/BabakCast/actions) run.
+If a signing secret is missing, the workflow stops at the *Verify signing secrets* step, before it builds anything. Set all four to get signed APKs from the [Actions](https://github.com/cocodedk/BabakCast/actions) run.
 
 `./scripts/setup-signing.sh` does all of the above in one pass: it reuses an existing
 `release.keystore` (or generates one), verifies the password, uploads the four secrets, and
