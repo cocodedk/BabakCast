@@ -3,6 +3,9 @@ package com.cocode.babakcast.ui.main
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -76,7 +79,7 @@ internal fun ActionButtonsSection(
             enabled = downloadEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.buttonColors(
                 containerColor = BabakCastColors.PrimaryAccent,
@@ -107,7 +110,7 @@ internal fun ActionButtonsSection(
             enabled = downloadEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = BabakCastColors.PrimaryAccent,
@@ -148,7 +151,7 @@ internal fun ActionButtonsSection(
                     enabled = isAllMediaEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .heightIn(min = 52.dp),
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = BabakCastColors.PrimaryAccent,
@@ -174,7 +177,7 @@ internal fun ActionButtonsSection(
                 }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
@@ -182,7 +185,8 @@ internal fun ActionButtonsSection(
                         enabled = isXActionEnabled && !uiState.isFetchingTweetText,
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp),
+                            .fillMaxHeight()
+                            .heightIn(min = 44.dp),
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -211,7 +215,8 @@ internal fun ActionButtonsSection(
                         enabled = isXActionEnabled && !uiState.isFetchingTweetText,
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp),
+                            .fillMaxHeight()
+                            .heightIn(min = 44.dp),
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = BabakCastColors.SecondaryAccent,
@@ -304,7 +309,7 @@ stringResource(length.labelRes()),
             enabled = summarizeEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = MaterialTheme.colorScheme.onSurface,
