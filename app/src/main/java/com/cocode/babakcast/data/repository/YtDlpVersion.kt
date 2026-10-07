@@ -3,41 +3,64 @@ package com.cocode.babakcast.data.repository
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipFile
-import java.util.zip.ZipInputStream
 
 /**
- * yt-dlp is a zip archive that carries its own version in yt_dlp/version.py, as a date:
- * 2025.11.12 for a stable release, 2026.09.27.232945 for a nightly (the last part is the time).
- * Reading it from the file itself means the answer can never disagree with the binary the way
- * a saved record can, for example after Android restores an app's preferences without its files.
+ * yt-dlp is an executable zip: a `#!/usr/bin/env python3` line, then a zip archive that carries
+ * its own version in yt_dlp/version.py, as a date (2025.11.12 for a stable release,
+ * 2026.09.27.232945 for a nightly, the last part being the time). The version is read from the
+ * file itself, through the zip's index at the end, so it works with that line in front and can
+ * never disagree with the binary the way a saved record can (for example after Android restores
+ * an app's preferences without its files).
  */
 internal object YtDlpVersion {
     private const val VERSION_ENTRY = "yt_dlp/version.py"
+    private const val MAX_VERSION_PY = 8 * 1024
     private val VERSION = Regex("""__version__\s*=\s*'([^']+)'""")
 
     /** The version of the yt-dlp file at [file], or null when it is missing or not a yt-dlp. */
     fun of(file: File): String? = try {
         ZipFile(file).use { zip ->
             zip.getEntry(VERSION_ENTRY)?.let { entry ->
-                parse(zip.getInputStream(entry).readBytes().decodeToString())
-            }
+                zip.getInputStream(entry).use { readSmall(it) }
+            }?.let { VERSION.find(it)?.groupValues?.get(1) }
         }
     } catch (e: Exception) {
         null
     }
 
-    /** Same, for a yt-dlp read from a stream (the copy that ships inside youtubedl-android). */
-    fun of(stream: InputStream): String? = try {
-        ZipInputStream(stream).use { zip ->
-            generateSequence { zip.nextEntry }
-                .firstOrNull { it.name == VERSION_ENTRY }
-                ?.let { parse(zip.readBytes().decodeToString()) }
+    /**
+     * Same, for a yt-dlp read from a stream (the copy that ships inside youtubedl-android). A zip
+     * cannot be read from the front of a stream when something comes before it, so the stream is
+     * copied to a temporary file in [tempDir] first.
+     */
+    fun ofStream(stream: InputStream, tempDir: File): String? {
+        val copy = File.createTempFile("yt-dlp-shipped", null, tempDir)
+        return try {
+            copy.outputStream().use { out -> stream.copyTo(out) }
+            of(copy)
+        } catch (e: Exception) {
+            null
+        } finally {
+            copy.delete()
         }
-    } catch (e: Exception) {
-        null
     }
 
-    private fun parse(text: String): String? = VERSION.find(text)?.groupValues?.get(1)
+    /** The text of a small entry, or null when it is longer than a version file can be. */
+    private fun readSmall(input: InputStream): String? {
+        val bytes = input.readUpTo(MAX_VERSION_PY + 1)
+        return if (bytes.size > MAX_VERSION_PY) null else bytes.decodeToString()
+    }
+
+    private fun InputStream.readUpTo(limit: Int): ByteArray {
+        val buffer = ByteArray(limit)
+        var total = 0
+        while (total < limit) {
+            val n = read(buffer, total, limit - total)
+            if (n < 0) break
+            total += n
+        }
+        return buffer.copyOf(total)
+    }
 
     /** Negative when [a] is older than [b]. Compared part by part, as numbers. */
     fun compare(a: String, b: String): Int {

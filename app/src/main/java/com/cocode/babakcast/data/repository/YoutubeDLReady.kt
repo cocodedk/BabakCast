@@ -104,13 +104,16 @@ object YoutubeDLReady {
         val prefs = appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
         val recorded = prefs.getInt(KEY_LAST_INIT_VERSION_CODE, UNSET_VERSION_CODE)
         if (!versionCodeChanged(recorded, BuildConfig.VERSION_CODE)) return
-        resetYtdlpIfNeeded(ytDlpDir(appContext), shippedYtdlpVersion(appContext))
+        val shipped = shippedYtdlpVersion(appContext)
+        val installed = YtDlpVersion.of(ytDlpBinary(appContext))
+        val reset = resetYtdlpIfNeeded(ytDlpDir(appContext), shipped)
+        Log.i(TAG, "app updated: shipped yt-dlp=$shipped, installed=$installed, put the shipped one back=$reset")
     }
 
     /** The version of the yt-dlp that ships inside youtubedl-android, or null when unreadable. */
     private fun shippedYtdlpVersion(appContext: Context): String? = try {
         appContext.resources.openRawResource(com.yausername.youtubedl_android.R.raw.ytdlp)
-            .use(YtDlpVersion::of)
+            .use { YtDlpVersion.ofStream(it, appContext.cacheDir) }
     } catch (e: Exception) {
         null
     }
