@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Privacy Policy | BabakCast</title>
-  <meta name="description" content="Privacy policy for BabakCast (com.cocode.babakcast): a local-first Android app that sends the content you choose to summarize to the third-party AI provider you configure, and no data to the developer." />
+  <meta name="description" content="Privacy policy for BabakCast (com.cocode.babakcast): an Android app that keeps your files on your phone, sends the content you choose to summarize to the third-party AI provider you configure, and sends no data to the developer." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://cast.cocode.dk/privacy/" />
   <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
@@ -78,6 +78,7 @@
   <a href="/#how" data-nav="how">How it works</a>
   <a href="/#install" data-nav="install">Install</a>
   <a href="/privacy/" data-nav="privacy" aria-current="page">Privacy</a>
+  <a href="/da/privacy/" hreflang="da" lang="da" data-nav="lang">Dansk</a>
   <a href="https://cocode.dk/" data-nav="more">More apps</a>
 </nav>
 <!-- cocode-apps:nav:end -->
@@ -91,20 +92,20 @@
       <section lang="en">
         <h1>Privacy Policy</h1>
         <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
-        <p class="meta">Last updated: 14 July 2026</p>
+        <p class="meta">Last updated: 7 October 2026</p>
 
-        <p class="lede"><strong>BabakCast is a local-first tool with no backend of its own: the developer operates no server and receives no data about you. However, BabakCast is not an offline app — when you ask it to download media or summarize a transcript, it sends the content and links you provide directly to the third-party services you choose, over the internet.</strong></p>
+        <p class="lede"><strong>BabakCast keeps your files on your phone and has no server of its own: the developer operates no server and receives no data about you. However, BabakCast is not an offline app. When you ask it to download media or summarize a transcript, it sends the content and links you provide directly to the third-party services you choose, over the internet.</strong></p>
 
         <p>This policy explains exactly what leaves your device, where it goes, and what stays on your phone. BabakCast has no user accounts, no analytics, no advertising, and no tracking, and it does not ship with any API keys.</p>
 
         <h2>1. Content you send to AI providers</h2>
         <p>When you use the <strong>summarize</strong> or translate features, BabakCast sends the text you are processing &mdash; the video transcript (for example, YouTube captions) or other text, together with a fixed instruction prompt &mdash; to the <strong>AI provider you have configured in Settings</strong>. That content leaves your device and is transmitted, over HTTPS, to that provider's servers, where it is processed under <em>their</em> privacy policy and data-retention practices.</p>
-        <p>You choose the provider. BabakCast supports the following, and sends your content only to the one you select:</p>
+        <p>You choose the provider. BabakCast lists the following in Settings and sends your content only to the one you select. In this version OpenAI and OpenRouter work. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.</p>
         <ul>
           <li><strong>OpenAI</strong> &mdash; <code>api.openai.com</code></li>
-          <li><strong>Azure OpenAI</strong> (Microsoft) &mdash; your <code>*.openai.azure.com</code> resource</li>
-          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code></li>
-          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>Azure OpenAI</strong> (Microsoft) &mdash; <code>*.openai.azure.com</code>. Not finished yet: this version cannot save the address of your own Azure resource, so the app uses a placeholder address instead.</li>
+          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code> (not finished yet)</li>
+          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code> (not finished yet)</li>
           <li><strong>OpenRouter</strong> &mdash; <code>openrouter.ai</code></li>
         </ul>
         <p>These providers are independent data controllers. Their handling of your content is governed by their own policies:
@@ -119,7 +120,7 @@
         <p>To download a video, image, audio track, or transcript, BabakCast contacts the <strong>source platform directly</strong> using the link you paste. This means your device connects to, and reveals its IP address and the requested item to, whichever of these services the link belongs to:</p>
         <ul>
           <li><strong>YouTube / Google</strong> &mdash; video, audio, and transcript downloads</li>
-          <li><strong>X (Twitter)</strong> &mdash; media downloads and tweet-text retrieval use X's public syndication endpoint (<code>cdn.syndication.twimg.com</code>) and X media servers; only the public tweet ID from your link is sent, with no login</li>
+          <li><strong>X (Twitter)</strong> &mdash; media downloads and tweet-text retrieval use X's public service for embedded posts (<code>cdn.syndication.twimg.com</code>) and X media servers; only the public tweet ID from your link is sent, with no login</li>
           <li><strong>Instagram / Meta</strong> &mdash; video downloads</li>
           <li><strong>LinkedIn</strong> &mdash; video downloads from public posts</li>
         </ul>
@@ -130,10 +131,11 @@
         <a href="https://www.linkedin.com/legal/privacy-policy" rel="noopener" target="_blank">LinkedIn</a>.</p>
 
         <h2>3. Your API keys</h2>
-        <p>You supply your own API key for each AI provider you enable. Keys are stored <strong>only on your device</strong>, encrypted with Android's <code>EncryptedSharedPreferences</code> (AES-256, with the master key held in the Android Keystore). A key is <strong>never sent to the developer</strong>. It is transmitted only to its own provider's API, as the authorization credential, over HTTPS, when you list models or make a request. Keys are shown masked in the app and can be deleted at any time in Settings.</p>
+        <p>You supply your own API key for each AI provider you enable. Keys are stored <strong>on your device</strong>, encrypted with Android's <code>EncryptedSharedPreferences</code> (AES-256, with the master key held in the Android Keystore). A key is <strong>never sent to the developer</strong>. It is transmitted only to its own provider's API, as the authorization credential, over HTTPS, when you list models or make a request. If Android backup is on, Android may also copy the encrypted preferences file into your own Google backup (see section 8). Keys are shown masked in the app and can be deleted at any time in Settings.</p>
 
-        <h2>4. Update checks</h2>
-        <p>BabakCast can check for a newer version by requesting the latest release from the GitHub API (<code>api.github.com</code>). This request carries no personal data beyond the standard connection information (such as your IP address) that any web request includes. GitHub's handling is covered by the
+        <h2>4. Updates</h2>
+        <p>BabakCast does not check for updates to itself. The <strong>See the latest version</strong> button on the About screen only opens a web page in your browser when you tap it (see section 9).</p>
+        <p>The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It changes its downloader only when you tap <strong>Update yt-dlp</strong> in Settings. Then it downloads a new copy of yt-dlp from GitHub, the newest test build (called "nightly"), together with the checksum GitHub publishes for it. It runs the copy on your phone only if the two match. F-Droid has not checked that copy, so tapping the button means you skip F-Droid's checks. The request to GitHub carries the same standard connection information and nothing else. When the app itself is updated, BabakCast keeps the copy you installed if it is newer than the one inside the app, and puts the one inside the app back if that one is newer. GitHub's handling is covered by the
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">GitHub Privacy Statement</a>.</p>
 
         <h2>5. Data stored on your device</h2>
@@ -143,12 +145,12 @@
           <li><strong>Settings</strong> &mdash; your preferences (default provider, language, summary style and length, theme, temperature) in a local preferences store. These contain no personal content.</li>
           <li><strong>API keys</strong> &mdash; encrypted, as described above.</li>
         </ul>
-        <p>BabakCast keeps no analytics database and no usage history, and it does not read files elsewhere on your device except the links and shared text you explicitly give it.</p>
+        <p>BabakCast keeps no analytics database and no usage history. It writes diagnostic messages to Android's system log on your phone. These can include the media links you paste, tweet IDs, and short excerpts of the text sent to your AI provider and of its replies. BabakCast does not send them to anyone, and Android overwrites old entries as new ones arrive. BabakCast does not read files elsewhere on your device except the links and shared text you explicitly give it.</p>
+        <p>When you share a file, BabakCast gives the app you pick permission to read it. That app may keep its own copy. BabakCast cannot delete that copy, and uninstalling BabakCast does not remove it.</p>
 
         <h2>6. Permissions</h2>
         <ul>
           <li><strong>Internet</strong> and <strong>network state</strong> &mdash; required to reach the services above and to detect your connection type.</li>
-          <li><strong>Read/write external storage</strong> (Android 12 / API 32 and older only) &mdash; legacy permission used to save and share downloaded files on older devices. It is not requested on newer Android versions.</li>
           <li>No location, contacts, camera, or microphone permissions are requested.</li>
         </ul>
 
@@ -160,11 +162,11 @@
         </ul>
 
         <h2>8. Device backup</h2>
-        <p>If you have enabled Android Auto Backup or Google account backup, the operating system may include this app's local data in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See
+        <p>BabakCast does not switch Android backup off. It leaves out only two small files that record which yt-dlp is installed, because the yt-dlp file itself is not backed up. If backup is on for your phone, Android may include the app's settings, the encrypted file that holds your API keys, and the downloaded media and transcripts in your own personal Google backup. This is controlled entirely by you and Google, and the developer has no access to it. See
         <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google's Privacy Policy</a> for details.</p>
 
         <h2>9. External links</h2>
-        <p>The app contains links to the developer's website (<a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>) and the project's GitHub page. Selecting them opens your browser; those sites are governed by their own privacy policies.</p>
+        <p>BabakCast opens a web page only when you tap a link in the app, and it hands the page to your web browser. The About screen has buttons for these pages: the latest version (the GitHub releases page, or the F-Droid page once the app is listed there), this privacy policy, the BabakCast website (<a href="https://cast.cocode.dk" rel="noopener" target="_blank">cast.cocode.dk</a>), the source code and the problem tracker on GitHub, and <a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>. BabakCast itself does not connect to these pages: your browser does, and each site is governed by its own privacy policy.</p>
 
         <h2>10. Children</h2>
         <p>The app does not knowingly collect data from anyone, including children.</p>
@@ -183,20 +185,20 @@
       <section lang="fa" dir="rtl">
         <h2 class="page-title">سیاست حفظ حریم خصوصی</h2>
         <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
-        <p class="meta">آخرین به‌روزرسانی: ۱۴ ژوئیه ۲۰۲۶</p>
+        <p class="meta">آخرین به‌روزرسانی: ۷ اکتبر ۲۰۲۶</p>
 
-        <p class="lede"><strong>BabakCast ابزاری محلی‌محور (local-first) است و سرور اختصاصی خودش را ندارد: توسعه‌دهنده هیچ سروری را اداره نمی‌کند و هیچ داده‌ای دربارهٔ شما دریافت نمی‌کند. با این حال BabakCast یک برنامهٔ کاملاً آفلاین نیست — وقتی از آن می‌خواهید رسانه‌ای را دانلود کند یا خلاصه‌ای بسازد، محتوا و پیوندهایی را که وارد می‌کنید مستقیماً و از طریق اینترنت به سرویس‌های شخص‌ثالثی که خودتان انتخاب می‌کنید ارسال می‌کند.</strong></p>
+        <p class="lede"><strong>BabakCast فایل‌های شما را روی گوشی نگه می‌دارد و سرور اختصاصی خودش را ندارد: توسعه‌دهنده هیچ سروری را اداره نمی‌کند و هیچ داده‌ای دربارهٔ شما دریافت نمی‌کند. با این حال BabakCast یک برنامهٔ کاملاً آفلاین نیست. وقتی از آن می‌خواهید رسانه‌ای را دانلود کند یا خلاصه‌ای بسازد، محتوا و پیوندهایی را که وارد می‌کنید مستقیماً و از طریق اینترنت به سرویس‌های شخص‌ثالثی که خودتان انتخاب می‌کنید ارسال می‌کند.</strong></p>
 
         <p>این سیاست دقیقاً توضیح می‌دهد چه چیزی دستگاه شما را ترک می‌کند، کجا می‌رود و چه چیزی روی گوشی شما می‌ماند. BabakCast هیچ حساب کاربری، ابزار تحلیلی، تبلیغات یا ردیابی ندارد و با هیچ کلید API از پیش‌تعیین‌شده‌ای عرضه نمی‌شود.</p>
 
         <h2>۱. محتوایی که به ارائه‌دهندگان هوش مصنوعی ارسال می‌شود</h2>
         <p>هنگام استفاده از قابلیت‌های <strong>خلاصه‌سازی</strong> یا ترجمه، BabakCast متنی را که پردازش می‌کنید — رونوشت ویدیو (برای نمونه، زیرنویس‌های یوتیوب) یا متن دیگر، همراه با یک دستور ثابت — به <strong>ارائه‌دهندهٔ هوش مصنوعی‌ای که در تنظیمات پیکربندی کرده‌اید</strong> ارسال می‌کند. آن محتوا دستگاه شما را ترک می‌کند و از طریق HTTPS به سرورهای آن ارائه‌دهنده منتقل می‌شود و در آنجا تحت سیاست حریم خصوصی و رویه‌های نگهداری دادهٔ <em>خودِ آن‌ها</em> پردازش می‌شود.</p>
-        <p>انتخاب ارائه‌دهنده با شماست. BabakCast از موارد زیر پشتیبانی می‌کند و محتوای شما را فقط به همان موردی که برمی‌گزینید می‌فرستد:</p>
+        <p>انتخاب ارائه‌دهنده با شماست. BabakCast موارد زیر را در تنظیمات فهرست می‌کند و محتوای شما را فقط به همان موردی که برمی‌گزینید می‌فرستد. در این نسخه OpenAI و OpenRouter کار می‌کنند. Azure OpenAI، Anthropic و Gemini در فهرست هستند، اما هنوز کامل نشده‌اند.</p>
         <ul>
           <li><strong>OpenAI</strong> &mdash; <code>api.openai.com</code></li>
-          <li><strong>Azure OpenAI</strong> (مایکروسافت) &mdash; منبع <code>*.openai.azure.com</code> شما</li>
-          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code></li>
-          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code></li>
+          <li><strong>Azure OpenAI</strong> (مایکروسافت) &mdash; <code>*.openai.azure.com</code>. هنوز کامل نشده: این نسخه نشانی منبع Azure خودتان را نمی‌تواند ذخیره کند، پس برنامه به‌جای آن یک نشانی نمونه به کار می‌برد.</li>
+          <li><strong>Anthropic</strong> &mdash; <code>api.anthropic.com</code> (هنوز کامل نشده)</li>
+          <li><strong>Google Gemini</strong> &mdash; <code>generativelanguage.googleapis.com</code> (هنوز کامل نشده)</li>
           <li><strong>OpenRouter</strong> &mdash; <code>openrouter.ai</code></li>
         </ul>
         <p>این ارائه‌دهندگان کنترل‌کنندگان مستقل داده هستند و نحوهٔ رفتار آن‌ها با محتوای شما تابع سیاست‌های خودشان است:
@@ -211,7 +213,7 @@
         <p>برای دانلود ویدیو، تصویر، صدا یا رونوشت، BabakCast با استفاده از پیوندی که وارد می‌کنید <strong>مستقیماً با پلتفرم مبدأ</strong> ارتباط می‌گیرد. یعنی دستگاه شما به هر یک از این سرویس‌ها که پیوند به آن تعلق دارد متصل می‌شود و نشانی IP و مورد درخواستی را برای آن آشکار می‌کند:</p>
         <ul>
           <li><strong>یوتیوب / گوگل</strong> &mdash; دانلود ویدیو، صدا و رونوشت</li>
-          <li><strong>X (توییتر)</strong> &mdash; دانلود رسانه و دریافت متن توییت از طریق نقطهٔ پایانی همگام‌سازی عمومی X (<code>cdn.syndication.twimg.com</code>) و سرورهای رسانهٔ X؛ تنها شناسهٔ عمومی توییت از پیوند شما، بدون ورود به حساب، ارسال می‌شود</li>
+          <li><strong>X (توییتر)</strong> &mdash; دانلود رسانه و دریافت متن توییت از طریق سرویس عمومی X برای نمایش پست‌ها (<code>cdn.syndication.twimg.com</code>) و سرورهای رسانهٔ X؛ تنها شناسهٔ عمومی توییت از پیوند شما، بدون ورود به حساب، ارسال می‌شود</li>
           <li><strong>اینستاگرام / متا</strong> &mdash; دانلود ویدیو</li>
           <li><strong>لینکدین</strong> &mdash; دانلود ویدیو از پست‌های عمومی</li>
         </ul>
@@ -222,10 +224,11 @@
         <a href="https://www.linkedin.com/legal/privacy-policy" rel="noopener" target="_blank">لینکدین</a>.</p>
 
         <h2>۳. کلیدهای API شما</h2>
-        <p>شما کلید API خودتان را برای هر ارائه‌دهندهٔ هوش مصنوعی که فعال می‌کنید تأمین می‌کنید. کلیدها <strong>فقط روی دستگاه شما</strong> و به‌صورت رمزگذاری‌شده با <code>EncryptedSharedPreferences</code> اندروید (AES-256، با کلید اصلی نگهداری‌شده در Android Keystore) ذخیره می‌شوند. کلید <strong>هرگز برای توسعه‌دهنده ارسال نمی‌شود</strong>. کلید فقط به API خودِ ارائه‌دهنده، به‌عنوان اعتبارنامهٔ احراز هویت و از طریق HTTPS، هنگام فهرست‌کردن مدل‌ها یا ارسال درخواست منتقل می‌شود. کلیدها در برنامه به‌صورت پوشیده نمایش داده می‌شوند و هر زمان می‌توانید آن‌ها را در تنظیمات حذف کنید.</p>
+        <p>شما کلید API خودتان را برای هر ارائه‌دهندهٔ هوش مصنوعی که فعال می‌کنید تأمین می‌کنید. کلیدها <strong>روی دستگاه شما</strong> و به‌صورت رمزگذاری‌شده با <code>EncryptedSharedPreferences</code> اندروید (AES-256، با کلید اصلی نگهداری‌شده در Android Keystore) ذخیره می‌شوند. کلید <strong>هرگز برای توسعه‌دهنده ارسال نمی‌شود</strong>. کلید فقط به API خودِ ارائه‌دهنده، به‌عنوان اعتبارنامهٔ احراز هویت و از طریق HTTPS، هنگام فهرست‌کردن مدل‌ها یا ارسال درخواست منتقل می‌شود. اگر پشتیبان‌گیری اندروید روشن باشد، اندروید ممکن است فایل رمزگذاری‌شدهٔ تنظیمات را هم در پشتیبان گوگل خودتان نگه دارد (بخش ۸). کلیدها در برنامه به‌صورت پوشیده نمایش داده می‌شوند و هر زمان می‌توانید آن‌ها را در تنظیمات حذف کنید.</p>
 
-        <h2>۴. بررسی به‌روزرسانی</h2>
-        <p>BabakCast می‌تواند با درخواست آخرین نسخه از API گیت‌هاب (<code>api.github.com</code>) وجود نسخهٔ جدیدتر را بررسی کند. این درخواست جز اطلاعات اتصال استاندارد (مانند نشانی IP شما) که هر درخواست وب در بر دارد، هیچ داده شخصی‌ای حمل نمی‌کند. رفتار گیت‌هاب تحت
+        <h2>۴. به‌روزرسانی‌ها</h2>
+        <p>BabakCast برای به‌روزرسانی خودش چیزی بررسی نمی‌کند. دکمهٔ <strong>See the latest version</strong> در صفحهٔ About فقط وقتی آن را می‌زنید یک صفحهٔ وب را در مرورگرتان باز می‌کند (بخش ۹).</p>
+        <p>نسخه‌ای که از گیت‌هاب دانلود می‌کنید ابزار دانلود ویدیو را هم به‌روز نگه می‌دارد. این ابزار yt-dlp است، همان ابزار متن‌بازی که ویدیوها را می‌گیرد. هنگام اجرای برنامه، BabakCast از گیت‌هاب می‌پرسد نسخهٔ جدیدتری از yt-dlp هست یا نه و ممکن است آن را دانلود کند. بعد از یک بررسی موفق تا روز بعد دوباره نمی‌پرسد. این درخواست هیچ پیوند، محتوا یا داده شخصی‌ای ندارد و فقط شامل اطلاعات اتصال معمولی (مانند نشانی IP شما) است که هر درخواست وب دارد. نسخهٔ F-Droid هرگز این کار را خودش انجام نمی‌دهد. ابزار دانلودش را فقط وقتی عوض می‌کند که در تنظیمات (Settings) روی <strong>Update yt-dlp</strong> بزنید. آن‌وقت یک نسخهٔ تازه از yt-dlp را از گیت‌هاب می‌گیرد، یعنی جدیدترین نسخهٔ آزمایشی (nightly)، همراه با چک‌سام (checksum) که گیت‌هاب برای آن منتشر می‌کند، و فقط اگر این دو با هم بخوانند آن را روی گوشی شما اجرا می‌کند. F-Droid این نسخه را بررسی نکرده است، پس با زدن این دکمه از بررسی‌های F-Droid می‌گذرید. درخواست به گیت‌هاب فقط همان اطلاعات اتصال معمولی را دارد. وقتی خود برنامه به‌روز می‌شود، BabakCast نسخه‌ای را که گرفته‌اید نگه می‌دارد اگر از نسخهٔ داخل برنامه تازه‌تر باشد، و اگر نسخهٔ داخل برنامه تازه‌تر باشد آن را جایگزین می‌کند. رفتار گیت‌هاب تحت
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">بیانیهٔ حریم خصوصی گیت‌هاب</a> است.</p>
 
         <h2>۵. داده‌های ذخیره‌شده روی دستگاه شما</h2>
@@ -235,12 +238,12 @@
           <li><strong>تنظیمات</strong> &mdash; ترجیحات شما (ارائه‌دهندهٔ پیش‌فرض، زبان، سبک و طول خلاصه، پوسته، دما) در یک انبار تنظیمات محلی. این‌ها هیچ محتوای شخصی‌ای ندارند.</li>
           <li><strong>کلیدهای API</strong> &mdash; رمزگذاری‌شده، همان‌گونه که در بالا توضیح داده شد.</li>
         </ul>
-        <p>BabakCast هیچ پایگاه‌دادهٔ تحلیلی و هیچ تاریخچهٔ استفاده‌ای نگه نمی‌دارد و به‌جز پیوندها و متنی که آشکارا به آن می‌دهید، فایل‌های دیگر دستگاه شما را نمی‌خواند.</p>
+        <p>BabakCast هیچ پایگاه‌دادهٔ تحلیلی و هیچ تاریخچهٔ استفاده‌ای نگه نمی‌دارد. پیام‌های عیب‌یابی را در گزارش سیستمی اندروید روی گوشی شما می‌نویسد. این پیام‌ها ممکن است شامل پیوندهای رسانه‌ای که وارد می‌کنید، شناسهٔ توییت‌ها و تکه‌های کوتاهی از متنِ ارسالی به ارائه‌دهندهٔ هوش مصنوعی و از پاسخ او باشند. BabakCast آن‌ها را برای کسی نمی‌فرستد و اندروید با آمدن پیام‌های تازه، قدیمی‌ها را بازنویسی می‌کند. BabakCast به‌جز پیوندها و متنی که آشکارا به آن می‌دهید، فایل‌های دیگر دستگاه شما را نمی‌خواند.</p>
+        <p>وقتی فایلی را به اشتراک می‌گذارید، BabakCast به برنامه‌ای که انتخاب می‌کنید اجازهٔ خواندن آن را می‌دهد. آن برنامه ممکن است نسخهٔ خودش را نگه دارد. BabakCast نمی‌تواند آن نسخه را پاک کند و حذف BabakCast هم آن را پاک نمی‌کند.</p>
 
         <h2>۶. مجوزها</h2>
         <ul>
           <li><strong>اینترنت</strong> و <strong>وضعیت شبکه</strong> &mdash; برای دسترسی به سرویس‌های بالا و تشخیص نوع اتصال لازم است.</li>
-          <li><strong>خواندن/نوشتن حافظهٔ خارجی</strong> (فقط اندروید ۱۲ / API 32 و پایین‌تر) &mdash; مجوز قدیمی برای ذخیره و اشتراک فایل‌های دانلودشده روی دستگاه‌های قدیمی‌تر. در نسخه‌های جدیدتر اندروید درخواست نمی‌شود.</li>
           <li>هیچ مجوز موقعیت مکانی، مخاطبین، دوربین یا میکروفون درخواست نمی‌شود.</li>
         </ul>
 
@@ -252,11 +255,11 @@
         </ul>
 
         <h2>۸. پشتیبان‌گیری دستگاه</h2>
-        <p>اگر پشتیبان‌گیری خودکار اندروید یا پشتیبان‌گیری حساب گوگل را فعال کرده باشید، سیستم‌عامل ممکن است داده‌های محلی این برنامه را در پشتیبان شخصی گوگل شما بگنجاند. این کار کاملاً توسط شما و گوگل کنترل می‌شود و توسعه‌دهنده به آن دسترسی ندارد. برای جزئیات به
+        <p>BabakCast پشتیبان‌گیری اندروید را خاموش نمی‌کند. فقط دو فایل کوچک را بیرون از آن نگه می‌دارد، همان دو فایلی که ثبت می‌کنند کدام نسخهٔ yt-dlp نصب است، چون خودِ فایل yt-dlp پشتیبان‌گیری نمی‌شود. اگر پشتیبان‌گیری روی گوشی شما روشن باشد، اندروید ممکن است تنظیمات برنامه، فایل رمزگذاری‌شدهٔ کلیدهای API و رسانه‌ها و رونوشت‌های دانلودشده را در پشتیبان شخصی گوگل شما بگنجاند. این کار کاملاً توسط شما و گوگل کنترل می‌شود و توسعه‌دهنده به آن دسترسی ندارد. برای جزئیات به
         <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">سیاست حریم خصوصی گوگل</a> مراجعه کنید.</p>
 
         <h2>۹. پیوندهای بیرونی</h2>
-        <p>برنامه شامل پیوندهایی به وب‌سایت توسعه‌دهنده (<a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>) و صفحهٔ گیت‌هاب پروژه است. انتخاب آن‌ها مرورگر شما را باز می‌کند و این سایت‌ها تابع سیاست‌های حریم خصوصی خودشان هستند.</p>
+        <p>BabakCast فقط وقتی روی یکی از پیوندهای برنامه می‌زنید یک صفحهٔ وب را باز می‌کند و آن را به مرورگر شما می‌سپارد. صفحهٔ About برای این صفحه‌ها دکمه دارد: آخرین نسخه (صفحهٔ انتشارهای گیت‌هاب، و بعد از ورود برنامه به F-Droid، صفحهٔ آن)، همین سیاست حریم خصوصی، وب‌سایت BabakCast (<a href="https://cast.cocode.dk" rel="noopener" target="_blank">cast.cocode.dk</a>)، کد منبع و ثبت مشکل در گیت‌هاب، و <a href="https://cocode.dk" rel="noopener" target="_blank">cocode.dk</a>. خود BabakCast به این صفحه‌ها وصل نمی‌شود، مرورگر شما وصل می‌شود، و هر سایت تابع سیاست حریم خصوصی خودش است.</p>
 
         <h2>۱۰. کودکان</h2>
         <p>این برنامه آگاهانه هیچ داده‌ای را از هیچ‌کس، از جمله کودکان، جمع‌آوری نمی‌کند.</p>

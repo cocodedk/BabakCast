@@ -1,1 +1,1 @@
-Removed the in-app APK updater and added an F-Droid build flavor that disables yt-dlp's runtime self-update.
+Removed the in-app updater. In the F-Droid version, the media downloader now updates only when BabakCast itself is updated.

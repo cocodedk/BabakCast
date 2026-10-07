@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BabakCast | Local-first YouTube, X, Instagram & LinkedIn Video Downloads + AI Summaries</title>
-  <meta name="description" content="Download YouTube, X (Twitter), Instagram, and LinkedIn videos, copy tweet text, summarize transcripts with your own AI provider. No backend, no tracking. Android." />
+  <title>BabakCast | Download YouTube, X, Instagram & LinkedIn Videos + AI Summaries</title>
+  <meta name="description" content="Download videos from YouTube, X (Twitter), Instagram and LinkedIn, copy tweet text, and summarize YouTube transcripts with your own AI provider. No accounts, no tracking. Android." />
   <meta property="og:title" content="BabakCast" />
-  <meta property="og:description" content="Download YouTube, X (Twitter), Instagram, and LinkedIn videos, copy tweet text, summarize transcripts with your own AI. No backend, no tracking." />
+  <meta property="og:description" content="Download videos from YouTube, X (Twitter), Instagram and LinkedIn, copy tweet text, and summarize YouTube transcripts with your own AI. No accounts, no tracking." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://cast.cocode.dk/" />
   <meta property="og:image" content="https://cast.cocode.dk/img/share.png" />
@@ -20,7 +20,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="alternate" hreflang="en" href="https://cast.cocode.dk/" />
+  <link rel="alternate" hreflang="da" href="https://cast.cocode.dk/da/" />
   <link rel="alternate" hreflang="fa" href="https://cast.cocode.dk/fa/" />
+  <link rel="alternate" hreflang="x-default" href="https://cast.cocode.dk/" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="blocks.css" />
   <link rel="stylesheet" href="https://brand.cocode.dk/v1.css">
@@ -36,6 +38,7 @@
   <cocode-head project="BabakCast" accent="#44bfff" on-accent="#040811" dark>
     <a href="https://cocode.dk">cocode.dk</a>
     <span class="on">EN</span>
+    <a href="da/" hreflang="da">DA</a>
     <a href="fa/" hreflang="fa">FA</a>
   </cocode-head>
 
@@ -48,6 +51,7 @@
   <a href="/#how" data-nav="how">How it works</a>
   <a href="/#install" data-nav="install">Install</a>
   <a href="/privacy/" data-nav="privacy">Privacy</a>
+  <a href="/da/" hreflang="da" lang="da" data-nav="lang">Dansk</a>
   <a href="https://cocode.dk/" data-nav="more">More apps</a>
 </nav>
 <!-- cocode-apps:nav:end -->
@@ -55,14 +59,14 @@
 
   <main class="shell" id="main" tabindex="-1">
     <section class="hero reveal">
-      <p class="kicker">Local-first · Android</p>
+      <p class="kicker">Android · No accounts · No tracking</p>
       <h1>Download. Summarize. Share.</h1>
       <p class="hero-copy">
-        BabakCast lets you grab YouTube, X (Twitter), Instagram, and LinkedIn videos, copy tweet text, and turn transcripts into summaries
-        using <strong>your</strong> AI provider. No backend, no accounts, no tracking.
+        BabakCast downloads videos from YouTube, X (Twitter), Instagram and LinkedIn, copies tweet text, and turns YouTube transcripts
+        (the written text of what is said) into summaries with <strong>your own</strong> AI provider. No accounts, no analytics, no tracking.
       </p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk" target="_blank" rel="noreferrer">Download APK</a>
+        <a class="btn btn-primary" href="https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk" target="_blank" rel="noreferrer">Download Android app</a>
         <a class="btn btn-ghost" href="https://github.com/cocodedk/BabakCast" target="_blank" rel="noreferrer">View GitHub</a>
       </div>
     </section>
@@ -72,50 +76,50 @@
       <div class="feature-grid">
         <article class="card glass-panel">
           <h3>YouTube, X, Instagram & LinkedIn download</h3>
-          <p>Paste a YouTube, X (Twitter), Instagram, or LinkedIn URL, get shareable video or audio files. Keep audio whole or split it at 16 MB &mdash; split parts are tagged &ldquo;Part n of N&rdquo; so they play in order.</p>
+          <p>Paste a link from YouTube, X (Twitter), Instagram or LinkedIn and get a video or audio file you can share. Keep audio in one piece, or split it into parts of a size you choose (16 MB by default). Each part is tagged &ldquo;Part n of N&rdquo;, so recipients can tell the intended order.</p>
         </article>
         <article class="card glass-panel">
-          <h3>X/Twitter all-media download</h3>
-          <p>Download all photos, videos, and GIFs from an X/Twitter post in one tap. Supports multi-image tweets, mixed media, and animated GIFs &mdash; share everything together.</p>
+          <h3>X (Twitter) post media</h3>
+          <p>Download the photos, videos and GIFs from an X (Twitter) post with one tap, then share them together. A post that has both photos and videos currently saves the photos only.</p>
         </article>
         <article class="card glass-panel">
           <h3>Tweet text copy &amp; share</h3>
-          <p>Paste an X/Twitter URL and tap <em>Copy Text</em> to copy the tweet to your clipboard, or <em>Share Text</em> to open the share sheet &mdash; no media download needed.</p>
+          <p>Paste an X (Twitter) link and tap <em>Copy Text</em> to copy the tweet to your clipboard, or <em>Share Text</em> to open the share sheet. No media download is needed.</p>
         </article>
         <article class="card glass-panel">
           <h3>Transcript to summary</h3>
-          <p>Extract YouTube captions and summarize with your chosen AI model. Bullets, paragraph, or TL;DR.</p>
+          <p>For a YouTube video, BabakCast gets the captions and asks your AI model for a bullet-point summary. Choose Short, Medium or Long.</p>
         </article>
         <article class="card glass-panel">
           <h3>Bring your own AI</h3>
-          <p>OpenAI, Azure, Anthropic, Gemini, OpenRouter. Set API key and model in Settings.</p>
+          <p>Add your own API key (the access code your AI provider gives you) and a model in Settings. OpenAI and OpenRouter work in this version. Azure OpenAI, Anthropic and Gemini are listed but not finished yet.</p>
         </article>
         <article class="card glass-panel">
-          <h3>Stays on device</h3>
-          <p>Everything runs locally. API keys stored with Android EncryptedSharedPreferences.</p>
+          <h3>Your files stay on your phone</h3>
+          <p>Downloading, splitting and cutting run on your phone. Summaries and translations send text to the AI provider you set up. Your API keys are stored encrypted on your phone.</p>
         </article>
         <article class="card glass-panel">
           <h3>Persian translation on share</h3>
-          <p>Optionally translate shared text to Persian with AI &mdash; original and translation go out together.</p>
+          <p>Turn on <em>Translate to Persian</em> and BabakCast adds an AI-generated Persian translation below the original in tweet text, summaries, and the text that goes with audio and X media. Video downloads and shares from the Downloads tab are not translated.</p>
         </article>
       </div>
     </section>
 
     <section id="philosophy" class="philosophy-block glass-panel reveal">
       <blockquote>
-        BabakCast is a personal-use tool. It does not ship with API keys, ads, analytics, or accounts.
-        You control your data and your AI provider.
+        BabakCast is a tool for personal use. It comes with no API keys, no ads, no usage tracking and no accounts.
+        You choose your AI provider, and you decide what you send to it.
       </blockquote>
     </section>
 
     <section id="providers" class="card glass-panel reveal">
-      <h2>Supported AI Providers</h2>
-      <p>Configure your preferred provider in Settings. Your API key stays encrypted on your device.</p>
+      <h2>AI providers</h2>
+      <p>Set up your provider in Settings. Your API key stays encrypted on your phone. OpenAI and OpenRouter work in this version. The other three are listed but not finished yet.</p>
       <div class="provider-grid">
         <div class="provider-tag">OpenAI</div>
-        <div class="provider-tag">Azure OpenAI</div>
-        <div class="provider-tag">Anthropic</div>
-        <div class="provider-tag">Google Gemini</div>
+        <div class="provider-tag">Azure OpenAI (not finished yet)</div>
+        <div class="provider-tag">Anthropic (not finished yet)</div>
+        <div class="provider-tag">Google Gemini (not finished yet)</div>
         <div class="provider-tag">OpenRouter</div>
       </div>
     </section>
@@ -125,23 +129,23 @@
       <!-- cocode-apps:install:start -->
 <ul class="install" role="list">
   <li><p class="fdroid-soon">Coming to F-Droid</p></li>
-  <li><a href="https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk">Download the APK from GitHub</a></li>
-  <li><a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cocodedk/BabakCast">Auto-update the GitHub APK with Obtainium</a></li>
+  <li><a href="https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk">Download the Android installation file (APK) from GitHub</a></li>
+  <li><a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cocodedk/BabakCast">Add the app to Obtainium, an app that keeps it up to date</a></li>
 </ul>
 <!-- cocode-apps:install:end -->
       <div class="install-steps">
         <div class="install-step">
           <span class="step-number">1</span>
           <div class="step-content">
-            <h3>Download the APK</h3>
-            <p>Use the download link above, or get it from <a href="https://github.com/cocodedk/BabakCast/releases" target="_blank" rel="noreferrer">GitHub Releases</a>.</p>
+            <h3>Download the app file</h3>
+            <p>Use the download link above, or get it from <a href="https://github.com/cocodedk/BabakCast/releases" target="_blank" rel="noreferrer">GitHub Releases</a>. The file is called an APK, which is the installation file for an Android app.</p>
           </div>
         </div>
         <div class="install-step">
           <span class="step-number">2</span>
           <div class="step-content">
             <h3>Allow installation</h3>
-            <p>When prompted, enable "Install from unknown sources" for your browser or file manager.</p>
+            <p>When Android asks, allow "Install from unknown sources" for your browser or file manager.</p>
           </div>
         </div>
         <div class="install-step">
@@ -154,8 +158,8 @@
         <div class="install-step">
           <span class="step-number">4</span>
           <div class="step-content">
-            <h3>Configure an AI provider</h3>
-            <p>Open Settings, add your API key, and start summarizing transcripts.</p>
+            <h3>Set up an AI provider (optional)</h3>
+            <p>Only needed for summaries and translations. Open Settings, tap OpenAI or OpenRouter under AI Providers, enter your API key, select a model and tap <em>Save and use this provider</em>. Downloading videos works without this step.</p>
           </div>
         </div>
       </div>
@@ -166,12 +170,11 @@
       <p><strong>Created by Babak Bandpey.</strong></p>
       <p><strong>Built by <a href="https://cocode.dk" target="_blank" rel="noreferrer">Cocode</a>.</strong></p>
       <p>
-        BabakCast and BabakPlayer form a focused transfer-and-play toolchain: practical,
-        private, and fast for real messaging workflows.
+        Use BabakCast to download media and share it through another Android app.
       </p>
       <div class="about-links">
-        <a href="https://github.com/cocodedk/BabakCast" target="_blank" rel="noreferrer">BabakCast Repository</a>
-        <a href="https://github.com/cocodedk/BabakPlayer" target="_blank" rel="noreferrer">BabakPlayer Repository</a>
+        <a href="https://github.com/cocodedk/BabakCast" target="_blank" rel="noreferrer">BabakCast source code</a>
+        <a href="https://github.com/cocodedk/BabakPlayer" target="_blank" rel="noreferrer">BabakPlayer source code</a>
       </div>
     </section>
   </main>
