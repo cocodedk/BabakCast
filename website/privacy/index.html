@@ -13,7 +13,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../blocks.css" />
+  <link rel="stylesheet" href="https://brand.cocode.dk/v1.css">
+  <script type="module" src="https://brand.cocode.dk/v1.js"></script>
   <style>
+    /* The cocode.dk frame lines up with this page's own (narrower) column. */
+    cocode-head, cocode-foot { --cocode-max: calc(820px + 8vw); --cocode-gutter: 4vw; }
     :root {
       --column: 820px;
       --bg: #080b16; --bg-2: #0f1730;
@@ -44,7 +48,7 @@
       padding: clamp(22px, 5vw, 44px);
     }
     h1, h2 { font-family: "Space Grotesk", "IBM Plex Sans", sans-serif; margin: 0; line-height: 1.2; }
-    h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); color: var(--text); margin-bottom: 6px; }
+    h1, .page-title { font-size: clamp(1.8rem, 5vw, 2.5rem); color: var(--text); margin: 0 0 6px; }
     h2 { font-size: 1.2rem; color: var(--neon-amber); margin: 30px 0 8px; }
     .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 4px; }
     code { background: rgba(11, 17, 33, 0.6); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.86em; }
@@ -60,6 +64,11 @@
   </style>
 </head>
 <body>
+  <!-- The cocode.dk family frame. Without JavaScript its children show instead: a way home. -->
+  <cocode-head project="BabakCast" accent="#44bfff" on-accent="#040811" dark>
+    <a href="https://cocode.dk">cocode.dk</a>
+  </cocode-head>
+
   <header class="site-header">
     <!-- cocode-apps:nav:start -->
 <link rel="stylesheet" href="/css/cocode-nav.css">
@@ -172,7 +181,7 @@
 
       <!-- ==================== PERSIAN (فارسی) ==================== -->
       <section lang="fa" dir="rtl">
-        <h1>سیاست حفظ حریم خصوصی</h1>
+        <h2 class="page-title">سیاست حفظ حریم خصوصی</h2>
         <p class="meta">BabakCast &middot; <code>com.cocode.babakcast</code></p>
         <p class="meta">آخرین به‌روزرسانی: ۱۴ ژوئیه ۲۰۲۶</p>
 
@@ -273,5 +282,9 @@
 </footer>
 <!-- cocode-apps:footer:end -->
   </div>
+
+  <cocode-foot repo="cocodedk/BabakCast" dark>
+    <a href="https://cocode.dk">cocode.dk</a>
+  </cocode-foot>
 </body>
 </html>

@@ -1,21 +1,13 @@
 /* The shared cocode-apps header, install block and footer, in this site's own look.
    --column is the page's text column; the privacy page narrows it. */
 .site-header, .site-footer { width: min(var(--column, 1100px), 92vw); margin: 0 auto; }
-.site-header { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; padding: 14px 0 6px; }
-.site-header .cocode-nav { flex: 1 1 auto; gap: 0 8px; }
+.site-header { padding: 8px 0 6px; }
+.site-header .cocode-nav { gap: 0 8px; }
 .cocode-nav a { padding: 0 8px; color: var(--muted); font-size: 0.95rem; text-decoration: none; }
 .cocode-nav a:hover { color: var(--neon-blue); }
 .cocode-nav a[aria-current="page"] { color: var(--text); }
 .cocode-nav .brand { padding: 0; color: var(--text); font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
   font-size: 1.1rem; letter-spacing: 0.02em; }
-.lang-switch { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
-  border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 0.9rem; text-decoration: none; }
-.lang-switch:hover { color: var(--neon-blue); border-color: var(--neon-blue); }
-@media (max-width: 47.99em) {
-  /* On phones the language link shares the name's row instead of taking a row of its own. */
-  .site-header { position: relative; }
-  .lang-switch { position: absolute; top: 14px; inset-inline-end: 0; }
-}
 
 /* The install block: F-Droid first, then the APK (the main button), then Obtainium. */
 .install { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-wrap: wrap; align-items: center;

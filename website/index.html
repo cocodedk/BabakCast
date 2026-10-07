@@ -23,11 +23,21 @@
   <link rel="alternate" hreflang="fa" href="https://cast.cocode.dk/fa/" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="blocks.css" />
+  <link rel="stylesheet" href="https://brand.cocode.dk/v1.css">
+  <script type="module" src="https://brand.cocode.dk/v1.js"></script>
 </head>
 <body>
   <div class="bg-orb orb-a"></div>
   <div class="bg-orb orb-b"></div>
   <div class="bg-grid"></div>
+
+  <!-- The cocode.dk family frame. Without JavaScript its children show instead: a way home
+       and the language links. -->
+  <cocode-head project="BabakCast" accent="#44bfff" on-accent="#040811" dark>
+    <a href="https://cocode.dk">cocode.dk</a>
+    <span class="on">EN</span>
+    <a href="fa/" hreflang="fa">FA</a>
+  </cocode-head>
 
   <header class="site-header">
     <!-- cocode-apps:nav:start -->
@@ -41,7 +51,6 @@
   <a href="https://cocode.dk/" data-nav="more">More apps</a>
 </nav>
 <!-- cocode-apps:nav:end -->
-    <a class="lang-switch" href="fa/" hreflang="fa" lang="fa">فارسی</a>
   </header>
 
   <main class="shell" id="main" tabindex="-1">
@@ -177,5 +186,9 @@
 </footer>
 <!-- cocode-apps:footer:end -->
   </div>
+
+  <cocode-foot repo="cocodedk/BabakCast" dark>
+    <a href="https://cocode.dk">cocode.dk</a>
+  </cocode-foot>
 </body>
 </html>
