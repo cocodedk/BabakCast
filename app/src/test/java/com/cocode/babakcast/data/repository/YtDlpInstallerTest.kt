@@ -132,6 +132,37 @@ class YtDlpInstallerTest {
         assertFalse("the other host was requested", github.paths.any { it.contains("elsewhere") })
     }
 
+    /**
+     * OkHttp folds `%2E%2E`, `%2e`, `..` and a backslash away when it parses an address, so each of
+     * these redirects points, after parsing, at this release's own file, which the policy allows.
+     * They must be refused on the text of the Location header, before it is parsed or requested.
+     */
+    @Test
+    fun aRedirectThatHidesDotsOrSeparators_isRefused_andNeverRequested() {
+        val origin = "http://${github.server.hostName}:${github.server.port}"
+        val hidden = mapOf(
+            "dots" to "$origin/download/$tag/a/%2E%2E/yt-dlp?m=dots",
+            "lowerdots" to "$origin/download/$tag/a/%2e%2e/yt-dlp?m=lowerdots",
+            "single" to "$origin/download/$tag/%2e/yt-dlp?m=single",
+            "slash" to "$origin/download/$tag/a%2Fb/../yt-dlp?m=slash",
+            "encbackslash" to "$origin/download/$tag/x%5C/../yt-dlp?m=encbackslash",
+            "backslash" to "$origin/download/$tag\\yt-dlp?m=backslash",
+            "relative" to "/download/$tag/a/%2e%2e/yt-dlp?m=relative"
+        )
+        for ((marker, location) in hidden) {
+            github.fileRedirect = location
+            assertRefusedAndUntouched("a redirect that hides $marker")
+            assertFalse("$marker was requested", github.paths.any { it.contains("m=$marker") })
+        }
+    }
+
+    @Test
+    fun aRedirectWithPercentCodesOnlyInItsQuery_isFollowed() {
+        // GitHub's signed download links have %2B, %3D and even %2F in the query, never in the path.
+        github.fileRedirect = github.server.url("/real?sig=a%2Fb%2Bc%3D&rscd=attachment%3B+filename%3Dyt-dlp").toString()
+        assertEquals(YtDlpUpdateResult.Updated, update())
+    }
+
     @Test
     fun aRedirectWithinTheRelease_isFollowed() {
         github.fileRedirect = github.server.url("/real?second=1").toString()

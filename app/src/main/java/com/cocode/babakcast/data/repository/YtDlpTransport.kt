@@ -27,7 +27,9 @@ internal class UrlPolicy(private val allows: (HttpUrl) -> Boolean) {
  *    a download on github.com redirects to release-assets.githubusercontent.com (or
  *    objects.githubusercontent.com), which is allowed too;
  *  - [assetUrl] is the one address each file of a release must have.
- * No path may hide a separator or a dot in percent-encoding, or hold a backslash.
+ * No path may hide a separator or a dot in percent-encoding, or hold a backslash. That is checked
+ * twice: on the parsed address here, and on the text as it arrived ([isCleanAddress]), because
+ * parsing already folds `%2E%2E` and `\` away.
  */
 internal class ReleaseSource(
     val apiUrl: String,
@@ -37,7 +39,6 @@ internal class ReleaseSource(
 ) {
     companion object {
         private val ASSET_HOSTS = setOf("objects.githubusercontent.com", "release-assets.githubusercontent.com")
-        private val HIDDEN_SEPARATOR = Regex("(?i)%(2f|5c|2e)")
 
         private fun clean(url: HttpUrl) =
             url.isHttps && url.port == 443 && !url.encodedPath.contains('\\') &&
@@ -59,6 +60,27 @@ internal class ReleaseSource(
     }
 }
 
+private val HIDDEN_SEPARATOR = Regex("(?i)%(2f|5c|2e)")
+
+/**
+ * Whether [raw], an address exactly as it was written (a Location header, an address from a
+ * listing), hides anything in its path. OkHttp's parser resolves `%2E`, `%2e` and `..` dot segments
+ * and turns a backslash into a slash, so an address checked only after parsing can look
+ * harmless and still lead somewhere else. A path holds no backslash, `%2F`, `%5C` or `%2E` in
+ * any case. The query is left alone: GitHub's signed download links have percent codes in it.
+ */
+internal fun isCleanAddress(raw: String): Boolean {
+    val beforeQuery = raw.substringBefore('#').substringBefore('?')
+    if (beforeQuery.contains('\\')) return false
+    val path = if ("://" in beforeQuery) {
+        val afterScheme = beforeQuery.substringAfter("://")
+        afterScheme.substring(afterScheme.indexOf('/').takeIf { it >= 0 } ?: afterScheme.length)
+    } else {
+        beforeQuery
+    }
+    return !HIDDEN_SEPARATOR.containsMatchIn(path)
+}
+
 /**
  * GET requests for the yt-dlp update. Redirects are followed here, not by OkHttp, so each
  * address is checked against [policy] before it is requested. [get] has one deadline for the
@@ -75,6 +97,7 @@ internal class YtDlpTransport(client: OkHttpClient, private val policy: UrlPolic
 
     fun <T> get(url: String, timeoutMs: Long, read: (Response) -> T): T {
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        if (!isCleanAddress(url)) throw IOException("The update may not use $url")
         var current = url.toHttpUrlOrNull() ?: throw IOException("Not an address: $url")
         for (hop in 0..MAX_REDIRECTS) {
             policy.require(current)
@@ -86,6 +109,7 @@ internal class YtDlpTransport(client: OkHttpClient, private val policy: UrlPolic
                 when {
                     response.isRedirect -> {
                         val location = response.header("Location") ?: throw IOException("A redirect with no address")
+                        if (!isCleanAddress(location)) throw IOException("A redirect to an address that hides a dot or a separator")
                         Step.Redirect(current.resolve(location) ?: throw IOException("A redirect to a bad address"))
                     }
                     !response.isSuccessful -> throw IOException("GitHub answered ${response.code}")

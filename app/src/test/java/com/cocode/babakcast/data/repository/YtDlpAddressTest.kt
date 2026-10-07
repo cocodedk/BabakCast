@@ -155,11 +155,56 @@ class YtDlpAddressTest {
     }
 
     @Test
+    fun theRawText_isCheckedForHiddenDotsAndSeparators_inThePathOnly() {
+        val dirty = listOf(
+            "https://objects.githubusercontent.com/a/%2E%2E/b", "https://objects.githubusercontent.com/a/%2e/b",
+            "https://objects.githubusercontent.com/a%2Fb", "https://objects.githubusercontent.com/a%5cb",
+            "https://objects.githubusercontent.com/a\\b", "https://github.com\\@evil.example/x",
+            "/a/%2e%2e/b", "a/%2E/b?x=1"
+        )
+        val clean = listOf(
+            "https://release-assets.githubusercontent.com/github-production-release-asset/1/f?sp=r&sig=a%2Fb%2Bc%3D#x",
+            "https://objects.githubusercontent.com/x/y", "/real?sig=%2F", "https://github.com"
+        )
+        for (raw in dirty) assertFalse("must refuse $raw", isCleanAddress(raw))
+        for (raw in clean) assertTrue("must accept $raw", isCleanAddress(raw))
+    }
+
+    /** Parsed, each of these redirects leads to an address the real policy allows; only the raw text gives them away. */
+    @Test
+    fun aRedirectThatHidesDotsOrSeparators_isRefused_andNeverRequested_withTheRealPolicy() {
+        val hidden = listOf(
+            "https://objects.githubusercontent.com/a/%2E%2E/b?m=dots",
+            "https://objects.githubusercontent.com/a/%2e%2e/b?m=lowerdots",
+            "https://release-assets.githubusercontent.com/a\\b?m=backslash",
+            "https://release-assets.githubusercontent.com/a%5Cb/../c?m=encbackslash",
+            "https://objects.githubusercontent.com/a%2Fb/../c?m=slash",
+            "$base/%2e/yt-dlp?m=single",
+            "$base/%2E/yt-dlp?m=singleupper"
+        )
+        for (location in hidden) {
+            val marker = location.substringAfter("m=")
+            val seen = mutableListOf<String>()
+            val client = network(seen) { url ->
+                when (url) {
+                    api -> Triple(200, releaseJson("$base/SHA2-256SUMS", "$base/yt-dlp"), null)
+                    "$base/SHA2-256SUMS" -> Triple(200, sums, null)
+                    "$base/yt-dlp" -> Triple(302, "", location)
+                    else -> Triple(404, "", null)
+                }
+            }
+            assertRefused(client)
+            assertFalse("$marker was requested: $seen", seen.any { it.contains("m=$marker") })
+        }
+    }
+
+    @Test
     fun aReleaseFileOnAnotherHostOrRepository_isRefused_beforeAnythingIsSent() {
         for (elsewhere in listOf(
             "https://evil.example/yt-dlp",
             "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp",
-            "https://github.com/yt-dlp/..%2Fother%2Frepo/yt-dlp"
+            "https://github.com/yt-dlp/..%2Fother%2Frepo/yt-dlp",
+            "$base/%2e/yt-dlp"
         )) {
             val seen = mutableListOf<String>()
             val client = network(seen) { url ->
