@@ -193,7 +193,7 @@
     <string name="about_privacy_no_server">The developer runs no server and receives none of your data.</string>
     <string name="about_privacy_direct">BabakCast needs the internet. To download a video, it contacts the site the link belongs to. To summarize or translate, it sends the text to the AI provider you chose in Settings.</string>
     <string name="about_privacy_keys">An API key is the access code your AI provider gives you. Your keys stay encrypted on your phone, and each key is sent only to its own provider.</string>
-    <string name="about_privacy_local">Downloads, transcripts and settings stay on your phone and are removed when you uninstall the app.</string>
+    <string name="about_privacy_local">Downloads, transcripts and settings stay on your phone and are removed when you uninstall the app. If Android backup is on, Android may also keep a copy of your settings in your own Google backup.</string>
     <string name="about_privacy_link">Read the privacy policy</string>
     <string name="about_links_title">Links</string>
     <string name="about_website">Open the website</string>
