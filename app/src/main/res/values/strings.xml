@@ -5,7 +5,7 @@
     <string name="url_clear_description">Clear link</string>
     <string name="translate_title">Translate to Persian</string>
     <string name="translate_in_progress">Translating…</string>
-    <string name="translate_hint">Adds a Persian translation to the text you copy or share: tweet text, summaries, and the text sent with audio or X media. Video downloads are shared without it.</string>
+    <string name="translate_hint">Adds a Persian translation to the text you share: tweet text (also when you copy it), summaries, and the text sent with audio or X media. A copied summary and a shared video download stay without it.</string>
     <string name="translate_share_now">Use original text</string>
     <string name="summary_title">SUMMARY</string>
     <string name="summary_share">Share →</string>

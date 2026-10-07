@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,7 +56,7 @@ private fun Body(@StringRes text: Int) = Text(
 @Composable
 private fun LinkButton(@StringRes label: Int, onClick: () -> Unit) = OutlinedButton(
     onClick = onClick,
-    modifier = Modifier.fillMaxWidth().height(48.dp),
+    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
     shape = MaterialTheme.shapes.medium,
     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
 ) {
@@ -78,7 +78,7 @@ internal fun NameAndVersionSection(version: String, onCheckForUpdates: () -> Uni
         )
         Button(
             onClick = onCheckForUpdates,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.buttonColors(
                 containerColor = BabakCastColors.PrimaryAccent,
