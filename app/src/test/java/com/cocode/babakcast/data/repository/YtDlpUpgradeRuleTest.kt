@@ -29,6 +29,7 @@ class YtDlpUpgradeRuleTest {
     @After
     fun tearDown() {
         dir.deleteRecursively()
+        scratch.deleteRecursively()
     }
 
     private fun install(version: String) = File(dir, "yt-dlp").writeBytes(fakeYtDlp(version))
@@ -83,8 +84,51 @@ class YtDlpUpgradeRuleTest {
     fun theVersionIsReadFromAFileAndFromAStream() {
         install("2025.11.12")
         assertEquals("2025.11.12", YtDlpVersion.of(File(dir, "yt-dlp")))
-        assertEquals("2026.01.05", YtDlpVersion.of(fakeYtDlp("2026.01.05").inputStream()))
+        assertEquals("2026.01.05", shipped("2026.01.05"))
         assertNull(YtDlpVersion.of(File(dir, "missing")))
+    }
+
+    // --- the real file format: a "#!" line in front of the zip ---
+
+    private val scratch: File by lazy { Files.createTempDirectory("ytdlp_scratch").toFile() }
+
+    /** The yt-dlp that ships inside the app, as a stream, the way the resource is read. */
+    private fun shipped(version: String) = YtDlpVersion.ofStream(fakeYtDlp(version).inputStream(), scratch)
+
+    @Test
+    fun theTestFileIsInTheRealFormat_aZipReaderAtByteZeroFindsNothing() {
+        val bytes = fakeYtDlp("2025.11.12")
+        assertTrue(String(bytes, 0, 2) == "#!")
+        assertNull(java.util.zip.ZipInputStream(bytes.inputStream()).nextEntry)
+    }
+
+    @Test
+    fun theShippedVersion_isReadThroughTheLeadingLine() {
+        assertEquals("2026.01.05", shipped("2026.01.05"))
+        assertEquals("2025.11.12", YtDlpVersion.of(File(dir, "yt-dlp").also { it.writeBytes(fakeYtDlp("2025.11.12")) }))
+    }
+
+    @Test
+    fun aShippedCopyNewerThanTheInstalledOne_resetsIt() {
+        install("2025.11.12")
+        val bundled = shipped("2026.01.05")
+
+        assertEquals("2026.01.05", bundled)
+        assertTrue(resetYtdlpIfNeeded(dir, bundled))
+        assertFalse(dir.exists())
+    }
+
+    @Test
+    fun anInstalledCopyNewerThanTheShippedOne_isKept() {
+        install("2026.09.27.232945")
+        assertFalse(resetYtdlpIfNeeded(dir, shipped("2025.11.12")))
+        assertTrue(File(dir, "yt-dlp").exists())
+    }
+
+    @Test
+    fun aVersionFileOfAnyRealisticSize_isReadButAHugeOneIsNot() {
+        assertEquals("2026.01.05", YtDlpVersion.of(File(dir, "a").also { it.writeBytes(fakeYtDlp("2026.01.05", versionPySize = 4_000)) }))
+        assertNull(YtDlpVersion.of(File(dir, "b").also { it.writeBytes(fakeYtDlp("2026.01.05", versionPySize = 200_000)) }))
     }
 
     @Test

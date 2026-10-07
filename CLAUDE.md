@@ -93,7 +93,9 @@ Two product flavors share the `distribution` dimension: `github` (yt-dlp self-up
 runtime, today's behaviour) and `fdroid` (no automatic update; the user
 taps "Update yt-dlp" in Settings, see `data/repository/YtDlpUpdater.kt`. F-Droid's policy asks for
 opt-in consent that says its checks are skipped, so the text beside the button says so, and the
-recipe declares NonFreeNet). The update has its own installer with deadlines (`YtDlpInstaller.kt`);
+recipe declares NonFreeNet). The update has its own installer (`YtDlpInstaller.kt`, `YtDlpTransport.kt`): HTTPS
+addresses on GitHub only, checked on every redirect; the file must match the release's SHA2-256SUMS; every request has
+a deadline and a size cap;
 an update and a yt-dlp run never wait for each other, the second is refused. An app update keeps a
 newer installed yt-dlp (`YtDlpVersion.kt`). `abiFilters` keep arm64-v8a, armeabi-v7a and x86_64: ffmpeg-kit has
 no 32-bit x86 build. Adding the dimension replaced the old bare
