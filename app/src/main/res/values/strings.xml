@@ -37,6 +37,9 @@
     <string name="error_title_wait">Please wait</string>
     <string name="error_not_initialized">BabakCast is still getting ready to download.</string>
     <string name="error_hint_wait">Wait a few seconds, then try again.</string>
+    <string name="error_tool_updating">yt-dlp is being updated.</string>
+    <string name="error_hint_tool_updating">Try again when it\'s done.</string>
+    <string name="error_hint_ytdlp_failed">@string/error_hint_download_retry</string>
     <string name="error_title_processing">Video problem</string>
     <string name="error_video_split_failed">The video couldn\'t be split.</string>
     <string name="error_hint_video_corrupt">Try Download Video to keep it as one file.</string>
@@ -100,7 +103,8 @@
     <string name="settings_summary_length">Summary length (not used yet)</string>
     <string name="settings_summary_length_automatic">Automatic</string>
     <string name="settings_downloader">Download tool</string>
-    <string name="settings_downloader_hint">yt-dlp is the tool BabakCast uses to download videos. When YouTube changes, downloads can stop working until yt-dlp is updated. The button below gets the newest yt-dlp from GitHub. This needs an internet connection. BabakCast only does it when you tap the button.</string>
+    <string name="settings_downloader_hint">yt-dlp is the program BabakCast uses to download videos. When YouTube changes, downloads can stop working until yt-dlp is updated.</string>
+    <string name="settings_downloader_warning">Update yt-dlp downloads the newest test build of yt-dlp from GitHub and runs it on your phone. F-Droid has not checked that copy, so you are choosing to skip F-Droid\'s checks. This needs an internet connection. BabakCast does it only when you tap the button.</string>
     <string name="settings_downloader_update">Update yt-dlp</string>
     <string name="settings_downloader_working">Updating yt-dlp…</string>
     <string name="settings_downloader_done">yt-dlp is now up to date.</string>

@@ -42,4 +42,36 @@ class PackagingGuardTest {
         assertFalse(manifest.contains("requestLegacyExternalStorage"))
         assertTrue(manifest.contains("android.permission.INTERNET"))
     }
+
+    /**
+     * yt-dlp lives in a folder that is not backed up, so the two preference files that record
+     * which yt-dlp is installed (the library's, and the app's own) must not be restored alone.
+     */
+    @Test
+    fun backupRules_leaveOutTheYtDlpRecords() {
+        val old = appFile("src/main/res/xml/backup_rules.xml").readText()
+        val new = appFile("src/main/res/xml/data_extraction_rules.xml").readText()
+        // Android 11 and older read backup_rules.xml; Android 12 and newer read each section here.
+        val sections = mapOf(
+            "backup_rules.xml" to old,
+            "cloud-backup" to new.substringAfter("<cloud-backup>").substringBefore("</cloud-backup>"),
+            "device-transfer" to new.substringAfter("<device-transfer>").substringBefore("</device-transfer>")
+        )
+        for ((name, rules) in sections) {
+            for (record in listOf("youtubedl-android.xml", "ytdlp_update.xml")) {
+                assertTrue("$name must exclude $record",
+                    rules.contains("""<exclude domain="sharedpref" path="$record"/>"""))
+            }
+        }
+    }
+
+    /** The F-Droid build's download error points to the button that updates yt-dlp; the default does not. */
+    @Test
+    fun theFdroidBuildsDownloadErrorHint_pointsToUpdateYtDlp() {
+        val fdroid = appFile("src/fdroid/res/values/strings.xml").readText()
+        val main = appFile("src/main/res/values/strings.xml").readText()
+        assertTrue(fdroid.contains("""name="error_hint_ytdlp_failed">"""))
+        assertTrue(fdroid.contains("Update yt-dlp"))
+        assertFalse(Regex("""name="error_hint_ytdlp_failed">[^<]*Update yt-dlp""").containsMatchIn(main))
+    }
 }

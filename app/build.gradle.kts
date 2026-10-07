@@ -86,8 +86,10 @@ android {
         // This flavor never updates yt-dlp on its own and sends no request at start. It ships
         // the yt-dlp bundled with youtubedl-android (2025.11.12 in 0.18.1, which YouTube no
         // longer accepts) and updates it only when the user taps "Update yt-dlp" in Settings.
-        // F-Droid precedent (Seal, YTDLnis) is the NonFreeNet anti-feature on the recipe, since
-        // that tap fetches yt-dlp from GitHub. Same applicationId as github: this is a
+        // F-Droid's inclusion policy allows downloading an executable only with explicit,
+        // opt-in consent that says F-Droid's checks are skipped: the Settings text above the
+        // button says so (settings_downloader_warning), and the recipe declares the NonFreeNet
+        // anti-feature (as Seal and YTDLnis do). Same applicationId as github: this is a
         // build-time switch, not a different app.
         create("fdroid") {
             dimension = "distribution"

@@ -1,97 +1,173 @@
 package com.cocode.babakcast.data.repository
 
-import com.yausername.youtubedl_android.YoutubeDL
+import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.AppErrorException
+import com.cocode.babakcast.util.ErrorHandler
+import com.yausername.youtubedl_android.YoutubeDLRequest
+import com.yausername.youtubedl_android.YoutubeDLResponse
+import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import okhttp3.OkHttpClient
+import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 
 /**
- * The fdroid flavour updates yt-dlp only when the user taps the button in Settings. The
- * update deletes and rewrites the yt-dlp binary, so it must never overlap a download.
+ * The fdroid flavour updates yt-dlp only when the user taps "Update yt-dlp". These tests drive
+ * the real [YtDlpUpdater], [YtDlpInstaller] and [YoutubeDlWrapper] against a fake GitHub:
+ * an update and a yt-dlp run never wait for each other (the second is refused at once), a
+ * stalled network ends in a failure and frees the gate, and a failed update changes nothing.
  */
 class YtDlpUpdaterTest {
 
-    @Test
-    fun update_whileADownloadRuns_reportsItAndChangesNothing() {
-        val gate = YtDlpGate()
-        val downloading = CountDownLatch(1)
-        val finishDownload = CountDownLatch(1)
-        val downloader = Thread {
-            gate.download {
-                downloading.countDown()
-                finishDownload.await(5, TimeUnit.SECONDS)
-            }
-        }
-        downloader.start()
-        assertTrue(downloading.await(5, TimeUnit.SECONDS))
+    private val originalRunner = YtDlpUpdater.runner
+    private lateinit var dir: File
+    private lateinit var binary: File
+    private lateinit var github: FakeGitHub
+    private val request = YoutubeDLRequest("https://www.youtube.com/watch?v=jNQXAC9IVRw")
+    private val oldFile = fakeYtDlp("2025.11.12")
 
-        val swapped = AtomicBoolean(false)
-        val result = gate.update { swapped.set(true); YtDlpUpdateResult.Updated }
+    @Before
+    fun setUp() {
+        dir = Files.createTempDirectory("ytdlp_update_test").toFile()
+        binary = File(dir, "yt-dlp").also { it.writeBytes(oldFile) }
+        github = FakeGitHub("2026.09.27.232945").start()
+        YtDlpUpdater.runner = { _, _ -> YoutubeDLResponse(emptyList(), 0, 0, "{}", "") }
+    }
+
+    @After
+    fun tearDown() {
+        YtDlpUpdater.runner = originalRunner
+        github.shutdown()
+        dir.deleteRecursively()
+    }
+
+    private fun installer(timeoutMs: Long = 5_000) =
+        YtDlpInstaller(OkHttpClient(), github.releaseUrl, binary, timeoutMs, timeoutMs)
+
+    @Test
+    fun update_installsTheNewerRelease() {
+        assertEquals(YtDlpUpdateResult.Updated, YtDlpUpdater.update(installer()))
+        assertEquals("2026.09.27.232945", YtDlpVersion.of(binary))
+        assertFalse(File(dir, "yt-dlp.download").exists())
+    }
+
+    @Test
+    fun update_whenTheInstalledFileIsAlreadyThatRelease_saysSoAndDownloadsNothing() {
+        binary.writeBytes(fakeYtDlp("2026.09.27.232945"))
+        assertEquals(YtDlpUpdateResult.AlreadyLatest, YtDlpUpdater.update(installer()))
+        assertEquals(1, github.server.requestCount)
+    }
+
+    /** After a restore the app's records can name a release the restored file is not: only the file counts. */
+    @Test
+    fun update_afterARestore_goesByTheFileNotByAnyRecord() {
+        assertEquals("2025.11.12", YtDlpVersion.of(binary))
+        assertEquals(YtDlpUpdateResult.Updated, YtDlpUpdater.update(installer()))
+    }
+
+    @Test
+    fun update_whileAYtDlpRunIsGoing_isRefusedAtOnce_andChangesNothing() {
+        val running = CountDownLatch(1)
+        val finish = CountDownLatch(1)
+        YtDlpUpdater.runner = { _, _ ->
+            running.countDown()
+            finish.await(10, TimeUnit.SECONDS)
+            YoutubeDLResponse(emptyList(), 0, 0, "", "")
+        }
+        val download = Thread { YoutubeDlWrapper("test").executeDownload(request) {} }
+        download.start()
+        assertTrue(running.await(5, TimeUnit.SECONDS))
+
+        val started = System.nanoTime()
+        val result = YtDlpUpdater.update(installer())
 
         assertEquals(YtDlpUpdateResult.DownloadRunning, result)
-        assertFalse(swapped.get())
-        finishDownload.countDown()
-        downloader.join(5_000)
+        assertTrue("refused at once", System.nanoTime() - started < TimeUnit.SECONDS.toNanos(1))
+        assertEquals(0, github.server.requestCount)
+        assertArrayEquals(oldFile, binary.readBytes())
+        finish.countDown()
+        download.join(5_000)
     }
 
     @Test
-    fun update_withNoDownload_runsAndReturnsItsResult() {
-        val gate = YtDlpGate()
-        assertEquals(YtDlpUpdateResult.Updated, gate.update { YtDlpUpdateResult.Updated })
-        // The write side is released afterwards, so a second update can run.
-        assertEquals(YtDlpUpdateResult.AlreadyLatest, gate.update { YtDlpUpdateResult.AlreadyLatest })
-    }
+    fun aYtDlpRun_whileAnUpdateRuns_isRefusedAtOnce_withAMessageForTheScreen() {
+        github.gate = CountDownLatch(1)
+        val update = Thread { YtDlpUpdater.update(installer(timeoutMs = 20_000)) }
+        update.start()
+        assertTrue(github.releaseAsked.await(5, TimeUnit.SECONDS))
 
-    @Test
-    fun download_waitsWhileTheBinaryIsBeingSwapped() {
-        val gate = YtDlpGate()
-        val swapping = CountDownLatch(1)
-        val finishSwap = CountDownLatch(1)
-        val updater = Thread {
-            gate.update {
-                swapping.countDown()
-                finishSwap.await(5, TimeUnit.SECONDS)
-                YtDlpUpdateResult.Updated
-            }
+        val started = System.nanoTime()
+        val refused = try {
+            YoutubeDlWrapper("test").fetchInfo(request)
+            null
+        } catch (e: AppErrorException) {
+            e
         }
-        updater.start()
-        assertTrue(swapping.await(5, TimeUnit.SECONDS))
 
-        val started = AtomicBoolean(false)
-        val downloader = Thread { gate.download { started.set(true) } }
-        downloader.start()
-        downloader.join(300)
-        assertFalse("a download must not start mid-swap", started.get())
+        assertNotNull("the run must be refused, not queued", refused)
+        assertTrue("refused at once", System.nanoTime() - started < TimeUnit.SECONDS.toNanos(1))
+        assertTrue(ErrorHandler.handleException(refused!!) is AppError.ToolUpdating)
+        github.gate!!.countDown()
+        update.join(10_000)
+        assertEquals("2026.09.27.232945", YtDlpVersion.of(binary))
+    }
 
-        finishSwap.countDown()
-        downloader.join(5_000)
-        updater.join(5_000)
-        assertTrue(started.get())
+    @Test(timeout = 20_000)
+    fun update_onAStalledNetwork_endsInFailedAtTheDeadline_andFreesTheGate() {
+        github.releaseStalls = true
+        val started = System.nanoTime()
+
+        val result = YtDlpUpdater.update(installer(timeoutMs = 800))
+
+        assertEquals(YtDlpUpdateResult.Failed, result)
+        assertTrue("within the deadline", System.nanoTime() - started < TimeUnit.SECONDS.toNanos(8))
+        assertArrayEquals(oldFile, binary.readBytes())
+        YoutubeDlWrapper("test").fetchInfo(request) // the gate is free again: not refused
+    }
+
+    @Test(timeout = 20_000)
+    fun update_whenTheDownloadStalls_failsAndLeavesTheOldFileAndNoLeftover() {
+        github.fileStalls = true
+
+        assertEquals(YtDlpUpdateResult.Failed, YtDlpUpdater.update(installer(timeoutMs = 800)))
+
+        assertArrayEquals(oldFile, binary.readBytes())
+        assertFalse(File(dir, "yt-dlp.download").exists())
     }
 
     @Test
-    fun downloads_canRunTogether() {
-        val gate = YtDlpGate()
-        val both = CountDownLatch(2)
-        val threads = List(2) {
-            Thread { gate.download { both.countDown(); both.await(5, TimeUnit.SECONDS) } }
+    fun update_whenTheDownloadIsShortOrNotThatRelease_isNotInstalled() {
+        github.shutdown()
+        github = FakeGitHub("2026.09.27.232945", file = fakeYtDlp("2025.01.01")).start()
+        assertEquals(YtDlpUpdateResult.Failed, YtDlpUpdater.update(installer()))
+        github.shutdown()
+        github = FakeGitHub("2026.09.27.232945", declaredSize = 999_999).start()
+        assertEquals(YtDlpUpdateResult.Failed, YtDlpUpdater.update(installer()))
+        assertArrayEquals(oldFile, binary.readBytes())
+    }
+
+    @Test
+    fun update_whenGitHubIsUnreachable_isFailedNotAnException() {
+        github.shutdown()
+        assertEquals(YtDlpUpdateResult.Failed, YtDlpUpdater.update(installer(timeoutMs = 2_000)))
+        assertArrayEquals(oldFile, binary.readBytes())
+        assertGateIsFree()
+    }
+
+    private fun assertGateIsFree() {
+        try {
+            YoutubeDlWrapper("test").fetchInfo(request)
+        } catch (e: AppErrorException) {
+            fail("the gate was not released")
         }
-        threads.forEach { it.start() }
-        assertTrue(both.await(5, TimeUnit.SECONDS))
-        threads.forEach { it.join(5_000) }
-    }
-
-    @Test
-    fun libraryAnswerMapsToTheUsersResult() {
-        assertEquals(YtDlpUpdateResult.Updated, toUpdateResult(YoutubeDL.UpdateStatus.DONE))
-        assertEquals(
-            YtDlpUpdateResult.AlreadyLatest,
-            toUpdateResult(YoutubeDL.UpdateStatus.ALREADY_UP_TO_DATE)
-        )
-        assertEquals(YtDlpUpdateResult.Failed, toUpdateResult(null))
     }
 }
