@@ -10,6 +10,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -160,14 +161,29 @@ class YtDlpAddressTest {
             "https://objects.githubusercontent.com/a/%2E%2E/b", "https://objects.githubusercontent.com/a/%2e/b",
             "https://objects.githubusercontent.com/a%2Fb", "https://objects.githubusercontent.com/a%5cb",
             "https://objects.githubusercontent.com/a\\b", "https://github.com\\@evil.example/x",
-            "/a/%2e%2e/b", "a/%2E/b?x=1"
+            "/a/%2e%2e/b", "a/%2E/b?x=1",
+            // a "://" inside the path is not a scheme
+            "//objects.githubusercontent.com/a/%2e%2e/https://x", "/a/%2e%2e/https://x",
+            "/a/b/https://x/%2E%2E", "https://objects.githubusercontent.com/a/%2e%2e/https://x",
+            "//objects.githubusercontent.com/a\\b/https://x"
         )
         val clean = listOf(
             "https://release-assets.githubusercontent.com/github-production-release-asset/1/f?sp=r&sig=a%2Fb%2Bc%3D#x",
-            "https://objects.githubusercontent.com/x/y", "/real?sig=%2F", "https://github.com"
+            "https://objects.githubusercontent.com/x/y", "/real?sig=%2F", "https://github.com",
+            "//release-assets.githubusercontent.com/x/y?next=https://z/%2e", "/download/https://x/ok", "a/b#%2e"
         )
         for (raw in dirty) assertFalse("must refuse $raw", isCleanAddress(raw))
         for (raw in clean) assertTrue("must accept $raw", isCleanAddress(raw))
+    }
+
+    @Test
+    fun theRawPath_isFoundByTheSchemeAtTheStartOnly() {
+        assertEquals("/a/%2e%2e/https://x", rawPath("//objects.githubusercontent.com/a/%2e%2e/https://x"))
+        assertEquals("/a/%2e%2e/https://x", rawPath("https://objects.githubusercontent.com/a/%2e%2e/https://x?q=1#f"))
+        assertEquals("/a/%2e%2e/https://x", rawPath("/a/%2e%2e/https://x?https://y"))
+        assertEquals("a/b", rawPath("a/b#c"))
+        assertEquals("", rawPath("https://github.com"))
+        assertEquals("", rawPath("//github.com?x=/y"))
     }
 
     /** Parsed, each of these redirects leads to an address the real policy allows; only the raw text gives them away. */
@@ -180,7 +196,10 @@ class YtDlpAddressTest {
             "https://release-assets.githubusercontent.com/a%5Cb/../c?m=encbackslash",
             "https://objects.githubusercontent.com/a%2Fb/../c?m=slash",
             "$base/%2e/yt-dlp?m=single",
-            "$base/%2E/yt-dlp?m=singleupper"
+            "$base/%2E/yt-dlp?m=singleupper",
+            // scheme-relative, with a "://" inside the path (the parsed address is allowed)
+            "//objects.githubusercontent.com/a/%2e%2e/https://x?m=schemerel",
+            "//release-assets.githubusercontent.com/a%5C/../https://x?m=schemerel2"
         )
         for (location in hidden) {
             val marker = location.substringAfter("m=")

@@ -147,7 +147,11 @@ class YtDlpInstallerTest {
             "slash" to "$origin/download/$tag/a%2Fb/../yt-dlp?m=slash",
             "encbackslash" to "$origin/download/$tag/x%5C/../yt-dlp?m=encbackslash",
             "backslash" to "$origin/download/$tag\\yt-dlp?m=backslash",
-            "relative" to "/download/$tag/a/%2e%2e/yt-dlp?m=relative"
+            "relative" to "/download/$tag/a/%2e%2e/yt-dlp?m=relative",
+            // a "://" inside the path is not a scheme: scheme-relative, relative and absolute forms
+            "schemerel" to "//${github.server.hostName}:${github.server.port}/download/$tag/a/%2e%2e/https://x/yt-dlp?m=schemerel",
+            "relcolon" to "/download/$tag/a/%2e%2e/https://x/yt-dlp?m=relcolon",
+            "abscolon" to "$origin/download/$tag/a/%2e%2e/https://x/yt-dlp?m=abscolon"
         )
         for ((marker, location) in hidden) {
             github.fileRedirect = location
