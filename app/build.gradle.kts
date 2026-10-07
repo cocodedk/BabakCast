@@ -59,6 +59,13 @@ android {
         versionName = providers.gradleProperty("VERSION_NAME").get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ffmpeg-kit-audio ships no 32-bit x86 build, so an x86 APK would crash with an
+        // UnsatisfiedLinkError the first time it splits or tags a file. 32-bit x86 phones
+        // are gone; 64-bit x86 (emulators, Chromebooks) keeps working.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     // AGP otherwise adds a Google-encrypted dependency list to the APK signing block,
@@ -76,10 +83,12 @@ android {
             dimension = "distribution"
             buildConfigField("boolean", "YTDLP_SELF_UPDATE", "true")
         }
-        // F-Droid forbids any code that downloads and runs another binary at runtime, so
-        // this flavor never calls updateYoutubeDL and ships only the yt-dlp binary bundled
-        // with youtubedl-android. Same applicationId as github: this is a build-time
-        // switch, not a different app.
+        // This flavor never updates yt-dlp on its own and sends no request at start. It ships
+        // the yt-dlp bundled with youtubedl-android (2025.11.12 in 0.18.1, which YouTube no
+        // longer accepts) and updates it only when the user taps "Update yt-dlp" in Settings.
+        // F-Droid precedent (Seal, YTDLnis) is the NonFreeNet anti-feature on the recipe, since
+        // that tap fetches yt-dlp from GitHub. Same applicationId as github: this is a
+        // build-time switch, not a different app.
         create("fdroid") {
             dimension = "distribution"
             buildConfigField("boolean", "YTDLP_SELF_UPDATE", "false")

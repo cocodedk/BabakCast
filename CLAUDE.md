@@ -90,8 +90,10 @@ gh workflow run release-apk.yml                  # after a PR bumps VERSION_NAME
 ```
 
 Two product flavors share the `distribution` dimension: `github` (yt-dlp self-updates at
-runtime, today's behaviour) and `fdroid` (self-update off — see
-`data/repository/YoutubeDLReady.kt`). Adding the dimension replaced the old bare
+runtime, today's behaviour) and `fdroid` (no automatic update; the user
+taps "Update yt-dlp" in Settings, see `data/repository/YtDlpUpdater.kt`, and the F-Droid recipe
+declares NonFreeNet for it). `abiFilters` keep arm64-v8a, armeabi-v7a and x86_64: ffmpeg-kit has
+no 32-bit x86 build. Adding the dimension replaced the old bare
 `testDebugUnitTest`/`lintDebug` tasks with per-flavor ones; `assembleDebug` and
 `assembleRelease` still exist as aggregates over both flavors.
 

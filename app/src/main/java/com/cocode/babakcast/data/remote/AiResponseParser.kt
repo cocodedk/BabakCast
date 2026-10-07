@@ -7,6 +7,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -70,7 +71,8 @@ internal object AiResponseParser {
             }
         }
 
-        return current.jsonPrimitive.content
+        // Only a JSON string is reply text; null, a number or a boolean would read as "null", "42" or "true".
+        return (current as? JsonPrimitive)?.takeIf { it.isString }?.content
     }
 
     /** Tokens used, when the reply says so. */
