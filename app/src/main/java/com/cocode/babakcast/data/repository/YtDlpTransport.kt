@@ -61,6 +61,21 @@ internal class ReleaseSource(
 }
 
 private val HIDDEN_SEPARATOR = Regex("(?i)%(2f|5c|2e)")
+private val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*:")
+
+/**
+ * The path of [raw], an address exactly as it was written, found without parsing it: a scheme only
+ * at the very start (`https:`), then, when `//` follows (an absolute address, or a scheme-relative
+ * one that starts with `//`), an authority up to the first `/`; anything else is already a path.
+ * The path ends at the first `?` or `#`. A `://` further along is part of the path, not a scheme.
+ */
+internal fun rawPath(raw: String): String {
+    val beforeQuery = raw.substringBefore('#').substringBefore('?')
+    val afterScheme = SCHEME.find(beforeQuery)?.let { beforeQuery.substring(it.value.length) } ?: beforeQuery
+    if (!afterScheme.startsWith("//")) return afterScheme
+    val authorityAndPath = afterScheme.substring(2)
+    return authorityAndPath.substring(authorityAndPath.indexOf('/').takeIf { it >= 0 } ?: authorityAndPath.length)
+}
 
 /**
  * Whether [raw], an address exactly as it was written (a Location header, an address from a
@@ -70,15 +85,8 @@ private val HIDDEN_SEPARATOR = Regex("(?i)%(2f|5c|2e)")
  * any case. The query is left alone: GitHub's signed download links have percent codes in it.
  */
 internal fun isCleanAddress(raw: String): Boolean {
-    val beforeQuery = raw.substringBefore('#').substringBefore('?')
-    if (beforeQuery.contains('\\')) return false
-    val path = if ("://" in beforeQuery) {
-        val afterScheme = beforeQuery.substringAfter("://")
-        afterScheme.substring(afterScheme.indexOf('/').takeIf { it >= 0 } ?: afterScheme.length)
-    } else {
-        beforeQuery
-    }
-    return !HIDDEN_SEPARATOR.containsMatchIn(path)
+    if (raw.substringBefore('#').substringBefore('?').contains('\\')) return false
+    return !HIDDEN_SEPARATOR.containsMatchIn(rawPath(raw))
 }
 
 /**
