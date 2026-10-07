@@ -29,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
+import com.cocode.babakcast.ui.labelRes
 
 @Composable
 internal fun GeneralSettingsSection(
@@ -41,7 +44,7 @@ internal fun GeneralSettingsSection(
     onSummaryLengthChange: (SummaryLength) -> Unit,
     onAutoPlayChange: (Boolean) -> Unit
 ) {
-    SectionHeader(title = "Defaults")
+    SectionHeader(title = stringResource(R.string.settings_defaults))
 
     Column(
         modifier = Modifier
@@ -54,7 +57,7 @@ internal fun GeneralSettingsSection(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "SUMMARY / TRANSLATION LANGUAGE",
+                text = stringResource(R.string.settings_summary_language),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -67,7 +70,7 @@ internal fun GeneralSettingsSection(
                 onValueChange = onLanguageChange,
                 placeholder = {
                     Text(
-                        "e.g. en, es, fa, German",
+                        stringResource(R.string.settings_summary_language_hint),
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
@@ -96,7 +99,7 @@ internal fun GeneralSettingsSection(
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    SectionHeader(title = "Playback")
+    SectionHeader(title = stringResource(R.string.settings_playback))
 
     Column(
         modifier = Modifier
@@ -121,11 +124,11 @@ internal fun GeneralSettingsSection(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "Auto-play next video",
+                        text = stringResource(R.string.settings_autoplay_title),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "Automatically play the next download after a video ends.",
+                        text = stringResource(R.string.settings_autoplay_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -140,7 +143,7 @@ internal fun GeneralSettingsSection(
 }
 
 @Composable
-internal fun SectionHeader(title: String) {
+internal fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title.uppercase(),
         style = MaterialTheme.typography.labelSmall.copy(
@@ -149,7 +152,7 @@ internal fun SectionHeader(title: String) {
             letterSpacing = 1.sp
         ),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 8.dp, top = 4.dp)
     )
@@ -218,12 +221,12 @@ internal fun SummaryLengthRow(
             ) {
                 Column {
                     Text(
-                        text = "Adaptive length",
+                        text = stringResource(R.string.settings_adaptive_title),
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Automatically adjust summary length",
+                        text = stringResource(R.string.settings_adaptive_hint),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -236,11 +239,11 @@ internal fun SummaryLengthRow(
         }
 
         SettingsRow(
-            label = "Summary length",
+            label = stringResource(R.string.settings_summary_length),
             value = if (adaptiveEnabled) {
-                "Automatic"
+                stringResource(R.string.settings_summary_length_automatic)
             } else {
-                length.name.lowercase().replaceFirstChar { it.uppercase() }
+                stringResource(length.labelRes())
             },
             onClick = { if (!adaptiveEnabled) showDialog = true },
             isFirst = true,
@@ -251,7 +254,7 @@ internal fun SummaryLengthRow(
     if (showDialog && !adaptiveEnabled) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Summary length") },
+            title = { Text(stringResource(R.string.settings_summary_length)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SummaryLength.values().forEach { option ->
@@ -262,7 +265,7 @@ internal fun SummaryLengthRow(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(option.name.lowercase().replaceFirstChar { it.uppercase() })
+                            Text(stringResource(option.labelRes()))
                         }
                     }
                 }
@@ -270,7 +273,7 @@ internal fun SummaryLengthRow(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.action_close))
                 }
             }
         )

@@ -44,7 +44,9 @@
 # API via ObjectMapper.readTree()/JsonNode at runtime, and Jackson's own internals use
 # reflection regardless of what the app does with the parsed tree. The fdroid flavor never
 # calls updateYoutubeDL() (BuildConfig.YTDLP_SELF_UPDATE is a compile-time false there, so
-# R8 folds the call away), making this dead weight in that flavor rather than a live risk.
+# R8 folds the call away); the update its users start from Settings has its own installer
+# (data/repository/YtDlpInstaller.kt, OkHttp and kotlinx.serialization), which does not reach
+# Jackson. So this is dead weight in that flavor rather than a live risk.
 -keep class com.fasterxml.jackson.** { *; }
 # Confirmed by an actual R8 run (missing_rules.txt), not guessed: jackson-databind 2.11's
 # Java7SupportImpl probes java.beans.ConstructorProperties/Transient in a try/catch and

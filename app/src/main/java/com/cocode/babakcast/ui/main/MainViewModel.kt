@@ -44,6 +44,10 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 import java.io.File
 import javax.inject.Inject
+import com.cocode.babakcast.R
+import android.content.Context
+import androidx.annotation.StringRes
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -57,7 +61,8 @@ class MainViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val providerResolver: ProviderResolver,
     private val shareHelper: ShareHelper,
-    private val shareTranslator: ShareTranslator
+    private val shareTranslator: ShareTranslator,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val tag = "MainViewModel"
 
@@ -134,10 +139,10 @@ class MainViewModel @Inject constructor(
         if (resolution !is TrimResolution.Ready) return Result.success(videoInfo)
 
         val sourceFile = videoInfo.file
-            ?: return Result.failure(IllegalStateException("Downloaded video file not found"))
+            ?: return Result.failure(IllegalStateException(context.getString(R.string.error_downloaded_file_missing)))
 
         _uiState.value = _uiState.value.copy(
-            loadingMessage = "Cutting segment...",
+            loadingMessage = context.getString(R.string.loading_cutting_segment),
             isProgressIndeterminate = true
         )
 
@@ -165,11 +170,11 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun downloadVideo() = startVideoDownload("Downloading full video...") { videoInfo ->
+    fun downloadVideo() = startVideoDownload(R.string.loading_downloading_full_video) { videoInfo ->
         splitAndShareVideo(videoInfo, SplitMode.NONE)
     }
 
-    fun downloadSplitVideo() = startVideoDownload("Downloading video...") { videoInfo ->
+    fun downloadSplitVideo() = startVideoDownload(R.string.loading_downloading_video) { videoInfo ->
         val fileSize = videoInfo.fileSizeBytes.takeIf { it > 0L }
             ?: videoInfo.file?.length() ?: 0L
         val needsSplit = !SplitDecision.skipFor(
@@ -196,14 +201,14 @@ class MainViewModel @Inject constructor(
     }
 
     private fun startVideoDownload(
-        loadingMessage: String,
+        @StringRes loadingMessageRes: Int,
         onReady: suspend (VideoInfo) -> Unit
     ) {
         val url = _uiState.value.url
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
+                error = AppError.InvalidUrl(messageRes = R.string.error_enter_supported_url)
             )
             return
         }
@@ -217,7 +222,7 @@ class MainViewModel @Inject constructor(
                 isDownloading = true,
                 isSummarizing = false,
                 isDownloadingAudio = false,
-                loadingMessage = loadingMessage,
+                loadingMessage = context.getString(loadingMessageRes),
                 isProgressIndeterminate = false,
                 splitChoicePrompt = null
             )
@@ -244,7 +249,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank() || !XUrlExtractor.isXUrl(url)) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter an X/Twitter URL")
+                error = AppError.InvalidUrl(messageRes = R.string.error_enter_x_url)
             )
             return
         }
@@ -257,7 +262,7 @@ class MainViewModel @Inject constructor(
                 isDownloading = true,
                 isSummarizing = false,
                 isDownloadingAudio = false,
-                loadingMessage = "Downloading all media...",
+                loadingMessage = context.getString(R.string.loading_downloading_all_media),
                 isProgressIndeterminate = false,
                 splitChoicePrompt = null
             )
@@ -292,7 +297,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun fetchTweetTextAndEmit(event: (String) -> TweetTextEvent, blankMessage: String) {
+    private fun fetchTweetTextAndEmit(event: (String) -> TweetTextEvent, @StringRes blankMessageRes: Int) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isFetchingTweetText = true, error = null)
             mediaRepository.fetchTweetText(_uiState.value.url).fold(
@@ -300,7 +305,7 @@ class MainViewModel @Inject constructor(
                     if (text.isBlank()) {
                         _uiState.value = _uiState.value.copy(
                             isFetchingTweetText = false,
-                            error = AppError.InvalidUrl(blankMessage)
+                            error = AppError.InvalidUrl(messageRes = blankMessageRes)
                         )
                     } else {
                         val enabled = _uiState.value.translateBeforeShare
@@ -322,10 +327,10 @@ class MainViewModel @Inject constructor(
     }
 
     fun fetchAndCopyTweetText() =
-        fetchTweetTextAndEmit(TweetTextEvent::Copied, "This tweet has no text to copy")
+        fetchTweetTextAndEmit(TweetTextEvent::Copied, R.string.error_tweet_no_text_copy)
 
     fun fetchAndShareTweetText() =
-        fetchTweetTextAndEmit(TweetTextEvent::Share, "This tweet has no text to share")
+        fetchTweetTextAndEmit(TweetTextEvent::Share, R.string.error_tweet_no_text_share)
 
     fun downloadAudio() = startAudioDownload { videoInfo, videoFile, audioFile ->
         splitAndShareAudio(videoInfo, videoFile, audioFile, SplitMode.NONE)
@@ -359,7 +364,7 @@ class MainViewModel @Inject constructor(
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
+                error = AppError.InvalidUrl(messageRes = R.string.error_enter_supported_url)
             )
             return
         }
@@ -374,7 +379,7 @@ class MainViewModel @Inject constructor(
                 isDownloading = false,
                 isSummarizing = false,
                 isDownloadingAudio = true,
-                loadingMessage = "Downloading source video...",
+                loadingMessage = context.getString(R.string.loading_downloading_source_video),
                 isProgressIndeterminate = false,
                 splitChoicePrompt = null
             )
@@ -386,7 +391,7 @@ class MainViewModel @Inject constructor(
                     if (downloadedInfo.file?.exists() != true) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = AppError.DownloadFailed("Downloaded video file not found"),
+                            error = AppError.DownloadFailed(messageRes = R.string.error_downloaded_file_missing),
                             isDownloadingAudio = false,
                             loadingMessage = null,
                             isProgressIndeterminate = false
@@ -406,7 +411,7 @@ class MainViewModel @Inject constructor(
                     if (videoFile == null || !videoFile.exists()) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = AppError.DownloadFailed("Downloaded video file not found"),
+                            error = AppError.DownloadFailed(messageRes = R.string.error_downloaded_file_missing),
                             isDownloadingAudio = false,
                             loadingMessage = null,
                             isProgressIndeterminate = false
@@ -415,7 +420,7 @@ class MainViewModel @Inject constructor(
                     }
 
                     _uiState.value = _uiState.value.copy(
-                        loadingMessage = "Extracting audio...",
+                        loadingMessage = context.getString(R.string.loading_extracting_audio),
                         isProgressIndeterminate = true
                     )
 
@@ -426,7 +431,7 @@ class MainViewModel @Inject constructor(
                             if (videoFile.exists()) videoFile.delete()
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
-                                error = AppError.AudioExtractFailed(error.message ?: "Audio extraction failed"),
+                                error = AppError.AudioExtractFailed(),
                                 isDownloadingAudio = false,
                                 loadingMessage = null,
                                 isProgressIndeterminate = false
@@ -487,8 +492,8 @@ class MainViewModel @Inject constructor(
             isDownloading = pending is PendingSplitRequest.Video,
             isDownloadingAudio = pending is PendingSplitRequest.Audio,
             loadingMessage = when (pending) {
-                is PendingSplitRequest.Video -> splitMode.splittingMessage("video")
-                is PendingSplitRequest.Audio -> splitMode.splittingMessage("audio")
+                is PendingSplitRequest.Video -> splitMode.splittingMessage(context, SplitChoiceMediaType.VIDEO)
+                is PendingSplitRequest.Audio -> splitMode.splittingMessage(context, SplitChoiceMediaType.AUDIO)
             },
             isProgressIndeterminate = false,
             splitChoicePrompt = null
@@ -515,25 +520,25 @@ class MainViewModel @Inject constructor(
         val url = _uiState.value.url
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl("Please enter a YouTube, X, or Instagram URL")
+                error = AppError.InvalidUrl(messageRes = R.string.error_enter_youtube_url)
             )
             return
         }
         if (XUrlExtractor.isXUrl(url)) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for X/Twitter posts")
+                error = AppError.TranscriptNotAvailable(messageRes = R.string.error_summary_unavailable_x)
             )
             return
         }
         if (InstagramUrlExtractor.isInstagramUrl(url)) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for Instagram posts")
+                error = AppError.TranscriptNotAvailable(messageRes = R.string.error_summary_unavailable_instagram)
             )
             return
         }
         if (LinkedInUrlExtractor.isLinkedInUrl(url)) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.TranscriptNotAvailable("Transcript summarization is not available for LinkedIn posts")
+                error = AppError.TranscriptNotAvailable(messageRes = R.string.error_summary_unavailable_linkedin)
             )
             return
         }
@@ -546,7 +551,7 @@ class MainViewModel @Inject constructor(
                 isDownloading = false,
                 isSummarizing = true,
                 isDownloadingAudio = false,
-                loadingMessage = "Fetching transcript...",
+                loadingMessage = context.getString(R.string.loading_fetching_transcript),
                 isProgressIndeterminate = true
             )
 
@@ -556,7 +561,7 @@ class MainViewModel @Inject constructor(
                     val defaultProvider = providerResolver.resolve() ?: run {
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
-                                error = AppError.ProviderMisconfigured("No AI provider configured"),
+                                error = AppError.ProviderMisconfigured(messageRes = R.string.error_no_provider),
                                 isSummarizing = false,
                                 isDownloadingAudio = false,
                                 loadingMessage = null,
@@ -571,7 +576,7 @@ class MainViewModel @Inject constructor(
                     val summaryLength = _uiState.value.summaryLength
 
                     _uiState.value = _uiState.value.copy(
-                        loadingMessage = "Generating summary...",
+                        loadingMessage = context.getString(R.string.loading_generating_summary),
                         isProgressIndeterminate = true
                     )
 
@@ -641,11 +646,11 @@ class MainViewModel @Inject constructor(
                 val index = state.summaryShareIndex.coerceIn(0, chunks.size - 1)
                 val nextIndex = if (index + 1 >= chunks.size) 0 else index + 1
                 _uiState.value = state.copy(summaryShareIndex = nextIndex)
-                shareHelper.shareText(chunks[index], "Share Summary")
+                shareHelper.shareText(chunks[index], context.getString(R.string.share_chooser_summary))
                 return
             }
             val summary = state.summary?.takeIf { it.isNotBlank() } ?: return
-            shareHelper.shareText(summary, "Share Summary")
+            shareHelper.shareText(summary, context.getString(R.string.share_chooser_summary))
             return
         }
         val summary = state.summary?.takeIf { it.isNotBlank() } ?: return
@@ -659,7 +664,7 @@ class MainViewModel @Inject constructor(
                         summaryShareIndex = if (chunks.size > 1) 1 else 0
                     )
                 }
-                shareHelper.shareText(chunks.first(), "Share Summary")
+                shareHelper.shareText(chunks.first(), context.getString(R.string.share_chooser_summary))
             }
         }
     }
@@ -670,7 +675,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             shareTranslationRunner.withTranslation {
                 val text = shareTranslationRunner.textForShare(summary, enabled)
-                shareHelper.shareLongText(text, "Share Summary", forceFile = true)
+                shareHelper.shareLongText(text, context.getString(R.string.share_chooser_summary), forceFile = true)
             }
         }
     }
@@ -697,7 +702,7 @@ class MainViewModel @Inject constructor(
 
         _uiState.value = _uiState.value.copy(
             progress = 0f,
-            loadingMessage = splitMode.splittingMessage("video")
+            loadingMessage = splitMode.splittingMessage(context, SplitChoiceMediaType.VIDEO)
         )
 
         videoSplitter.splitVideoIfNeeded(
@@ -709,7 +714,7 @@ class MainViewModel @Inject constructor(
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
                 progress = (currentPart / denominator).coerceIn(0f, 1f),
-                loadingMessage = splitMode.splittingProgressMessage("video", currentPart, totalParts)
+                loadingMessage = splitMode.splittingProgressMessage(context, SplitChoiceMediaType.VIDEO, currentPart, totalParts)
             )
         }.fold(
             onSuccess = { splitVideoInfo ->
@@ -742,9 +747,11 @@ class MainViewModel @Inject constructor(
                     return@fold
                 }
 
+                // The technical text goes to the log; the screen shows a plain message.
+                Log.e(tag, "video split failed", error)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = ErrorHandler.handleException(error),
+                    error = AppError.VideoSplitFailed(),
                     isDownloading = false,
                     isDownloadingAudio = false,
                     loadingMessage = null,
@@ -769,7 +776,7 @@ class MainViewModel @Inject constructor(
 
         _uiState.value = _uiState.value.copy(
             progress = 0f,
-            loadingMessage = splitMode.splittingMessage("audio"),
+            loadingMessage = splitMode.splittingMessage(context, SplitChoiceMediaType.AUDIO),
             isProgressIndeterminate = false
         )
 
@@ -782,7 +789,7 @@ class MainViewModel @Inject constructor(
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
                 progress = (currentPart / denominator).coerceIn(0f, 1f),
-                loadingMessage = splitMode.splittingProgressMessage("audio", currentPart, totalParts)
+                loadingMessage = splitMode.splittingProgressMessage(context, SplitChoiceMediaType.AUDIO, currentPart, totalParts)
             )
         }.fold(
             onSuccess = { audioFiles ->
@@ -815,7 +822,7 @@ class MainViewModel @Inject constructor(
                 if (audioFile.exists()) audioFile.delete()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = ErrorHandler.handleException(error),
+                    error = AppError.AudioSplitFailed(),
                     isDownloadingAudio = false,
                     loadingMessage = null,
                     isProgressIndeterminate = false,
@@ -846,7 +853,7 @@ class MainViewModel @Inject constructor(
                 caption = shareTranslationRunner.textForShare(AudioShareCaption.build(videoInfo.title, shareFiles.size), enabled),
                 files = shareFiles,
                 mimeType = "audio/mpeg",
-                title = "Share audio"
+                title = context.getString(R.string.share_chooser_audio)
             )
             // Non-blank caption means a two-stage share: hold the files for after the
             // title is shared (see MainScreen's ON_RESUME observer).
@@ -875,20 +882,4 @@ class MainViewModel @Inject constructor(
     }
 
     private fun isChapterTooLargeError(error: Throwable): Boolean = error is ChapterTooLargeException
-}
-
-private fun SplitMode.splittingMessage(noun: String): String = when (this) {
-    SplitMode.NONE -> error("$noun has no splitting message in NONE mode")
-    SplitMode.BY_SIZE -> "Splitting $noun..."
-    SplitMode.CHAPTERS -> "Splitting $noun by chapters..."
-}
-
-private fun SplitMode.splittingProgressMessage(
-    noun: String,
-    currentPart: Int,
-    totalParts: Int
-): String = when (this) {
-    SplitMode.NONE -> error("$noun has no progress message in NONE mode")
-    SplitMode.BY_SIZE -> "Splitting $noun part $currentPart/$totalParts..."
-    SplitMode.CHAPTERS -> "Splitting $noun chapter $currentPart/$totalParts..."
 }

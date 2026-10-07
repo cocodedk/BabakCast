@@ -3,6 +3,9 @@ package com.cocode.babakcast.ui.main
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +32,9 @@ import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.urlparsing.XUrlExtractor
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
+import com.cocode.babakcast.ui.labelRes
 
 @Composable
 internal fun ActionButtonsSection(
@@ -73,7 +79,7 @@ internal fun ActionButtonsSection(
             enabled = downloadEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.buttonColors(
                 containerColor = BabakCastColors.PrimaryAccent,
@@ -83,7 +89,7 @@ internal fun ActionButtonsSection(
             )
         ) {
             Text(
-                "Download Video",
+                stringResource(R.string.download_video),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
@@ -104,7 +110,7 @@ internal fun ActionButtonsSection(
             enabled = downloadEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = BabakCastColors.PrimaryAccent,
@@ -121,7 +127,7 @@ internal fun ActionButtonsSection(
             )
         ) {
             Text(
-                "Download Split (${uiState.splitSizeMb} MB)",
+                stringResource(R.string.download_split_video, uiState.splitSizeMb),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
@@ -145,7 +151,7 @@ internal fun ActionButtonsSection(
                     enabled = isAllMediaEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .heightIn(min = 52.dp),
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = BabakCastColors.PrimaryAccent,
@@ -162,7 +168,7 @@ internal fun ActionButtonsSection(
                     )
                 ) {
                     Text(
-                        "Download All Media",
+                        stringResource(R.string.download_all_media),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp
@@ -171,7 +177,7 @@ internal fun ActionButtonsSection(
                 }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
@@ -179,7 +185,8 @@ internal fun ActionButtonsSection(
                         enabled = isXActionEnabled && !uiState.isFetchingTweetText,
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp),
+                            .fillMaxHeight()
+                            .heightIn(min = 44.dp),
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -194,7 +201,7 @@ internal fun ActionButtonsSection(
                             )
                         } else {
                             Text(
-                                "Copy Text",
+                                stringResource(R.string.copy_text),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 13.sp
@@ -208,7 +215,8 @@ internal fun ActionButtonsSection(
                         enabled = isXActionEnabled && !uiState.isFetchingTweetText,
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp),
+                            .fillMaxHeight()
+                            .heightIn(min = 44.dp),
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = BabakCastColors.SecondaryAccent,
@@ -223,7 +231,7 @@ internal fun ActionButtonsSection(
                             )
                         } else {
                             Text(
-                                "Share Text →",
+                                stringResource(R.string.share_text),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 13.sp
@@ -248,7 +256,7 @@ internal fun ActionButtonsSection(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "SUMMARY LENGTH",
+                    text = stringResource(R.string.summary_length_label),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -279,11 +287,7 @@ internal fun ActionButtonsSection(
                             )
                         ) {
                             Text(
-                                when (length) {
-                                    SummaryLength.SHORT -> "Short"
-                                    SummaryLength.MEDIUM -> "Medium"
-                                    SummaryLength.LONG -> "Long"
-                                },
+stringResource(length.labelRes()),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
@@ -305,7 +309,7 @@ internal fun ActionButtonsSection(
             enabled = summarizeEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = MaterialTheme.colorScheme.onSurface,
@@ -334,11 +338,11 @@ internal fun ActionButtonsSection(
                 }
                 Text(
                     if (uiState.isSummarizing) {
-                        "Summarizing…"
+                        stringResource(R.string.summarize_in_progress)
                     } else if (!uiState.supportsSummarize) {
-                        "Summarize (YouTube only)"
+                        stringResource(R.string.summarize_youtube_only)
                     } else {
-                        "Summarize Transcript"
+                        stringResource(R.string.summarize_transcript)
                     },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,

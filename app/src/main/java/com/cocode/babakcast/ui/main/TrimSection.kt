@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.domain.video.TrimInput
 import com.cocode.babakcast.domain.video.TrimResolution
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @Composable
 internal fun TrimSection(
@@ -41,14 +43,14 @@ internal fun TrimSection(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Cut a segment",
+                    stringResource(R.string.trim_title),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Text(
                     if (trim.enabled) {
-                        "Only this segment is kept — the rest is discarded"
+                        stringResource(R.string.trim_hint_on)
                     } else {
-                        "Keeps the whole video"
+                        stringResource(R.string.trim_hint_off)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = BabakCastColors.PrimaryAccent.copy(alpha = 0.7f)
@@ -68,14 +70,14 @@ internal fun TrimSection(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     TrimTimeField(
-                        label = "START",
+                        label = stringResource(R.string.trim_start),
                         value = trim.start,
                         enabled = enabled,
                         onValueChange = onStartChange,
                         modifier = Modifier.weight(1f)
                     )
                     TrimTimeField(
-                        label = "END",
+                        label = stringResource(R.string.trim_end),
                         value = trim.end,
                         enabled = enabled,
                         onValueChange = onEndChange,
@@ -83,8 +85,8 @@ internal fun TrimSection(
                     )
                 }
                 Text(
-                    text = (resolution as? TrimResolution.Invalid)?.message
-                        ?: "Format m:ss.s — e.g. 1:23.4 (tenths of a second)",
+                    text = (resolution as? TrimResolution.Invalid)?.let { stringResource(it.messageRes) }
+                        ?: stringResource(R.string.trim_format_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (resolution is TrimResolution.Invalid) {
                         MaterialTheme.colorScheme.error

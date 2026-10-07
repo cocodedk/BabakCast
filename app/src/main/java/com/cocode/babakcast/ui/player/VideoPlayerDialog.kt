@@ -33,6 +33,8 @@ import androidx.media3.ui.PlayerView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @Composable
 fun VideoPlayerDialog(
@@ -113,7 +115,7 @@ fun VideoPlayerDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Outlined.Close,
-                            contentDescription = "Close player",
+                            contentDescription = stringResource(R.string.player_close),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }

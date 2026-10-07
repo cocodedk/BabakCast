@@ -1,6 +1,5 @@
 package com.cocode.babakcast.ui.settings
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -22,16 +20,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cocode.babakcast.ui.theme.BabakCastColors
-import com.cocode.babakcast.util.openUrlOrToast
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -39,7 +38,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "Settings",
+                        stringResource(R.string.settings_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
@@ -54,7 +53,7 @@ fun SettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.action_back),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -69,7 +68,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // AI Providers Section
-            SectionHeader(title = "AI Providers")
+            SectionHeader(title = stringResource(R.string.settings_ai_providers))
             
             Column(
                 modifier = Modifier
@@ -102,68 +101,23 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // About Section
-            SectionHeader(title = "About")
-            
+            DownloadToolSection()
+
+            // About Section: the About screen holds the version, links, credits and privacy promises
+            SectionHeader(title = stringResource(R.string.settings_about))
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(bottom = 32.dp)
             ) {
-                Text(
-                    text = "Your API key is sent directly to the provider you configure. BabakCast does not proxy or store your data.",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = "Created by Babak Bandpey",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = "cocode.dk",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = BabakCastColors.SecondaryAccent,
-                    modifier = Modifier.clickable { context.openUrlOrToast("https://cocode.dk") }
-                )
-
-                Text(
-                    text = "cocodedk.github.io/BabakCast",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = BabakCastColors.SecondaryAccent,
-                    modifier = Modifier.clickable { context.openUrlOrToast("https://cocodedk.github.io/BabakCast") }
-                )
-
-                Text(
-                    text = "Version ${viewModel.installedVersionName}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = "Releases on GitHub",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = BabakCastColors.SecondaryAccent,
-                    modifier = Modifier.clickable {
-                        context.openUrlOrToast("https://github.com/cocodedk/BabakCast/releases")
-                    }
+                SettingsRow(
+                    label = stringResource(R.string.about_title),
+                    value = viewModel.installedVersionName,
+                    onClick = onNavigateToAbout,
+                    isFirst = true,
+                    isLast = true
                 )
             }
         }
@@ -257,7 +211,7 @@ private fun ProviderConfigDialog(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "API Key",
+                        text = stringResource(R.string.settings_api_key),
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -269,7 +223,7 @@ private fun ProviderConfigDialog(
                         onValueChange = onApiKeyChange,
                         placeholder = { 
                             Text(
-                                "Enter your API key",
+                                stringResource(R.string.settings_api_key_placeholder),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp)
                             ) 
                         },
@@ -285,6 +239,11 @@ private fun ProviderConfigDialog(
                         textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         shape = MaterialTheme.shapes.small
                     )
+                    Text(
+                        text = stringResource(R.string.settings_api_key_help),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
                 }
 
                 if (showUrlField) {
@@ -292,7 +251,7 @@ private fun ProviderConfigDialog(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "API Endpoint",
+                            text = stringResource(R.string.settings_api_endpoint),
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
@@ -320,7 +279,7 @@ private fun ProviderConfigDialog(
                             shape = MaterialTheme.shapes.small
                         )
                         Text(
-                            text = "Replace YOUR_RESOURCE and YOUR_DEPLOYMENT with your Azure values",
+                            text = stringResource(R.string.settings_azure_hint),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -344,7 +303,7 @@ private fun ProviderConfigDialog(
                             )
                         )
                     ) {
-                        Text("Cancel", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.action_cancel), style = MaterialTheme.typography.bodyMedium)
                     }
                     
                     Button(
@@ -357,7 +316,7 @@ private fun ProviderConfigDialog(
                         )
                     ) {
                         Text(
-                            "Save",
+                            stringResource(R.string.action_save),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -374,7 +333,7 @@ private fun ProviderConfigDialog(
                         )
                     ) {
                         Text(
-                            "Remove Configuration",
+                            stringResource(R.string.settings_remove_configuration),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
                         )
                     }

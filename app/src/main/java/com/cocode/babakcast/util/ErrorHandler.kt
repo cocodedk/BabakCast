@@ -1,8 +1,7 @@
 package com.cocode.babakcast.util
 
-import android.content.Context
-import com.cocode.babakcast.R
 import com.cocode.babakcast.domain.split.ChapterTooLargeException
+import com.yausername.youtubedl_android.YoutubeDLException
 import java.io.IOException
 
 /**
@@ -14,20 +13,21 @@ object ErrorHandler {
      */
     fun handleException(exception: Throwable): AppError {
         return when (exception) {
+            is AppErrorException -> exception.error
             is ChapterTooLargeException ->
-                AppError.ChapterSplitTooLarge(exception.message ?: "Chapter split exceeds size cap")
+                AppError.ChapterSplitTooLarge(exception.message)
             is IllegalArgumentException -> {
                 when {
                     exception.message?.contains("YouTube", ignoreCase = true) == true ->
-                        AppError.InvalidYouTubeUrl(exception.message ?: "Invalid YouTube URL")
+                        AppError.InvalidYouTubeUrl(exception.message)
                     exception.message?.contains("unsupported URL", ignoreCase = true) == true ||
                     exception.message?.contains("Invalid URL", ignoreCase = true) == true ->
-                        AppError.InvalidUrl(exception.message ?: "Unsupported URL")
+                        AppError.InvalidUrl(exception.message)
                     exception.message?.contains("provider", ignoreCase = true) == true ->
-                        AppError.ProviderMisconfigured(exception.message ?: "Provider error")
+                        AppError.ProviderMisconfigured(exception.message)
                     exception.message?.contains("model", ignoreCase = true) == true ->
-                        AppError.ModelNotFound(exception.message ?: "Model not found")
-                    else -> AppError.UnknownError(exception.message ?: "Invalid input")
+                        AppError.ModelNotFound(exception.message)
+                    else -> AppError.UnknownError(exception.message)
                 }
             }
             is IOException -> {
@@ -38,36 +38,26 @@ object ErrorHandler {
                     exception.message?.contains("transcript", ignoreCase = true) == true ->
                         AppError.TranscriptNotAvailable()
                     exception.message?.contains("download", ignoreCase = true) == true ->
-                        AppError.DownloadFailed(exception.message ?: "Download failed")
-                    else -> AppError.NetworkError(exception.message ?: "Network error")
+                        AppError.DownloadFailed(exception.message)
+                    else -> AppError.NetworkError(exception.message)
                 }
             }
             else -> {
-                val msg = exception.message ?: "Unexpected error"
+                val msg = exception.message
                 when {
+                    msg == null -> AppError.UnknownError()
                     msg.contains("transcript", ignoreCase = true) ->
                         AppError.TranscriptNotAvailable(msg)
                     msg.contains("not initialized", ignoreCase = true) ->
-                        AppError.NotInitialized("Download engine is still starting.")
+                        AppError.NotInitialized()
+                    exception is YoutubeDLException -> AppError.YtDlpFailed(msg)
+                    // The technical text (an ffmpeg log) goes to the log, not to the screen.
                     msg.contains("audio extraction", ignoreCase = true) ->
-                        AppError.AudioExtractFailed(msg)
+                        AppError.AudioExtractFailed()
                     msg.contains("audio split", ignoreCase = true) ->
-                        AppError.AudioSplitFailed(msg)
+                        AppError.AudioSplitFailed()
                     else -> AppError.UnknownError(msg)
                 }
-            }
-        }
-    }
-
-    /**
-     * Get full error message with fix hint
-     */
-    fun getFullErrorMessage(error: AppError): String {
-        return buildString {
-            append(error.message)
-            error.fixHint?.let {
-                append("\n\n")
-                append("How to fix: $it")
             }
         }
     }

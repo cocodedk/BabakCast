@@ -16,12 +16,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import java.util.Locale
+import com.cocode.babakcast.R
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class DownloadsViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val shareHelper: ShareHelper,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
@@ -51,9 +55,12 @@ class DownloadsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isCleaningDownloads = false,
                 message = if (result.isSuccess) {
-                    "Downloads cleared"
+                    context.getString(R.string.downloads_cleared)
                 } else {
-                    "Failed to clear downloads: ${result.exceptionOrNull()?.message ?: "Unknown error"}"
+                    context.getString(
+                        R.string.downloads_clear_failed,
+                        result.exceptionOrNull()?.message ?: context.getString(R.string.downloads_unknown_error)
+                    )
                 }
             )
             loadDownloads()
@@ -63,20 +70,20 @@ class DownloadsViewModel @Inject constructor(
     fun shareDownload(item: DownloadItem) {
         val missing = item.files.firstOrNull { !it.exists() }
         if (missing != null) {
-            _uiState.value = _uiState.value.copy(message = "File not found")
+            _uiState.value = _uiState.value.copy(message = context.getString(R.string.downloads_file_not_found))
             return
         }
         val mimeType = resolveMimeType(item.files)
         val title = when {
-            mimeType.startsWith("audio") -> "Share audio"
-            mimeType.startsWith("video") -> "Share video"
-            else -> "Share file"
+            mimeType.startsWith("audio") -> context.getString(R.string.share_chooser_audio)
+            mimeType.startsWith("video") -> context.getString(R.string.share_chooser_video)
+            else -> context.getString(R.string.share_chooser_file)
         }
         shareHelper.shareFiles(item.files, mimeType, title, item.displayName)
     }
 
     fun shareTitle(item: DownloadItem) {
-        shareHelper.shareText(item.displayName, "Share title")
+        shareHelper.shareText(item.displayName, context.getString(R.string.share_chooser_title))
     }
 
     fun deleteDownload(item: DownloadItem) {
@@ -95,9 +102,9 @@ class DownloadsViewModel @Inject constructor(
             }
             _uiState.value = _uiState.value.copy(
                 message = if (result.isSuccess && result.getOrDefault(false)) {
-                    "Download deleted"
+                    context.getString(R.string.downloads_deleted)
                 } else {
-                    "Failed to delete download"
+                    context.getString(R.string.downloads_delete_failed)
                 }
             )
             loadDownloads()
@@ -173,28 +180,4 @@ class DownloadsViewModel @Inject constructor(
             else -> DownloadMediaType.Unknown
         }
     }
-}
-
-data class DownloadsUiState(
-    val downloads: List<DownloadItem> = emptyList(),
-    val isLoadingDownloads: Boolean = false,
-    val downloadsError: String? = null,
-    val isCleaningDownloads: Boolean = false,
-    val message: String? = null,
-    val autoPlayNext: Boolean = false
-)
-
-data class DownloadItem(
-    val displayName: String,
-    val files: List<java.io.File>,
-    val sizeBytes: Long,
-    val lastModified: Long,
-    val partCount: Int,
-    val mediaType: DownloadMediaType
-)
-
-enum class DownloadMediaType(val label: String) {
-    Audio("Audio"),
-    Video("Video"),
-    Unknown("File")
 }

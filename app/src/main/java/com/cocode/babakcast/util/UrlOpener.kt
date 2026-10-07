@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import com.cocode.babakcast.R
 
 fun Context.openUrl(url: String): Boolean = runCatching {
     startActivity(
@@ -15,6 +16,6 @@ fun Context.openUrl(url: String): Boolean = runCatching {
 
 fun Context.openUrlOrToast(url: String) {
     if (!openUrl(url)) {
-        Toast.makeText(this, "Couldn't open browser", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.browser_unavailable, Toast.LENGTH_SHORT).show()
     }
 }

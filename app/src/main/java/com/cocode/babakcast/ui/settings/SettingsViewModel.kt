@@ -17,12 +17,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Named
+import android.content.Context
+import android.util.Log
+import com.cocode.babakcast.R
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val providerRepository: ProviderRepository,
     private val secureStorage: SecureStorage,
     private val settingsRepository: SettingsRepository,
+    @ApplicationContext private val context: Context,
     @param:Named("installedVersionName") val installedVersionName: String
 ) : ViewModel() {
 
@@ -114,11 +119,13 @@ class SettingsViewModel @Inject constructor(
             val result = withContext(Dispatchers.IO) {
                 providerRepository.fetchModelsForProvider(providerId, apiKey.takeIf { !it.isNullOrBlank() })
             }
+            // The technical text (an HTTP code and the provider's reply) goes to the log only.
+            result.exceptionOrNull()?.let { Log.w("SettingsViewModel", "Model list failed for $providerId", it) }
             _uiState.value = _uiState.value.copy(
                 modelsLoading = false,
                 fetchedModels = result.getOrElse { emptyList() },
                 fetchedModelsProviderId = providerId,
-                modelsError = result.exceptionOrNull()?.message
+                modelsError = result.exceptionOrNull()?.let { context.getString(R.string.models_load_failed) }
             )
         }
     }

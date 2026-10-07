@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @Composable
 internal fun UrlInputSection(
@@ -34,7 +36,7 @@ internal fun UrlInputSection(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "VIDEO URL",
+            text = stringResource(R.string.url_label),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -48,7 +50,7 @@ internal fun UrlInputSection(
             onValueChange = onUrlChange,
             placeholder = {
                 Text(
-                    "Paste YouTube, X, Instagram, or LinkedIn video link",
+                    stringResource(R.string.url_placeholder),
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
@@ -65,7 +67,7 @@ internal fun UrlInputSection(
                     ) {
                         Icon(
                             Icons.Outlined.Close,
-                            contentDescription = "Clear URL",
+                            contentDescription = stringResource(R.string.url_clear_description),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )

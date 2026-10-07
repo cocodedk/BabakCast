@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @Composable
 internal fun ProviderCard(
@@ -58,7 +60,7 @@ internal fun ProviderCard(
                     text = if (providerState.hasApiKey) {
                         "${providerState.selectedModel} · ${providerState.maskedApiKey}"
                     } else {
-                        "Not configured"
+                        stringResource(R.string.provider_not_configured)
                     },
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 12.sp

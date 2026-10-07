@@ -89,7 +89,7 @@ class ShareTranslationRunnerTest {
     }
 
     @Test
-    fun textForShare_failed_returnsOriginalText_andSetsNetworkError() = runBlocking {
+    fun textForShare_failed_returnsOriginalText_andSetsTranslationError() = runBlocking {
         var state = MainUiState()
         val r = runner(
             state = { state },
@@ -101,7 +101,7 @@ class ShareTranslationRunnerTest {
 
         assertEquals("hello", result)
         assertEquals(
-            AppError.NetworkError("Translation failed — sharing original text"),
+            AppError.TranslationFailed(),
             state.error
         )
     }

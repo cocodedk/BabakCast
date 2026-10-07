@@ -1,5 +1,6 @@
 package com.cocode.babakcast.ui.main
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 /**
  * The two audio actions: keep the extracted MP3 whole (primary) or split it for
@@ -33,13 +36,13 @@ internal fun AudioActionButtons(
         !uiState.trimBlocksDownload
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         AudioButton(
-            label = "Download Audio",
+            label = stringResource(R.string.audio_download),
             enabled = audioEnabled,
             color = BabakCastColors.PrimaryAccent,
             onClick = onDownloadAudio
         )
         AudioButton(
-            label = "Download Audio Split (${uiState.splitSizeMb} MB)",
+            label = stringResource(R.string.audio_download_split, uiState.splitSizeMb),
             enabled = audioEnabled,
             color = MaterialTheme.colorScheme.onSurface,
             onClick = onDownloadSplitAudio
@@ -59,7 +62,7 @@ private fun AudioButton(
         enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .heightIn(min = 52.dp),
         shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = color,

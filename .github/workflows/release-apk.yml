@@ -5,7 +5,7 @@
 # Builds both distribution flavors (see app/build.gradle.kts) with the same key.
 # dependenciesInfo is off for every build, not just fdroid (android {} block, both flavors):
 #   - github: today's behaviour, yt-dlp self-update on -> BabakCast.apk
-#   - fdroid: yt-dlp self-update off -> BabakCast-fdroid.apk
+#   - fdroid: yt-dlp updates only when the user taps "Update yt-dlp" -> BabakCast-fdroid.apk
 
 name: Build signed release APK
 
