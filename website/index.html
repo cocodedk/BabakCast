@@ -9,6 +9,11 @@
   <meta property="og:description" content="Download YouTube, X (Twitter), Instagram, and LinkedIn videos, copy tweet text, summarize transcripts with your own AI. No backend, no tracking." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://cast.cocode.dk/" />
+  <meta property="og:image" content="https://cast.cocode.dk/img/share.png" />
+  <meta property="og:image:width" content="1024" />
+  <meta property="og:image:height" content="500" />
+  <meta property="og:image:alt" content="BabakCast: the app icon and the app's name" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="theme-color" content="#0b1020" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -17,6 +22,7 @@
   <link rel="alternate" hreflang="en" href="https://cast.cocode.dk/" />
   <link rel="alternate" hreflang="fa" href="https://cast.cocode.dk/fa/" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="blocks.css" />
   <link rel="stylesheet" href="https://brand.cocode.dk/v1.css">
   <script type="module" src="https://brand.cocode.dk/v1.js"></script>
 </head>
@@ -33,7 +39,21 @@
     <a href="fa/" hreflang="fa">FA</a>
   </cocode-head>
 
-  <main class="shell">
+  <header class="site-header">
+    <!-- cocode-apps:nav:start -->
+<link rel="stylesheet" href="/css/cocode-nav.css">
+<a class="skip" href="#main">Skip to content</a>
+<nav class="cocode-nav" aria-label="BabakCast">
+  <a class="brand" href="/" data-nav="home" aria-current="page"><img src="/img/icon.png" alt="" width="32" height="32">BabakCast</a>
+  <a href="/#how" data-nav="how">How it works</a>
+  <a href="/#install" data-nav="install">Install</a>
+  <a href="/privacy/" data-nav="privacy">Privacy</a>
+  <a href="https://cocode.dk/" data-nav="more">More apps</a>
+</nav>
+<!-- cocode-apps:nav:end -->
+  </header>
+
+  <main class="shell" id="main" tabindex="-1">
     <section class="hero reveal">
       <p class="kicker">Local-first · Android</p>
       <h1>Download. Summarize. Share.</h1>
@@ -47,7 +67,7 @@
       </div>
     </section>
 
-    <section id="features" class="reveal">
+    <section id="how" class="reveal">
       <h2>What it does</h2>
       <div class="feature-grid">
         <article class="card glass-panel">
@@ -102,12 +122,19 @@
 
     <section id="install" class="card glass-panel reveal">
       <h2>Install on Android</h2>
+      <!-- cocode-apps:install:start -->
+<ul class="install" role="list">
+  <li><p class="fdroid-soon">Coming to F-Droid</p></li>
+  <li><a href="https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk">Download the APK from GitHub</a></li>
+  <li><a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cocodedk/BabakCast">Auto-update the GitHub APK with Obtainium</a></li>
+</ul>
+<!-- cocode-apps:install:end -->
       <div class="install-steps">
         <div class="install-step">
           <span class="step-number">1</span>
           <div class="step-content">
             <h3>Download the APK</h3>
-            <p>Tap the download button above or get it from <a href="https://github.com/cocodedk/BabakCast/releases" target="_blank" rel="noreferrer">GitHub Releases</a>.</p>
+            <p>Use the download link above, or get it from <a href="https://github.com/cocodedk/BabakCast/releases" target="_blank" rel="noreferrer">GitHub Releases</a>.</p>
           </div>
         </div>
         <div class="install-step">
@@ -149,9 +176,16 @@
     </section>
   </main>
 
-  <footer class="shell site-footer">
-    <p>Apache-2.0 | <a href="privacy.html">Privacy Policy</a></p>
-  </footer>
+  <div class="shell site-footer">
+    <!-- cocode-apps:footer:start -->
+<footer class="cocode-footer">
+  <a href="https://github.com/cocodedk/BabakCast">Source code</a> ·
+  <a href="/privacy/">Privacy</a> ·
+  License: Apache-2.0 ·
+  <a href="https://cocode.dk/">Made by Cocode (cocode.dk)</a>
+</footer>
+<!-- cocode-apps:footer:end -->
+  </div>
 
   <cocode-foot repo="cocodedk/BabakCast" dark>
     <a href="https://cocode.dk">cocode.dk</a>

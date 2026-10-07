@@ -7,6 +7,21 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 ![Local-first](https://img.shields.io/badge/Local--first-161A22?style=flat)
 ![BYO-AI](https://img.shields.io/badge/BYO--AI-FFB860?style=flat)
 
+## Installation
+
+<!-- cocode-apps:install:start -->
+- Coming to F-Droid
+- [Download the APK from GitHub](https://github.com/cocodedk/BabakCast/releases/latest/download/BabakCast.apk)
+- [Auto-update the GitHub APK with Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cocodedk/BabakCast)
+<!-- cocode-apps:install:end -->
+
+### Requirements
+
+- Android 8.0 (API 26) or higher.
+- For summarization: an API key from at least one supported provider (OpenAI, Anthropic, Gemini, OpenRouter, or Azure OpenAI).
+
+---
+
 ## Website
 - [English](https://cast.cocode.dk/)
 - [فارسی (Persian)](https://cast.cocode.dk/fa/)
@@ -49,28 +64,6 @@ A **local-first** Android app to download YouTube, X (Twitter), Instagram, and L
 
 ---
 
-## Installation
-
-### From source
-
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/cocodedk/BabakCast.git
-   cd BabakCast
-   ```
-2. Open in Android Studio and run on a device or emulator (API 26+).
-
-### APK (when available)
-
-- Download the latest release from [Releases](https://github.com/cocodedk/BabakCast/releases) and install on your Android device.
-
-### Requirements
-
-- Android 8.0 (API 26) or higher.
-- For summarization: an API key from at least one supported provider (OpenAI, Anthropic, Gemini, OpenRouter, or Azure OpenAI).
-
----
-
 ## Usage
 
 1. **Download video** — Paste a YouTube, X (Twitter), Instagram, or LinkedIn URL, tap *Download Video*. The app downloads the video, splits it if needed, and opens the share sheet.
@@ -97,7 +90,42 @@ You can pick from suggested models or enter a custom model name.
 
 ---
 
-## Release build (CI)
+## Tech stack
+
+- **Kotlin** + **Jetpack Compose**
+- **Hilt** for dependency injection
+- **youtubedl-android** for YouTube, X/Twitter, Instagram, and LinkedIn download & transcript
+- **FFmpegKit** for video splitting
+- **EncryptedSharedPreferences** for API key storage
+
+---
+
+## Privacy
+
+BabakCast has no backend of its own: the developer runs no server and receives no data about you, and
+the app has no accounts, no analytics, no ads and no tracking. It is not an offline app, though. When you
+ask it to download media or summarize a transcript, it sends the links and content you provide directly
+to the services involved: the source platform for a download, and only the AI provider you configure for a
+summary. API keys are stored on the device and are not sent anywhere except to the provider you choose.
+
+Read the full policy at <https://cast.cocode.dk/privacy/> (also in [privacy.md](privacy.md)).
+
+---
+
+## Build
+
+Needs Java 17 and the Android SDK (Android Studio).
+
+### From source
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/cocodedk/BabakCast.git
+   cd BabakCast
+   ```
+2. Open in Android Studio and run on a device or emulator (API 26+).
+
+### Release build (CI)
 
 On every **push or merge to `main`**, GitHub Actions builds a **signed release APK** and uploads it as a workflow artifact.
 
@@ -124,7 +152,7 @@ If the secrets are not set, the workflow will fail at the build step; set all fo
 `release.keystore` (or generates one), verifies the password, uploads the four secrets, and
 stores the same values locally so your own builds are signed too.
 
-### Signing local builds
+#### Signing local builds
 
 Debug builds are signed with the release keystore when the four values are available, so a
 locally built APK can replace an installed release build with `adb install -r` — no uninstall,
@@ -141,7 +169,11 @@ against the project root.
 
 ---
 
-## Development
+## Contributing
+
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the local setup, the coding style and the pull request checklist. To report a security problem, follow [SECURITY.md](SECURITY.md).
+
+### Development
 
 A pre-commit hook runs unit tests before each commit. Enable it once:
 
@@ -150,16 +182,6 @@ git config core.hooksPath .githooks
 ```
 
 Or run `./scripts/install-hooks.sh`. Commits will be blocked if `./gradlew test` fails.
-
----
-
-## Tech stack
-
-- **Kotlin** + **Jetpack Compose**
-- **Hilt** for dependency injection
-- **youtubedl-android** for YouTube, X/Twitter, Instagram, and LinkedIn download & transcript
-- **FFmpegKit** for video splitting
-- **EncryptedSharedPreferences** for API key storage
 
 ---
 
