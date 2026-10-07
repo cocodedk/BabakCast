@@ -59,6 +59,13 @@ android {
         versionName = providers.gradleProperty("VERSION_NAME").get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ffmpeg-kit-audio ships no 32-bit x86 build, so an x86 APK would crash with an
+        // UnsatisfiedLinkError the first time it splits or tags a file. 32-bit x86 phones
+        // are gone; 64-bit x86 (emulators, Chromebooks) keeps working.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     // AGP otherwise adds a Google-encrypted dependency list to the APK signing block,
