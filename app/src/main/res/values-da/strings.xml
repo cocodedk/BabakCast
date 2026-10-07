@@ -196,9 +196,9 @@
     <string name="about_privacy_local">Hentede filer, transskriptioner og indstillinger bliver på din telefon og fjernes, når du afinstallerer appen. Hvis Androids sikkerhedskopiering er slået til, kan Android også gemme en kopi af dem i din egen Google-sikkerhedskopi.</string>
     <string name="about_privacy_link">Læs privatlivspolitikken</string>
     <string name="about_links_title">Links</string>
-    <string name="about_website">Åbn webstedet</string>
+    <string name="about_website">Åbn hjemmesiden</string>
     <string name="about_source">Se kildekoden på GitHub</string>
-    <string name="about_report">Meld et problem på GitHub</string>
+    <string name="about_report">Meld en fejl på GitHub</string>
     <string name="about_credits">Tak og licenser</string>
     <string name="about_license">BabakCast er fri software, udgivet under Apache License 2.0.</string>
     <string name="about_credits_body">Bygget med Kotlin, Jetpack Compose og Hilt. Hentning og transskriptioner bygger på youtubedl-android, og opdeling af video og lyd bygger på FFmpegKit.</string>
