@@ -54,7 +54,7 @@ You supply your own API key for each AI provider you enable. Keys are stored **o
 
 BabakCast does not check for updates to itself. The **See the latest version** button on the About screen only opens a web page in your browser when you tap it (see section 9).
 
-The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this: its downloader changes only when the app itself is updated. GitHub's handling is covered by the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It asks GitHub for a newer yt-dlp only when you tap **Update yt-dlp** in Settings, and the request carries the same standard connection information and nothing else. Without that tap, its downloader stays the one that came with the app. GitHub's handling is covered by the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ## 5. Data stored on your device
 
@@ -71,7 +71,6 @@ When you share a file, BabakCast gives the app you pick permission to read it. T
 ## 6. Permissions
 
 - **Internet** and **network state** — required to reach the services above and to detect your connection type.
-- **Read/write external storage** (Android 12L / API 32 and older only) — legacy permission used to save and share downloaded files on older devices. It is not requested on newer Android versions.
 - No location, contacts, camera, or microphone permissions are requested.
 
 ## 7. No tracking, no accounts, no ads

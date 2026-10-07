@@ -99,6 +99,14 @@
     <string name="settings_adaptive_hint">Findes ikke endnu. Vælg Kort, Mellem eller Lang under RESUMÉETS LÆNGDE på fanen Hjem.</string>
     <string name="settings_summary_length">Resuméets længde (bruges ikke endnu)</string>
     <string name="settings_summary_length_automatic">Automatisk</string>
+    <string name="settings_downloader">Hentningsværktøj</string>
+    <string name="settings_downloader_hint">yt-dlp er det værktøj, BabakCast henter videoer med. Når YouTube ændrer sig, kan hentninger holde op med at virke, indtil yt-dlp er opdateret. Knappen nedenfor henter den nyeste yt-dlp fra GitHub. Det kræver internetforbindelse. BabakCast gør det kun, når du trykker på knappen.</string>
+    <string name="settings_downloader_update">Opdater yt-dlp</string>
+    <string name="settings_downloader_working">Opdaterer yt-dlp…</string>
+    <string name="settings_downloader_done">yt-dlp er nu opdateret.</string>
+    <string name="settings_downloader_latest">Du har allerede den nyeste yt-dlp.</string>
+    <string name="settings_downloader_busy">En hentning er i gang. Prøv igen, når den er færdig.</string>
+    <string name="settings_downloader_failed">Opdateringen lykkedes ikke. Tjek din internetforbindelse, og prøv igen.</string>
     <string name="action_close">Luk</string>
     <string name="share_chooser_title">Del titel</string>
     <string name="tweet_text_copied">Tweet-teksten er kopieret</string>

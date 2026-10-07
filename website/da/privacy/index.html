@@ -131,7 +131,7 @@
 
         <h2>4. Opdateringer</h2>
         <p>BabakCast tjekker ikke selv for opdateringer til appen. Knappen <strong>Se den nyeste version</strong> på siden Om åbner kun en webside i din browser, når du trykker på den (se afsnit 9).</p>
-        <p>Den version, du henter fra GitHub, holder til gengæld sit værktøj til at hente videoer opdateret. Værktøjet hedder yt-dlp og er et open source-værktøj, der henter videoerne. Når appen starter, spørger den GitHub, om der findes en nyere yt-dlp, og den kan hente den. Efter et vellykket tjek spørger den ikke igen før næste dag. Forespørgslen indeholder ingen links, intet indhold og ingen personlige oplysninger ud over de almindelige forbindelsesoplysninger (for eksempel din IP-adresse), som enhver webforespørgsel indeholder. F-Droid-versionen gør aldrig dette: dens værktøj skifter kun, når selve appen opdateres. GitHubs håndtering er beskrevet i
+        <p>Den version, du henter fra GitHub, holder til gengæld sit værktøj til at hente videoer opdateret. Værktøjet hedder yt-dlp og er et open source-værktøj, der henter videoerne. Når appen starter, spørger den GitHub, om der findes en nyere yt-dlp, og den kan hente den. Efter et vellykket tjek spørger den ikke igen før næste dag. Forespørgslen indeholder ingen links, intet indhold og ingen personlige oplysninger ud over de almindelige forbindelsesoplysninger (for eksempel din IP-adresse), som enhver webforespørgsel indeholder. F-Droid-versionen gør aldrig dette af sig selv. Den spørger kun GitHub efter en nyere yt-dlp, når du trykker på <strong>Opdater yt-dlp</strong> i Indstillinger, og forespørgslen indeholder de samme almindelige forbindelsesoplysninger og intet andet. Uden det tryk forbliver værktøjet det, der fulgte med appen. GitHubs håndtering er beskrevet i
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">GitHubs privatlivserklæring</a>.</p>
 
         <h2>5. Hvad der bliver på telefonen</h2>
@@ -147,7 +147,6 @@
         <h2>6. Tilladelser</h2>
         <ul>
           <li><strong>Internet</strong> og <strong>netværksstatus</strong>: kræves for at nå tjenesterne ovenfor og for at se, hvilken type forbindelse du har.</li>
-          <li><strong>Læs/skriv eksternt lager</strong> (kun Android 12L / API 32 og ældre): en ældre tilladelse, der bruges til at gemme og dele hentede filer på ældre enheder. Den bliver ikke anmodet om på nyere Android-versioner.</li>
           <li>Der anmodes ikke om tilladelser til lokation, kontakter, kamera eller mikrofon.</li>
         </ul>
 

@@ -135,7 +135,7 @@
 
         <h2>4. Updates</h2>
         <p>BabakCast does not check for updates to itself. The <strong>See the latest version</strong> button on the About screen only opens a web page in your browser when you tap it (see section 9).</p>
-        <p>The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this: its downloader changes only when the app itself is updated. GitHub's handling is covered by the
+        <p>The version you download from GitHub does keep its media downloader up to date. That downloader is yt-dlp, the open-source tool that fetches the videos. When the app starts, it asks GitHub whether there is a newer yt-dlp and may download it. After a successful check it does not ask again until the next day. The request carries no links, no content and no personal data beyond the standard connection information (such as your IP address) that any web request includes. The F-Droid version never does this on its own. It asks GitHub for a newer yt-dlp only when you tap <strong>Update yt-dlp</strong> in Settings, and the request carries the same standard connection information and nothing else. Without that tap, its downloader stays the one that came with the app. GitHub's handling is covered by the
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">GitHub Privacy Statement</a>.</p>
 
         <h2>5. Data stored on your device</h2>
@@ -151,7 +151,6 @@
         <h2>6. Permissions</h2>
         <ul>
           <li><strong>Internet</strong> and <strong>network state</strong> &mdash; required to reach the services above and to detect your connection type.</li>
-          <li><strong>Read/write external storage</strong> (Android 12L / API 32 and older only) &mdash; legacy permission used to save and share downloaded files on older devices. It is not requested on newer Android versions.</li>
           <li>No location, contacts, camera, or microphone permissions are requested.</li>
         </ul>
 
@@ -229,7 +228,7 @@
 
         <h2>۴. به‌روزرسانی‌ها</h2>
         <p>BabakCast برای به‌روزرسانی خودش چیزی بررسی نمی‌کند. دکمهٔ <strong>See the latest version</strong> در صفحهٔ About فقط وقتی آن را می‌زنید یک صفحهٔ وب را در مرورگرتان باز می‌کند (بخش ۹).</p>
-        <p>نسخه‌ای که از گیت‌هاب دانلود می‌کنید ابزار دانلود ویدیو را هم به‌روز نگه می‌دارد. این ابزار yt-dlp است، همان ابزار متن‌بازی که ویدیوها را می‌گیرد. هنگام اجرای برنامه، BabakCast از گیت‌هاب می‌پرسد نسخهٔ جدیدتری از yt-dlp هست یا نه و ممکن است آن را دانلود کند. بعد از یک بررسی موفق تا روز بعد دوباره نمی‌پرسد. این درخواست هیچ پیوند، محتوا یا داده شخصی‌ای ندارد و فقط شامل اطلاعات اتصال معمولی (مانند نشانی IP شما) است که هر درخواست وب دارد. نسخهٔ F-Droid هرگز این کار را نمی‌کند و ابزار دانلودش فقط همراه به‌روزرسانی خود برنامه عوض می‌شود. رفتار گیت‌هاب تحت
+        <p>نسخه‌ای که از گیت‌هاب دانلود می‌کنید ابزار دانلود ویدیو را هم به‌روز نگه می‌دارد. این ابزار yt-dlp است، همان ابزار متن‌بازی که ویدیوها را می‌گیرد. هنگام اجرای برنامه، BabakCast از گیت‌هاب می‌پرسد نسخهٔ جدیدتری از yt-dlp هست یا نه و ممکن است آن را دانلود کند. بعد از یک بررسی موفق تا روز بعد دوباره نمی‌پرسد. این درخواست هیچ پیوند، محتوا یا داده شخصی‌ای ندارد و فقط شامل اطلاعات اتصال معمولی (مانند نشانی IP شما) است که هر درخواست وب دارد. نسخهٔ F-Droid هرگز این کار را خودش انجام نمی‌دهد. فقط وقتی در تنظیمات (Settings) روی <strong>Update yt-dlp</strong> بزنید، از گیت‌هاب نسخهٔ جدیدتر yt-dlp را می‌خواهد و فقط همان اطلاعات اتصال معمولی را می‌فرستد. بدون این کار، ابزار دانلودش همان نسخه‌ای می‌ماند که همراه برنامه آمده است. رفتار گیت‌هاب تحت
         <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener" target="_blank">بیانیهٔ حریم خصوصی گیت‌هاب</a> است.</p>
 
         <h2>۵. داده‌های ذخیره‌شده روی دستگاه شما</h2>
@@ -245,7 +244,6 @@
         <h2>۶. مجوزها</h2>
         <ul>
           <li><strong>اینترنت</strong> و <strong>وضعیت شبکه</strong> &mdash; برای دسترسی به سرویس‌های بالا و تشخیص نوع اتصال لازم است.</li>
-          <li><strong>خواندن/نوشتن حافظهٔ خارجی</strong> (فقط اندروید 12L، یعنی API 32، و پایین‌تر) &mdash; مجوز قدیمی برای ذخیره و اشتراک فایل‌های دانلودشده روی دستگاه‌های قدیمی‌تر. در نسخه‌های جدیدتر اندروید درخواست نمی‌شود.</li>
           <li>هیچ مجوز موقعیت مکانی، مخاطبین، دوربین یا میکروفون درخواست نمی‌شود.</li>
         </ul>
 
