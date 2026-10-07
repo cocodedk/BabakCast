@@ -62,16 +62,18 @@ fun sha256Hex(bytes: ByteArray): String =
     MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
 /**
- * A stand-in for GitHub's "latest release" page and the files it points to: yt-dlp at /yt-dlp
- * and its checksum file at /sums. Each part can answer normally, say nothing at all (a stalled
- * network), wait for [gate], answer with something too large, or redirect.
+ * A stand-in for GitHub's "latest release" page and the files it points to, which are at
+ * /download/<tag>/yt-dlp and /download/<tag>/SHA2-256SUMS. Each part can answer normally, say
+ * nothing at all (a stalled network), wait for [gate], answer with something too large, or redirect.
  */
 class FakeGitHub(
     private val tag: String,
     private val file: ByteArray = fakeYtDlp(tag),
     private val declaredSize: Long = file.size.toLong(),
     private val sums: String = "${sha256Hex(file)}  yt-dlp\n",
-    private val listSums: Boolean = true
+    private val listSums: Boolean = true,
+    /** The release the SUMS asset address names (the tag itself unless a test says otherwise). */
+    private val sumsTag: String = tag
 ) {
     val server = MockWebServer()
 
@@ -84,48 +86,67 @@ class FakeGitHub(
     /** Counted down when the release page is asked for. */
     val releaseAsked = CountDownLatch(1)
 
-    /** Where /yt-dlp redirects to, or null to serve the file there. */
+    /** Where the yt-dlp file's address redirects to, or null to serve the file there. */
     @Volatile var fileRedirect: String? = null
     @Volatile var hugeRelease = false
     @Volatile var hugeSums = false
     @Volatile var hugeFile = false
 
+    /** The paths asked for so far, in order. */
+    val paths = CopyOnWriteArrayList<String>()
+
     val releaseUrl: String get() = server.url("/release").toString()
 
-    /** Test only: plain HTTP to this one host (the real policy wants HTTPS on GitHub). */
-    internal val policy: UrlPolicy get() = UrlPolicy { it.host == server.hostName }
+    /**
+     * Test only: plain HTTP to this one host, with the same shape of rules as the real
+     * [ReleaseSource.github]: files at /download/<tag>/<name>, and only those of the tag asked for.
+     */
+    internal val source: ReleaseSource
+        get() = ReleaseSource(
+            apiUrl = releaseUrl,
+            api = UrlPolicy { it.host == server.hostName },
+            release = { t ->
+                UrlPolicy { url ->
+                    url.host == server.hostName &&
+                        (url.encodedPath.startsWith("/download/$t/") || url.encodedPath == "/real")
+                }
+            },
+            assetUrl = { t, name -> server.url("/download/$t/$name").toString() }
+        )
 
     fun start(): FakeGitHub {
         server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse = when (request.path.also { paths += it.orEmpty() }?.substringBefore('?')) {
-                "/release" -> {
-                    releaseAsked.countDown()
-                    gate?.await(15, TimeUnit.SECONDS)
-                    if (releaseStalls) stalled() else if (hugeRelease) big(2L * 1024 * 1024) else json()
-                }
-                "/sums" -> when {
-                    hugeSums -> big(100L * 1024)
-                    hugeFile -> MockResponse().setBody("${sha256Hex(bigFile)}  yt-dlp\n")
-                    else -> MockResponse().setBody(sums)
-                }
-                "/yt-dlp" -> when {
-                    fileStalls -> stalled()
-                    fileRedirect != null -> MockResponse().setResponseCode(302).setHeader("Location", fileRedirect!!)
-                    hugeFile -> MockResponse().setBody(Buffer().write(bigFile))
-                    else -> MockResponse().setBody(Buffer().write(file))
-                }
-                "/real" -> MockResponse().setBody(Buffer().write(file))
-                else -> MockResponse().setResponseCode(404)
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                paths += request.path.orEmpty()
+                return answer(request.path.orEmpty().substringBefore('?'))
             }
         }
         server.start()
         return this
     }
 
-    /** The paths asked for so far, in order. */
-    val paths = CopyOnWriteArrayList<String>()
-
     fun shutdown() = server.shutdown()
+
+    private fun answer(path: String): MockResponse = when {
+        path == "/release" -> {
+            releaseAsked.countDown()
+            gate?.await(15, TimeUnit.SECONDS)
+            if (releaseStalls) stalled() else if (hugeRelease) big(2L * 1024 * 1024) else json()
+        }
+        path.endsWith("/SHA2-256SUMS") -> when {
+            hugeSums -> big(100L * 1024)
+            hugeFile -> MockResponse().setBody("${sha256Hex(bigFile)}  yt-dlp\n")
+            else -> MockResponse().setBody(sums)
+        }
+        path.startsWith("/download/") && path.endsWith("/yt-dlp") -> when {
+            fileStalls -> stalled()
+            fileRedirect != null -> MockResponse().setResponseCode(302).setHeader("Location", fileRedirect!!)
+            hugeFile -> MockResponse().setBody(Buffer().write(bigFile))
+            else -> MockResponse().setBody(Buffer().write(file))
+        }
+        path == "/real" -> MockResponse().setBody(Buffer().write(file))
+        else -> MockResponse().setResponseCode(404)
+    }
 
     private fun stalled() = MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE)
 
@@ -134,12 +155,16 @@ class FakeGitHub(
     private fun big(bytes: Long) = MockResponse().setBody(Buffer().write(ByteArray(bytes.toInt()) { 'a'.code.toByte() }))
 
     private fun json(): MockResponse {
-        val sumsAsset = if (listSums) """{"name":"SHA2-256SUMS","browser_download_url":"${server.url("/sums")}","size":1},""" else ""
+        val sumsAsset = if (listSums) {
+            """{"name":"SHA2-256SUMS","browser_download_url":"${server.url("/download/$sumsTag/SHA2-256SUMS")}","size":1},"""
+        } else {
+            ""
+        }
         return MockResponse().setBody(
             """{"tag_name":"$tag","name":"yt-dlp $tag","assets":[
                 $sumsAsset
                 {"name":"yt-dlp.exe","browser_download_url":"${server.url("/other")}","size":1},
-                {"name":"yt-dlp","browser_download_url":"${server.url("/yt-dlp")}","size":$declaredSize}]}"""
+                {"name":"yt-dlp","browser_download_url":"${server.url("/download/$tag/yt-dlp")}","size":$declaredSize}]}"""
         )
     }
 }

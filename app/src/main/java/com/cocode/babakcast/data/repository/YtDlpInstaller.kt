@@ -31,31 +31,30 @@ import okhttp3.Response
  * app release whenever the key changes.
  */
 internal class YtDlpInstaller(
-    client: OkHttpClient,
-    private val releaseUrl: String,
+    private val client: OkHttpClient,
+    private val source: ReleaseSource,
     private val binary: File,
-    policy: UrlPolicy = UrlPolicy.GITHUB,
     private val releaseTimeoutMs: Long = 20_000,
     private val downloadTimeoutMs: Long = 40_000
 ) {
-    private val net = YtDlpTransport(client, policy)
-
     fun update(): YtDlpUpdateResult {
-        val release = Json.parseToJsonElement(net.get(releaseUrl, releaseTimeoutMs) { it.readLimited(MAX_JSON) }).jsonObject
-        val tag = release.string("tag_name") ?: throw IOException("The release has no version")
+        val api = YtDlpTransport(client, source.api)
+        val release = Json.parseToJsonElement(api.get(source.apiUrl, releaseTimeoutMs) { it.readLimited(MAX_JSON) }).jsonObject
+        val tag = release.string("tag_name")?.takeIf { TAG.matches(it) } ?: throw IOException("The release has no valid version")
         val installed = YtDlpVersion.of(binary)
         if (installed != null && YtDlpVersion.compare(installed, tag) >= 0) return YtDlpUpdateResult.AlreadyLatest
 
         val assets = release["assets"]?.jsonArray?.map { it.jsonObject }.orEmpty().associateBy { it.string("name") }
-        val file = assets[FILE] ?: throw IOException("The release has no $FILE file")
-        val sums = assets[SUMS] ?: throw IOException("The release has no $SUMS file")
-        val expected = expectedSha256(net.get(address(sums), releaseTimeoutMs) { it.readLimited(MAX_SUMS) })
+        val fileUrl = boundAddress(assets, FILE, tag)
+        val sumsUrl = boundAddress(assets, SUMS, tag)
+        val net = YtDlpTransport(client, source.release(tag))
+        val expected = expectedSha256(net.get(sumsUrl, releaseTimeoutMs) { it.readLimited(MAX_SUMS) })
 
         val staging = File(binary.parentFile, "$FILE.download")
         try {
-            val actual = net.get(address(file), downloadTimeoutMs) { stage(it, staging) }
+            val actual = net.get(fileUrl, downloadTimeoutMs) { stage(it, staging) }
             if (actual != expected) throw IOException("The download does not match the published checksum")
-            val size = file["size"]?.jsonPrimitive?.longOrNull
+            val size = assets[FILE]?.get("size")?.jsonPrimitive?.longOrNull
             if (size != null && staging.length() != size) throw IOException("The download is incomplete")
             if (YtDlpVersion.of(staging) != tag) throw IOException("The download is not yt-dlp $tag")
             if (!staging.renameTo(binary)) throw IOException("Could not put the new yt-dlp in place")
@@ -85,8 +84,13 @@ internal class YtDlpInstaller(
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun address(asset: JsonObject): String =
-        asset.string("browser_download_url") ?: throw IOException("A release file has no address")
+    /** The address of [name] in release [tag], which the release's own listing must give exactly. */
+    private fun boundAddress(assets: Map<String?, JsonObject>, name: String, tag: String): String {
+        val declared = assets[name]?.string("browser_download_url") ?: throw IOException("The release has no $name file")
+        val expected = source.assetUrl(tag, name)
+        if (declared != expected) throw IOException("$name points outside release $tag")
+        return expected
+    }
 
     private fun JsonObject.string(key: String): String? = this[key]?.jsonPrimitive?.contentOrNull
 
@@ -96,6 +100,8 @@ internal class YtDlpInstaller(
         private const val MAX_JSON = 1L * 1024 * 1024
         private const val MAX_SUMS = 64L * 1024
         private const val MAX_FILE = 20L * 1024 * 1024
+        /** A yt-dlp release tag: 2025.11.12 (stable), or 2026.09.27.232945 (nightly, with the time). */
+        private val TAG = Regex("""\d{4}\.\d{2}\.\d{2}(\.\d{1,9})?""")
         private val SUMS_LINE = Regex("^([0-9a-f]{64})  $FILE$")
 
         /**

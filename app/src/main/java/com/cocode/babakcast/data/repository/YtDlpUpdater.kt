@@ -9,6 +9,7 @@ import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.YoutubeDLResponse
 import java.io.File
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
 /** The yt-dlp release channel both flavours read. YouTube changes often, and fixes land here first. */
@@ -83,7 +84,10 @@ object YtDlpUpdater {
 
     /** Blocking, and over within about a minute: call off the main thread. Never throws. */
     fun update(appContext: Context): YtDlpUpdateResult =
-        update(YtDlpInstaller(OkHttpClient(), YTDLP_CHANNEL.apiUrl, ytDlpBinary(appContext)))
+        update(YtDlpInstaller(OkHttpClient(), ReleaseSource.github(channelRepo()), ytDlpBinary(appContext)))
+
+    /** The repository of [YTDLP_CHANNEL]: yt-dlp-nightly-builds for the nightly channel. */
+    private fun channelRepo(): String = YTDLP_CHANNEL.apiUrl.toHttpUrl().pathSegments[2]
 
     internal fun update(installer: YtDlpInstaller): YtDlpUpdateResult = gate.update {
         try {

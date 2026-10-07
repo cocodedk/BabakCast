@@ -9,31 +9,53 @@ import okhttp3.Request
 import okhttp3.Response
 import okio.Buffer
 
-/**
- * Which addresses the yt-dlp update may talk to. It downloads a program the phone then runs, so
- * every address must be HTTPS and on GitHub: the API, the release page, and the two hosts GitHub
- * serves release files from (a download on github.com answers with a redirect to one of them).
- * Checked before each request, so nothing is ever sent to an address that is not on the list.
- */
+/** Whether an address is acceptable. [require] throws when it is not. */
 internal class UrlPolicy(private val allows: (HttpUrl) -> Boolean) {
 
     fun require(url: HttpUrl) {
-        if (!allows(url)) throw IOException("The update may not use ${url.scheme}://${url.host}")
+        if (!allows(url)) throw IOException("The update may not use ${url.scheme}://${url.host}${url.encodedPath}")
     }
+}
 
+/**
+ * Where the yt-dlp update may go. It downloads a program the phone then runs, so every address
+ * must be HTTPS on GitHub and, for the files, inside one release of one repository:
+ *  - [api] covers the request for the latest release;
+ *  - [release] covers the requests for that release's files, once its tag is known: on github.com
+ *    only /yt-dlp/<repo>/releases/download/<tag>/yt-dlp and .../SHA2-256SUMS, matched segment by
+ *    segment, so a redirect to another release or repository is refused before it is followed;
+ *    a download on github.com redirects to release-assets.githubusercontent.com (or
+ *    objects.githubusercontent.com), which is allowed too;
+ *  - [assetUrl] is the one address each file of a release must have.
+ * No path may hide a separator or a dot in percent-encoding, or hold a backslash.
+ */
+internal class ReleaseSource(
+    val apiUrl: String,
+    val api: UrlPolicy,
+    val release: (tag: String) -> UrlPolicy,
+    val assetUrl: (tag: String, name: String) -> String
+) {
     companion object {
-        private val HOSTS = setOf(
-            "api.github.com",
-            "github.com",
-            "objects.githubusercontent.com",
-            "release-assets.githubusercontent.com"
-        )
+        private val ASSET_HOSTS = setOf("objects.githubusercontent.com", "release-assets.githubusercontent.com")
+        private val HIDDEN_SEPARATOR = Regex("(?i)%(2f|5c|2e)")
 
-        val GITHUB = UrlPolicy { url ->
-            url.isHttps && url.port == 443 && url.host in HOSTS &&
-                // On github.com only yt-dlp's own releases.
-                (url.host != "github.com" || url.encodedPath.startsWith("/yt-dlp/"))
-        }
+        private fun clean(url: HttpUrl) =
+            url.isHttps && url.port == 443 && !url.encodedPath.contains('\\') &&
+                !HIDDEN_SEPARATOR.containsMatchIn(url.encodedPath)
+
+        /** The latest release of github.com/yt-dlp/[repo]. */
+        fun github(repo: String) = ReleaseSource(
+            apiUrl = "https://api.github.com/repos/yt-dlp/$repo/releases/latest",
+            api = UrlPolicy { clean(it) && it.host == "api.github.com" },
+            release = { tag ->
+                val files = listOf(YtDlpInstaller.FILE, YtDlpInstaller.SUMS)
+                    .map { listOf("yt-dlp", repo, "releases", "download", tag, it) }
+                UrlPolicy { url ->
+                    clean(url) && (url.host in ASSET_HOSTS || (url.host == "github.com" && url.encodedPathSegments in files))
+                }
+            },
+            assetUrl = { tag, name -> "https://github.com/yt-dlp/$repo/releases/download/$tag/$name" }
+        )
     }
 }
 
