@@ -19,6 +19,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +38,10 @@ import com.cocode.babakcast.util.openUrlOrToast
 @Composable
 fun AboutScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
-    val open = { link: AboutLink -> context.openUrlOrToast(aboutUrl(link)) }
+    // The app's own language (the per-app language or the phone's), so the website and privacy
+    // links open the pages in that language.
+    val language = LocalConfiguration.current.locales[0].language
+    val open = { link: AboutLink -> context.openUrlOrToast(aboutUrl(link, language)) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
