@@ -91,9 +91,19 @@ class XSyndicationClient @Inject constructor(
 
         /**
          * Parse a syndication API JSON response into a [TweetMediaResult].
-         * Exposed for testability.
+         * Exposed for testability. A reply that is not valid JSON, or not shaped like a post,
+         * ends as an [AppErrorException] with [AppError.XPostUnavailable].
          */
-        fun parseMediaDetails(jsonString: String): TweetMediaResult {
+        fun parseMediaDetails(jsonString: String): TweetMediaResult =
+            try {
+                parseUnchecked(jsonString)
+            } catch (e: AppErrorException) {
+                throw e
+            } catch (e: Exception) {
+                throw AppErrorException(AppError.XPostUnavailable(), "Could not read the syndication response: ${e.message}", e)
+            }
+
+        private fun parseUnchecked(jsonString: String): TweetMediaResult {
             val root = json.parseToJsonElement(jsonString).jsonObject
             val text = root["note_tweet"]?.jsonObject?.get("text")?.jsonPrimitive?.content
                 ?: root["text"]?.jsonPrimitive?.content ?: ""

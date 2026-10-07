@@ -13,9 +13,8 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -74,7 +73,7 @@ class AIClient @Inject constructor(
                 .build()
             Log.d(
                 tag,
-                "HTTP request provider=${provider.id} url=$url headers=${request.headers} bodyLength=${requestBody.length}"
+                "HTTP request provider=${provider.id} url=$url headers=${headerNames(request.headers)} bodyLength=${requestBody.length}"
             )
 
             // Execute request
@@ -118,7 +117,7 @@ class AIClient @Inject constructor(
             )
 
             val aiResponse = try {
-                parseResponse(provider, responseBody)
+                AiResponseParser.parse(responseBody, provider.response.content_path)
             } catch (e: Exception) {
                 Log.e(
                     tag,
@@ -170,66 +169,6 @@ class AIClient @Inject constructor(
         return body
     }
 
-    /**
-     * Parse response using JSON path from provider schema
-     */
-    private fun parseResponse(provider: Provider, responseBody: String): AIResponse {
-        val element = json.parseToJsonElement(responseBody)
-        if (element !is JsonObject) {
-            val kind = when (element) {
-                is JsonArray -> "array"
-                else -> "primitive"
-            }
-            Log.e(tag, "Unexpected JSON root type=$kind provider=${provider.id}")
-            throw unreadable("Unexpected JSON root type: $kind")
-        }
-        val jsonObject = element.jsonObject
-        
-        // Extract content using path (simple implementation for common paths)
-        val content = extractContent(jsonObject, provider.response.content_path)
-            ?: throw unreadable("Could not extract content from response using path: ${provider.response.content_path}")
-
-        return AIResponse(
-            content = content,
-            tokensUsed = extractTokensUsed(jsonObject)
-        )
-    }
-
-    /**
-     * Extract content from JSON using path notation
-     * Supports simple paths like "choices[0].message.content"
-     */
-    private fun extractContent(jsonObject: JsonObject, path: String): String? {
-        val parts = path.split(".")
-        var current: JsonElement = jsonObject
-
-        for (part in parts) {
-            val hasIndex = part.contains("[")
-            val name = if (hasIndex) part.substringBefore("[") else part
-            val index = if (hasIndex) part.substringAfter("[").substringBefore("]").toIntOrNull() else null
-
-            if (name.isNotEmpty()) {
-                val obj = current as? JsonObject ?: return null
-                current = obj[name] ?: return null
-            }
-
-            if (index != null) {
-                val array = current as? JsonArray ?: return null
-                current = array.getOrNull(index) ?: return null
-            }
-        }
-
-        return current.jsonPrimitive.content
-    }
-
-    /**
-     * Extract tokens used from response (if available)
-     */
-    private fun extractTokensUsed(jsonObject: JsonObject): Int? {
-        return jsonObject["usage"]?.jsonObject?.get("total_tokens")?.jsonPrimitive?.content?.toIntOrNull()
-            ?: jsonObject["usage"]?.jsonObject?.get("prompt_tokens")?.jsonPrimitive?.content?.toIntOrNull()
-    }
-
     /** A refused request: a usage limit has its own message, anything else is a general AI request failure. */
     private fun requestError(code: Int, body: String): AppError =
         if (code == 429 || body.contains("quota", ignoreCase = true)) {
@@ -240,4 +179,12 @@ class AIClient @Inject constructor(
 
     /** A response BabakCast can't use. [technical] is for the log; the screen shows a plain message. */
     private fun unreadable(technical: String) = AppErrorException(AppError.AiResponseUnreadable(), technical)
+
+    companion object {
+        /**
+         * Header names only. The auth header's value is the API key, and OkHttp redacts only
+         * `Authorization`, not `api-key`, `x-api-key` or `x-goog-api-key`, so never log the values.
+         */
+        internal fun headerNames(headers: Headers): String = headers.names().sorted().joinToString()
+    }
 }
