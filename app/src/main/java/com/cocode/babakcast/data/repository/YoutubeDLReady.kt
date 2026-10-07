@@ -12,26 +12,30 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 /**
- * True when the yt-dlp binary that youtubedl-android already extracted should be deleted
- * before init, so its own init_ytdlp() re-extracts the copy bundled with this build.
+ * True when the app's versionCode differs from the one recorded at the last successful init,
+ * which is the moment to compare the yt-dlp on disk with the one this build ships.
  *
- * youtubedl-android 0.18.1's init_ytdlp() only copies the raw resource into
- * <noBackupFilesDir>/youtubedl-android/yt-dlp/yt-dlp when that file is ABSENT — it never
- * compares versions. Left alone, the fdroid flavor (which never calls updateYoutubeDL)
- * would keep running whichever yt-dlp got extracted by an older app version, or by a
- * github-flavor install this one replaced. A plain versionCode mismatch is enough to
- * decide "stale, re-extract": it catches both an app update carrying a newer bundled
- * yt-dlp, and an install that replaces a self-updating github build with this one.
- * No recorded versionCode ([UNSET_VERSION_CODE]) means "never recorded" — that still
- * compares unequal, but a delete on the not-yet-created directory is a harmless no-op.
+ * youtubedl-android 0.18.1's init_ytdlp() only copies the bundled yt-dlp into the library's
+ * own folder when that file is ABSENT: it never compares versions. So after an app update
+ * the fdroid flavor would keep an older yt-dlp (one a replaced github build, or an older app
+ * version, had put there), and a newer app that ships a newer yt-dlp would not get to use it.
+ * [shouldResetYtdlp] decides what to do about the file; this only decides when to look. No
+ * recorded versionCode ([UNSET_VERSION_CODE]) means "never recorded", which also counts as
+ * changed.
  */
 internal const val UNSET_VERSION_CODE = -1
 
-internal fun shouldReExtractYtdlp(recordedVersionCode: Int, currentVersionCode: Int): Boolean =
+internal fun versionCodeChanged(recordedVersionCode: Int, currentVersionCode: Int): Boolean =
     recordedVersionCode != currentVersionCode
+
+/**
+ * True when the daily yt-dlp refresh at start should run. Only the github flavor refreshes on
+ * its own; the fdroid flavor never contacts GitHub at start, whatever the day.
+ */
+internal fun shouldRefreshAtStart(selfUpdate: Boolean, lastUpdateDay: Long, today: Long): Boolean =
+    selfUpdate && lastUpdateDay != today
 
 /**
  * Tracks YoutubeDL initialization. Start from Application.onCreate();
@@ -73,9 +77,9 @@ object YoutubeDLReady {
         if (_status.value is YoutubeDLInitStatus.Ready) return
         val appContext = context.applicationContext
         scope.launch(Dispatchers.IO) {
-            // github self-updates yt-dlp at runtime, so a stale extracted binary there is
+            // github self-updates yt-dlp at runtime, so an old extracted binary there is
             // expected to be replaced by refreshYoutubeDlIfDue(); only fdroid needs this.
-            if (!BuildConfig.YTDLP_SELF_UPDATE) reExtractYtdlpIfStale(appContext)
+            if (!BuildConfig.YTDLP_SELF_UPDATE) reconcileYtdlpAfterUpdate(appContext)
             try {
                 YoutubeDL.getInstance().init(appContext)
             } catch (e: Exception) {
@@ -91,23 +95,24 @@ object YoutubeDLReady {
     }
 
     /**
-     * fdroid only (see [shouldReExtractYtdlp]): delete the yt-dlp youtubedl-android already
-     * extracted when it doesn't match this build's versionCode, so init_ytdlp() re-extracts
-     * the one bundled here instead of silently keeping an older binary.
+     * fdroid only (see [versionCodeChanged]): after an app update, keep the yt-dlp the user
+     * installed from Settings when it is the same as or newer than the one this build ships,
+     * and put the shipped one back (delete the directory, so init_ytdlp() re-extracts it)
+     * when that one is newer or the installed file is broken. See [shouldResetYtdlp].
      */
-    private fun reExtractYtdlpIfStale(appContext: Context) {
+    private fun reconcileYtdlpAfterUpdate(appContext: Context) {
         val prefs = appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
         val recorded = prefs.getInt(KEY_LAST_INIT_VERSION_CODE, UNSET_VERSION_CODE)
-        if (!shouldReExtractYtdlp(recorded, BuildConfig.VERSION_CODE)) return
-        // Matches youtubedl-android's own baseDir/"yt-dlp" layout (YoutubeDL.init()/
-        // init_ytdlp() in library 0.18.1); deleting the directory is what that library
-        // itself does on a failed extraction, so init_ytdlp() starts from a clean slate.
-        File(File(appContext.noBackupFilesDir, "youtubedl-android"), "yt-dlp").deleteRecursively()
-        // The library also records which release an update installed. With that binary gone the
-        // record is wrong: the Settings update would answer "already the latest" and install
-        // nothing, so forget it too.
-        appContext.getSharedPreferences("youtubedl-android", Context.MODE_PRIVATE)
-            .edit().remove("dlpVersion").remove("dlpVersionName").apply()
+        if (!versionCodeChanged(recorded, BuildConfig.VERSION_CODE)) return
+        resetYtdlpIfNeeded(ytDlpDir(appContext), shippedYtdlpVersion(appContext))
+    }
+
+    /** The version of the yt-dlp that ships inside youtubedl-android, or null when unreadable. */
+    private fun shippedYtdlpVersion(appContext: Context): String? = try {
+        appContext.resources.openRawResource(com.yausername.youtubedl_android.R.raw.ytdlp)
+            .use(YtDlpVersion::of)
+    } catch (e: Exception) {
+        null
     }
 
     /** fdroid only: called after a successful init, so a failed one is retried next launch. */
@@ -142,11 +147,11 @@ object YoutubeDLReady {
      * Settings (see [YtDlpUpdater]).
      */
     private fun refreshYoutubeDlIfDue(appContext: Context) {
-        if (!BuildConfig.YTDLP_SELF_UPDATE) return
         try {
             val prefs = appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
             val today = System.currentTimeMillis() / MILLIS_PER_DAY
-            if (prefs.getLong(KEY_LAST_UPDATE_DAY, 0L) == today) return
+            val lastDay = prefs.getLong(KEY_LAST_UPDATE_DAY, 0L)
+            if (!shouldRefreshAtStart(BuildConfig.YTDLP_SELF_UPDATE, lastDay, today)) return
             val result = YoutubeDL.getInstance().updateYoutubeDL(appContext, YTDLP_CHANNEL)
             prefs.edit().putLong(KEY_LAST_UPDATE_DAY, today).apply()
             Log.i(TAG, "yt-dlp refresh: $result")
