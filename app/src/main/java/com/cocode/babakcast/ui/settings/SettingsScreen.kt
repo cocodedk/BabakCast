@@ -237,6 +237,11 @@ private fun ProviderConfigDialog(
                         textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         shape = MaterialTheme.shapes.small
                     )
+                    Text(
+                        text = stringResource(R.string.settings_api_key_help),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
                 }
 
                 if (showUrlField) {

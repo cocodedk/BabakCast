@@ -12,6 +12,7 @@ object ErrorHandler {
      */
     fun handleException(exception: Throwable): AppError {
         return when (exception) {
+            is AppErrorException -> exception.error
             is ChapterTooLargeException ->
                 AppError.ChapterSplitTooLarge(exception.message)
             is IllegalArgumentException -> {
@@ -48,10 +49,11 @@ object ErrorHandler {
                         AppError.TranscriptNotAvailable(msg)
                     msg.contains("not initialized", ignoreCase = true) ->
                         AppError.NotInitialized()
+                    // The technical text (an ffmpeg log) goes to the log, not to the screen.
                     msg.contains("audio extraction", ignoreCase = true) ->
-                        AppError.AudioExtractFailed(msg)
+                        AppError.AudioExtractFailed()
                     msg.contains("audio split", ignoreCase = true) ->
-                        AppError.AudioSplitFailed(msg)
+                        AppError.AudioSplitFailed()
                     else -> AppError.UnknownError(msg)
                 }
             }

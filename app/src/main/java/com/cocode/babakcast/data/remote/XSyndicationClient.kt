@@ -16,6 +16,8 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.AppErrorException
 
 /**
  * Client for the X/Twitter syndication API.
@@ -40,12 +42,14 @@ class XSyndicationClient @Inject constructor(
 
             if (!response.isSuccessful) {
                 return@withContext Result.failure(
-                    IOException("Syndication API returned ${response.code}")
+                    AppErrorException(AppError.XPostUnavailable(), "Syndication API returned ${response.code}")
                 )
             }
 
             val body = response.body?.string()
-                ?: return@withContext Result.failure(IOException("Empty response body"))
+                ?: return@withContext Result.failure(
+                    AppErrorException(AppError.XPostUnavailable(), "Empty response body")
+                )
 
             val result = parseMediaDetails(body)
             Log.d(tag, "Fetched ${result.media.size} media items for tweet $tweetId: ${result.media.map { it::class.simpleName }}")

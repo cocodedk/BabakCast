@@ -21,10 +21,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.AppErrorException
 
 /**
  * Provider-agnostic AI HTTP client
@@ -90,7 +91,10 @@ class AIClient @Inject constructor(
                         "contentType=${response.header("Content-Type")} headers=${response.headers} body=${errorBody.take(500)}"
                 )
                 return@withContext Result.failure(
-                    IOException("API request failed: ${response.code} - $errorBody")
+                    AppErrorException(
+                        error = requestError(response.code, errorBody),
+                        message = "API request failed: ${response.code} - $errorBody"
+                    )
                 )
             }
 
@@ -98,14 +102,14 @@ class AIClient @Inject constructor(
             val responseBody = response.body?.string()
             if (responseBody == null) {
                 Log.e(tag, "Empty response body provider=${provider.id} code=${response.code} headers=${response.headers}")
-                return@withContext Result.failure(IOException("Empty response body"))
+                return@withContext Result.failure(unreadable("Empty response body"))
             }
             if (responseBody.isBlank()) {
                 Log.e(
                     tag,
                     "Blank response body provider=${provider.id} code=${response.code} contentType=${response.header("Content-Type")} headers=${response.headers}"
                 )
-                return@withContext Result.failure(IOException("Empty response body"))
+                return@withContext Result.failure(unreadable("Empty response body"))
             }
 
             Log.d(
@@ -177,13 +181,13 @@ class AIClient @Inject constructor(
                 else -> "primitive"
             }
             Log.e(tag, "Unexpected JSON root type=$kind provider=${provider.id}")
-            throw IOException("Unexpected JSON root type: $kind")
+            throw unreadable("Unexpected JSON root type: $kind")
         }
         val jsonObject = element.jsonObject
         
         // Extract content using path (simple implementation for common paths)
         val content = extractContent(jsonObject, provider.response.content_path)
-            ?: throw IOException("Could not extract content from response using path: ${provider.response.content_path}")
+            ?: throw unreadable("Could not extract content from response using path: ${provider.response.content_path}")
 
         return AIResponse(
             content = content,
@@ -225,4 +229,15 @@ class AIClient @Inject constructor(
         return jsonObject["usage"]?.jsonObject?.get("total_tokens")?.jsonPrimitive?.content?.toIntOrNull()
             ?: jsonObject["usage"]?.jsonObject?.get("prompt_tokens")?.jsonPrimitive?.content?.toIntOrNull()
     }
+
+    /** A refused request: a usage limit has its own message, anything else is a general AI request failure. */
+    private fun requestError(code: Int, body: String): AppError =
+        if (code == 429 || body.contains("quota", ignoreCase = true)) {
+            AppError.ApiQuotaExceeded()
+        } else {
+            AppError.AiRequestFailed()
+        }
+
+    /** A response BabakCast can't use. [technical] is for the log; the screen shows a plain message. */
+    private fun unreadable(technical: String) = AppErrorException(AppError.AiResponseUnreadable(), technical)
 }

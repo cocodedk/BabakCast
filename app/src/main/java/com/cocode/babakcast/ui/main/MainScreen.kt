@@ -85,7 +85,7 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     // Resolved here, in composition, so the lambdas below can use them.
-    val shareTitleLabel = stringResource(R.string.share_chooser_title)
+    val audioShareStepLabel = stringResource(R.string.share_chooser_audio_step)
     val shareTweetTextLabel = stringResource(R.string.share_tweet_text_chooser)
     val tweetTextCopiedMessage = stringResource(R.string.tweet_text_copied)
     val copiedMessage = stringResource(R.string.copied_to_clipboard)
@@ -128,7 +128,7 @@ fun MainScreen(
                         // drops caption text when files are attached. The files follow on
                         // the next app-resume (ON_RESUME observer below); a background
                         // activity start would be blocked.
-                        val textIntent = shareHelper.buildShareTextChooser(request.caption, shareTitleLabel)
+                        val textIntent = shareHelper.buildShareTextChooser(request.caption, audioShareStepLabel)
                         textShareLauncher.launch(textIntent)
                     }
                 }

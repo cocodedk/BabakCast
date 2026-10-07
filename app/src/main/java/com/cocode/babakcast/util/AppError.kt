@@ -100,6 +100,26 @@ sealed class AppError(
         detail
     )
 
+    class AiRequestFailed(
+        detail: String? = null
+    ) : AppError(R.string.error_title_provider, R.string.error_ai_request_failed, R.string.error_hint_ai_request, detail)
+
+    class AiResponseUnreadable(
+        detail: String? = null
+    ) : AppError(
+        R.string.error_title_provider, R.string.error_ai_response_unreadable, R.string.error_hint_ai_response, detail
+    )
+
+    class XPostUnavailable(
+        detail: String? = null
+    ) : AppError(R.string.error_title_x_post, R.string.error_x_post_unavailable, R.string.error_hint_x_post, detail)
+
+    class TranslationFailed(
+        detail: String? = null
+    ) : AppError(
+        R.string.error_title_translation, R.string.error_translation_failed, R.string.error_hint_translation, detail
+    )
+
     class UnknownError(
         detail: String? = null
     ) : AppError(R.string.error_title_unknown, R.string.error_unknown, R.string.error_hint_try_again, detail)

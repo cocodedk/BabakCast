@@ -431,7 +431,7 @@ class MainViewModel @Inject constructor(
                             if (videoFile.exists()) videoFile.delete()
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
-                                error = AppError.AudioExtractFailed(error.message),
+                                error = AppError.AudioExtractFailed(),
                                 isDownloadingAudio = false,
                                 loadingMessage = null,
                                 isProgressIndeterminate = false
@@ -520,7 +520,7 @@ class MainViewModel @Inject constructor(
         val url = _uiState.value.url
         if (url.isBlank()) {
             _uiState.value = _uiState.value.copy(
-                error = AppError.InvalidUrl(messageRes = R.string.error_enter_supported_url)
+                error = AppError.InvalidUrl(messageRes = R.string.error_enter_youtube_url)
             )
             return
         }
@@ -747,9 +747,11 @@ class MainViewModel @Inject constructor(
                     return@fold
                 }
 
+                // The technical text goes to the log; the screen shows a plain message.
+                Log.e(tag, "video split failed", error)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = ErrorHandler.handleException(error),
+                    error = AppError.VideoSplitFailed(),
                     isDownloading = false,
                     isDownloadingAudio = false,
                     loadingMessage = null,
@@ -820,7 +822,7 @@ class MainViewModel @Inject constructor(
                 if (audioFile.exists()) audioFile.delete()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = ErrorHandler.handleException(error),
+                    error = AppError.AudioSplitFailed(),
                     isDownloadingAudio = false,
                     loadingMessage = null,
                     isProgressIndeterminate = false,

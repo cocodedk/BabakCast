@@ -69,13 +69,32 @@ class ErrorHandlerTest {
     }
 
     @Test
+    fun anErrorThatCarriesItsOwnMessageIsShownAsIs() {
+        val carried = AppError.XPostUnavailable()
+        val error = ErrorHandler.handleException(AppErrorException(carried, "Syndication API returned 404"))
+        assertEquals(carried, error)
+        assertEquals(null, error.detail)
+    }
+
+    @Test
+    fun audioFailuresDoNotShowTheTechnicalText() {
+        val extract = ErrorHandler.handleException(Exception("Audio extraction failed: ffmpeg log"))
+        assertTrue(extract is AppError.AudioExtractFailed)
+        assertEquals(null, extract.detail)
+        val split = ErrorHandler.handleException(Exception("audio split failed: ffmpeg log"))
+        assertTrue(split is AppError.AudioSplitFailed)
+        assertEquals(null, split.detail)
+    }
+
+    @Test
     fun everyErrorHasAFixHint() {
         val errors = listOf(
             AppError.InvalidYouTubeUrl(), AppError.InvalidUrl(), AppError.TranscriptNotAvailable(),
             AppError.ProviderMisconfigured(), AppError.ApiQuotaExceeded(), AppError.ModelNotFound(),
             AppError.NetworkError(), AppError.DownloadFailed(), AppError.NotInitialized(),
             AppError.VideoSplitFailed(), AppError.AudioExtractFailed(), AppError.AudioSplitFailed(),
-            AppError.ChapterSplitTooLarge(), AppError.UnknownError()
+            AppError.ChapterSplitTooLarge(), AppError.AiRequestFailed(), AppError.AiResponseUnreadable(),
+            AppError.XPostUnavailable(), AppError.TranslationFailed(), AppError.UnknownError()
         )
         errors.forEach { assertTrue("${it::class.simpleName} has a fix hint", it.fixHintRes != null) }
     }
@@ -86,7 +105,7 @@ class ErrorHandlerTest {
         assertNotEquals(AppError.NetworkError("x"), AppError.NetworkError("y"))
         assertNotEquals(
             AppError.NetworkError(),
-            AppError.NetworkError(messageRes = R.string.error_translation_failed)
+            AppError.NetworkError(messageRes = R.string.error_download_failed)
         )
         assertNotEquals(AppError.NetworkError(), AppError.UnknownError())
     }

@@ -30,7 +30,7 @@ internal fun SummarySection(
     onShareSummary: () -> Unit
 ) {
     val shareLabel = if (shareChunkCount > 1) {
-        stringResource(R.string.summary_send_part, shareChunkIndex + 1, shareChunkCount)
+        stringResource(R.string.summary_share_part, shareChunkIndex + 1, shareChunkCount)
     } else {
         stringResource(R.string.summary_share)
     }
