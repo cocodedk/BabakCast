@@ -39,12 +39,11 @@
 
 # --- Jackson (com.fasterxml.jackson:jackson-databind / -core / -annotations) ---
 # Plain jars, not AARs, so AGP has no proguard.txt/consumer-rules.txt to merge from them
-# automatically (verified in the Gradle cache). YoutubeDLUpdater — the github flavor's
-# runtime self-update path, data/repository/YoutubeDLReady.kt — parses GitHub's releases
+# automatically (verified in the Gradle cache). YoutubeDLUpdater parses GitHub's releases
 # API via ObjectMapper.readTree()/JsonNode at runtime, and Jackson's own internals use
-# reflection regardless of what the app does with the parsed tree. The fdroid flavor never
-# calls updateYoutubeDL() (BuildConfig.YTDLP_SELF_UPDATE is a compile-time false there, so
-# R8 folds the call away), making this dead weight in that flavor rather than a live risk.
+# reflection regardless of what the app does with the parsed tree. Both flavors reach it:
+# github updates on its own at start (data/repository/YoutubeDLReady.kt), fdroid when the
+# user taps "Update yt-dlp" in Settings (data/repository/YtDlpUpdater.kt).
 -keep class com.fasterxml.jackson.** { *; }
 # Confirmed by an actual R8 run (missing_rules.txt), not guessed: jackson-databind 2.11's
 # Java7SupportImpl probes java.beans.ConstructorProperties/Transient in a try/catch and

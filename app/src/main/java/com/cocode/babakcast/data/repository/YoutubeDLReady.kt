@@ -103,6 +103,11 @@ object YoutubeDLReady {
         // init_ytdlp() in library 0.18.1); deleting the directory is what that library
         // itself does on a failed extraction, so init_ytdlp() starts from a clean slate.
         File(File(appContext.noBackupFilesDir, "youtubedl-android"), "yt-dlp").deleteRecursively()
+        // The library also records which release an update installed. With that binary gone the
+        // record is wrong: the Settings update would answer "already the latest" and install
+        // nothing, so forget it too.
+        appContext.getSharedPreferences("youtubedl-android", Context.MODE_PRIVATE)
+            .edit().remove("dlpVersion").remove("dlpVersionName").apply()
     }
 
     /** fdroid only: called after a successful init, so a failed one is retried next launch. */
@@ -132,8 +137,9 @@ object YoutubeDLReady {
      * Best-effort: on any failure (offline, GitHub unreachable) the bundled binary is
      * kept and the check is retried on the next launch.
      *
-     * Gated on [BuildConfig.YTDLP_SELF_UPDATE]: the fdroid flavor must never download and
-     * run a binary at runtime, so it keeps whatever yt-dlp ships inside youtubedl-android.
+     * Gated on [BuildConfig.YTDLP_SELF_UPDATE]: the fdroid flavor never updates yt-dlp on its
+     * own. It keeps the yt-dlp inside youtubedl-android until the user taps "Update yt-dlp" in
+     * Settings (see [YtDlpUpdater]).
      */
     private fun refreshYoutubeDlIfDue(appContext: Context) {
         if (!BuildConfig.YTDLP_SELF_UPDATE) return
@@ -141,8 +147,7 @@ object YoutubeDLReady {
             val prefs = appContext.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
             val today = System.currentTimeMillis() / MILLIS_PER_DAY
             if (prefs.getLong(KEY_LAST_UPDATE_DAY, 0L) == today) return
-            val result = YoutubeDL.getInstance()
-                .updateYoutubeDL(appContext, YoutubeDL.UpdateChannel.NIGHTLY)
+            val result = YoutubeDL.getInstance().updateYoutubeDL(appContext, YTDLP_CHANNEL)
             prefs.edit().putLong(KEY_LAST_UPDATE_DAY, today).apply()
             Log.i(TAG, "yt-dlp refresh: $result")
         } catch (e: Exception) {

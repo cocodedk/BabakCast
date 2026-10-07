@@ -101,6 +101,8 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            DownloadToolSection()
+
             // About Section: the About screen holds the version, links, credits and privacy promises
             SectionHeader(title = stringResource(R.string.settings_about))
 

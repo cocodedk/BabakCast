@@ -99,6 +99,14 @@
     <string name="settings_adaptive_hint">Not available yet. Choose Short, Medium or Long under SUMMARY LENGTH on the Home screen.</string>
     <string name="settings_summary_length">Summary length (not used yet)</string>
     <string name="settings_summary_length_automatic">Automatic</string>
+    <string name="settings_downloader">Download tool</string>
+    <string name="settings_downloader_hint">yt-dlp is the tool BabakCast uses to download videos. When YouTube changes, downloads can stop working until yt-dlp is updated. The button below gets the newest yt-dlp from GitHub. This needs an internet connection. BabakCast only does it when you tap the button.</string>
+    <string name="settings_downloader_update">Update yt-dlp</string>
+    <string name="settings_downloader_working">Updating yt-dlp…</string>
+    <string name="settings_downloader_done">yt-dlp is now up to date.</string>
+    <string name="settings_downloader_latest">You already have the newest yt-dlp.</string>
+    <string name="settings_downloader_busy">A download is running. Try again when it is finished.</string>
+    <string name="settings_downloader_failed">The update did not work. Check your internet connection, and try again.</string>
     <string name="action_close">Close</string>
     <string name="share_chooser_title">Share title</string>
     <string name="tweet_text_copied">Tweet text copied</string>
