@@ -19,7 +19,9 @@ import com.cocode.babakcast.domain.split.ChapterTooLargeException
 import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
+import com.cocode.babakcast.domain.video.TrimRange
 import com.cocode.babakcast.domain.video.TrimResolution
+import com.cocode.babakcast.domain.video.TrimTimeFields
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.domain.video.VideoTrimmer
 import com.cocode.babakcast.util.AppError
@@ -117,13 +119,21 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(enabled = enabled))
     }
 
-    fun updateTrimStart(text: String) {
-        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(start = text))
+    fun updateTrimStart(fields: TrimTimeFields) {
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(start = fields))
     }
 
-    fun updateTrimEnd(text: String) {
-        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(end = text))
+    fun updateTrimEnd(fields: TrimTimeFields) {
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(end = fields))
     }
+
+    /**
+     * The range to fetch, or null to fetch the whole video. Passing it to the download
+     * keeps the transfer to roughly the segment instead of the entire file; the cut
+     * itself still happens in [applyTrim], which is the only frame-accurate step.
+     */
+    private fun trimSection(): TrimRange? =
+        (_uiState.value.trim.resolve() as? TrimResolution.Ready)?.range
 
     /**
      * Cuts the requested segment out of a freshly downloaded video, or passes the
@@ -210,6 +220,9 @@ class MainViewModel @Inject constructor(
 
         pendingSplitRequest = null
         viewModelScope.launch {
+            // A section download reports no percentages — ffmpeg does the fetching, and it
+            // prints none — so the bar runs indeterminate rather than sitting frozen at 0%.
+            val section = trimSection()
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
@@ -217,12 +230,12 @@ class MainViewModel @Inject constructor(
                 isDownloading = true,
                 isSummarizing = false,
                 isDownloadingAudio = false,
-                loadingMessage = loadingMessage,
-                isProgressIndeterminate = false,
+                loadingMessage = if (section != null) "Downloading segment..." else loadingMessage,
+                isProgressIndeterminate = section != null,
                 splitChoicePrompt = null
             )
 
-            mediaRepository.downloadVideo(url) { progress ->
+            mediaRepository.downloadVideo(url, section) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { videoInfo ->
@@ -367,6 +380,7 @@ class MainViewModel @Inject constructor(
         pendingSplitRequest = null
         _pendingAudioFiles.value = null
         viewModelScope.launch {
+            val section = trimSection()
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
@@ -374,12 +388,16 @@ class MainViewModel @Inject constructor(
                 isDownloading = false,
                 isSummarizing = false,
                 isDownloadingAudio = true,
-                loadingMessage = "Downloading source video...",
-                isProgressIndeterminate = false,
+                loadingMessage = if (section != null) {
+                    "Downloading segment..."
+                } else {
+                    "Downloading source video..."
+                },
+                isProgressIndeterminate = section != null,
                 splitChoicePrompt = null
             )
 
-            mediaRepository.downloadVideo(url) { progress ->
+            mediaRepository.downloadVideo(url, section) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { downloadedInfo ->

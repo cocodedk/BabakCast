@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.data.model.SummaryLength
 import com.cocode.babakcast.domain.split.SplitSize
+import com.cocode.babakcast.domain.video.TrimTimeFields
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.urlparsing.XUrlExtractor
 
@@ -46,8 +47,8 @@ internal fun ActionButtonsSection(
     onTranslateToggle: (Boolean) -> Unit,
     onShareNow: () -> Unit,
     onTrimToggle: (Boolean) -> Unit,
-    onTrimStartChange: (String) -> Unit,
-    onTrimEndChange: (String) -> Unit
+    onTrimStartChange: (TrimTimeFields) -> Unit,
+    onTrimEndChange: (TrimTimeFields) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
