@@ -56,6 +56,12 @@ class AiResponseParserTest {
     fun contentThatIsNotText_isUnreadable() = assertUnreadable("""{"choices":[{"message":{"content":{"a":1}}}]}""")
 
     @Test
+    fun nullContent_isUnreadable() = assertUnreadable("""{"choices":[{"message":{"content":null}}]}""")
+
+    @Test
+    fun numberContent_isUnreadable() = assertUnreadable("""{"choices":[{"message":{"content":42}}]}""")
+
+    @Test
     fun usageThatIsNotAnObject_isUnreadable() =
         assertUnreadable("""{"choices":[{"message":{"content":"Hi"}}],"usage":5}""")
 

@@ -73,6 +73,16 @@ sealed class AppError(
         detail: String? = null
     ) : AppError(R.string.error_title_wait, R.string.error_not_initialized, R.string.error_hint_wait, detail)
 
+    /** A yt-dlp job was refused because the user is updating yt-dlp from Settings. */
+    class ToolUpdating(
+        detail: String? = null
+    ) : AppError(R.string.error_title_wait, R.string.error_tool_updating, R.string.error_hint_tool_updating, detail)
+
+    /** yt-dlp itself failed. The F-Droid build's hint points to "Update yt-dlp" in Settings. */
+    class YtDlpFailed(
+        detail: String? = null
+    ) : AppError(R.string.error_title_download, R.string.error_download_failed, R.string.error_hint_ytdlp_failed, detail)
+
     class VideoSplitFailed(
         detail: String? = null
     ) : AppError(
