@@ -1,16 +1,18 @@
 # BabakCast
 
-> An Android podcast player application built with Kotlin and Jetpack Compose.
+> An Android app for downloading and sharing media, and for summarizing YouTube transcripts with an AI provider you configure. Built with Kotlin and Jetpack Compose.
 
 ## Overview
 
-BabakCast is a modern Android podcast player with clean UI, podcast discovery, episode management, and seamless playback. Built with Clean Architecture and MVVM pattern.
+BabakCast downloads media from YouTube, X (Twitter), Instagram and LinkedIn, copies or shares the text of X posts, and summarizes YouTube transcripts with the AI provider you set up yourself. Downloads can be cut to a time range and split into numbered parts for sharing. The app has no developer backend, accounts or analytics. Built with Clean Architecture and MVVM.
 
 ## Links
 
 - GitHub: https://github.com/cocodedk/BabakCast
 - Website (EN): https://cast.cocode.dk/
+- Website (DA): https://cast.cocode.dk/da/
 - Website (FA): https://cast.cocode.dk/fa/
+- Privacy policy: https://cast.cocode.dk/privacy/
 - Author: https://cocode.dk
 - LinkedIn: https://linkedin.com/in/babakbandpey
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Danish for the strings only the F-Droid build has; see src/fdroid/res/values/strings.xml. -->
+<resources>
+    <string name="error_hint_ytdlp_failed">Prøv igen, eller tjek, at videoen stadig findes. Hentningsværktøjet er måske forældet. Tryk på \"Opdater yt-dlp\" i Indstillinger, og prøv igen.</string>
+</resources>

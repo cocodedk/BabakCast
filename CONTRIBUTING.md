@@ -15,8 +15,8 @@ Built by [Cocode](https://cocode.dk).
 ## Build and Test Commands
 ```bash
 ./gradlew assembleDebug
-./gradlew testDebugUnitTest
-./gradlew lintDebug
+./gradlew testGithubDebugUnitTest testFdroidDebugUnitTest
+./gradlew lintGithubDebug lintFdroidDebug
 ./gradlew buildSmoke
 ```
 
