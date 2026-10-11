@@ -1,10 +1,12 @@
 package com.cocode.babakcast.data.repository
 
+import com.cocode.babakcast.domain.video.TrimRange
 import com.cocode.babakcast.util.Platform
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class MediaRequestBuilderTest {
 
@@ -217,5 +219,75 @@ class MediaRequestBuilderTest {
             "https://www.linkedin.com/posts/test-1234567890123456789", Platform.LINKEDIN, "/tmp/out.mp4"
         )
         assertTrue(request.hasOption("--no-warnings"))
+    }
+
+    // --- Section download (the "Cut a segment" path) ---
+
+    /**
+     * Without a section yt-dlp fetches the whole file, exactly as before: the two
+     * section options must not appear at all.
+     */
+    @Test
+    fun downloadRequestWithoutASectionFetchesTheWholeVideo() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.youtube.com/watch?v=abc123", Platform.YOUTUBE, "/tmp/out.mp4"
+        )
+        assertFalse(request.hasOption("--download-sections"))
+        assertFalse(request.hasOption("--downloader-args"))
+    }
+
+    @Test
+    fun downloadRequestWithASectionAsksForThatRangeOnly() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.youtube.com/watch?v=abc123",
+            Platform.YOUTUBE,
+            "/tmp/out.mp4",
+            TrimRange(307_300L, 317_300L)
+        )
+        assertEquals("*307.300-317.300", request.getOption("--download-sections"))
+    }
+
+    /**
+     * -copyts keeps the source timeline, so the frame-accurate trim that follows can
+     * still clip the range the user asked for even though the section starts at the
+     * keyframe before it.
+     */
+    @Test
+    fun downloadRequestWithASectionKeepsTheSourceTimestamps() {
+        val request = MediaRepository.buildDownloadRequest(
+            "https://www.youtube.com/watch?v=abc123",
+            Platform.YOUTUBE,
+            "/tmp/out.mp4",
+            TrimRange(0L, 10_000L)
+        )
+        assertEquals("ffmpeg:-copyts -start_at_zero", request.getOption("--downloader-args"))
+    }
+
+    @Test
+    fun downloadRequestFormatsSectionSecondsWithoutLocaleDecimalCommas() {
+        val previous = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.GERMANY)
+            val request = MediaRepository.buildDownloadRequest(
+                "https://www.youtube.com/watch?v=abc123",
+                Platform.YOUTUBE,
+                "/tmp/out.mp4",
+                TrimRange(1_500L, 2_250L)
+            )
+            assertEquals("*1.500-2.250", request.getOption("--download-sections"))
+        } finally {
+            Locale.setDefault(previous)
+        }
+    }
+
+    @Test
+    fun downloadRequestKeepsTheSectionOnEveryPlatform() {
+        for (platform in Platform.entries) {
+            val request = MediaRepository.buildDownloadRequest(
+                "https://example.com/watch?v=abc123", platform, "/tmp/out.mp4",
+                TrimRange(0L, 5_000L)
+            )
+            assertEquals("*0.000-5.000", request.getOption("--download-sections"))
+        }
     }
 }

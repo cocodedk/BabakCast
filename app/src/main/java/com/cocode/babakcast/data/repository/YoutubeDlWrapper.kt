@@ -1,9 +1,11 @@
 package com.cocode.babakcast.data.repository
 
 import android.util.Log
+import com.cocode.babakcast.domain.video.TrimRange
 import com.cocode.babakcast.util.Platform
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -173,9 +175,15 @@ internal class YoutubeDlWrapper(
             return request
         }
 
-        internal fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest {
+        internal fun buildDownloadRequest(
+            url: String,
+            platform: Platform,
+            outputPath: String,
+            section: TrimRange? = null
+        ): YoutubeDLRequest {
             val request = YoutubeDLRequest(url)
             request.addOption("-f", DOWNLOAD_FORMAT)
+            if (section != null) applySection(request, section)
             // Separate video/audio streams arrive in different containers; force the merged
             // result back to mp4 so the output path's extension stays honest. yt-dlp ignores
             // this when no merge is required, so it costs nothing on the muxed path.
@@ -185,6 +193,31 @@ internal class YoutubeDlWrapper(
             request.addOption("-o", outputPath)
             return request
         }
+
+        /**
+         * Fetch only the requested range instead of the whole file. yt-dlp hands a section
+         * download to ffmpeg, which seeks into the stream and asks the server for that byte
+         * range, so a ten-second cut costs a megabyte or two rather than the whole video.
+         *
+         * ffmpeg can only begin on the keyframe at or before the requested time, so what
+         * arrives starts slightly early. `-copyts` keeps the source's own timestamps instead
+         * of resetting them to zero, which lets the frame-accurate trim that follows clip
+         * exactly the range that was asked for. `-start_at_zero` subtracts the container's
+         * own start offset, so sources that do not begin at zero behave as they do today.
+         *
+         * Plain seconds rather than timestamps: yt-dlp accepts them and they cannot be
+         * misread the way `1:02` can.
+         */
+        private fun applySection(request: YoutubeDLRequest, section: TrimRange) {
+            val start = formatSeconds(section.startMs)
+            val end = formatSeconds(section.endMs)
+            request.addOption("--download-sections", "*$start-$end")
+            request.addOption("--downloader-args", "ffmpeg:-copyts -start_at_zero")
+        }
+
+        /** Seconds with three decimals, always dotted — a comma would start a second argument. */
+        private fun formatSeconds(millis: Long): String =
+            String.format(Locale.US, "%d.%03d", millis / 1000L, millis % 1000L)
 
         private fun applyPlatformExtractorArgs(request: YoutubeDLRequest, platform: Platform) {
             when (platform) {

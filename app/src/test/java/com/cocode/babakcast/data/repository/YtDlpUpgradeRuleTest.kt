@@ -24,6 +24,7 @@ class YtDlpUpgradeRuleTest {
     @Before
     fun setUp() {
         dir = Files.createTempDirectory("ytdlp_upgrade_test").toFile()
+        scratch = Files.createTempDirectory("ytdlp_scratch").toFile()
     }
 
     @After
@@ -90,7 +91,7 @@ class YtDlpUpgradeRuleTest {
 
     // --- the real file format: a "#!" line in front of the zip ---
 
-    private val scratch: File by lazy { Files.createTempDirectory("ytdlp_scratch").toFile() }
+    private lateinit var scratch: File
 
     /** The yt-dlp that ships inside the app, as a stream, the way the resource is read. */
     private fun shipped(version: String) = YtDlpVersion.ofStream(fakeYtDlp(version).inputStream(), scratch)
@@ -100,6 +101,14 @@ class YtDlpUpgradeRuleTest {
         val bytes = fakeYtDlp("2025.11.12")
         assertTrue(String(bytes, 0, 2) == "#!")
         assertNull(java.util.zip.ZipInputStream(bytes.inputStream()).nextEntry)
+    }
+
+    @Test
+    fun aTempFolderThatCannotBeUsed_givesNoVersion_notAnException() {
+        val missing = File(scratch, "no-such-folder")
+        assertNull(YtDlpVersion.ofStream(fakeYtDlp("2026.01.05").inputStream(), missing))
+        val notAFolder = File(scratch, "a-file").also { it.writeText("x") }
+        assertNull(YtDlpVersion.ofStream(fakeYtDlp("2026.01.05").inputStream(), notAFolder))
     }
 
     @Test

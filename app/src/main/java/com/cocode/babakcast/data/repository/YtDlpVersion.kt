@@ -31,17 +31,19 @@ internal object YtDlpVersion {
     /**
      * Same, for a yt-dlp read from a stream (the copy that ships inside youtubedl-android). A zip
      * cannot be read from the front of a stream when something comes before it, so the stream is
-     * copied to a temporary file in [tempDir] first.
+     * copied to a temporary file in [tempDir] first. Null too when that file cannot be made or
+     * written (a full or missing folder).
      */
     fun ofStream(stream: InputStream, tempDir: File): String? {
-        val copy = File.createTempFile("yt-dlp-shipped", null, tempDir)
+        var copy: File? = null
         return try {
+            copy = File.createTempFile("yt-dlp-shipped", null, tempDir)
             copy.outputStream().use { out -> stream.copyTo(out) }
             of(copy)
         } catch (e: Exception) {
             null
         } finally {
-            copy.delete()
+            copy?.delete()
         }
     }
 

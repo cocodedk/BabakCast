@@ -1,7 +1,7 @@
 package com.cocode.babakcast.domain.video
 
-import com.cocode.babakcast.R
 import androidx.annotation.StringRes
+import com.cocode.babakcast.R
 
 /**
  * The trim controls exactly as the user left them. [enabled] off is the default,
@@ -9,8 +9,8 @@ import androidx.annotation.StringRes
  */
 data class TrimInput(
     val enabled: Boolean = false,
-    val start: String = "",
-    val end: String = ""
+    val start: TrimTimeFields = TrimTimeFields(),
+    val end: TrimTimeFields = TrimTimeFields()
 ) {
     /**
      * Single source of truth for whether these fields describe a usable cut —
@@ -20,10 +20,12 @@ data class TrimInput(
     fun resolve(): TrimResolution {
         if (!enabled) return TrimResolution.Disabled
 
-        val startMs = TrimTimeParser.parseToMillis(start)
-            ?: return TrimResolution.Invalid(R.string.trim_error_start)
-        val endMs = TrimTimeParser.parseToMillis(end)
-            ?: return TrimResolution.Invalid(R.string.trim_error_end)
+        val startMs = start.toMillis() ?: return TrimResolution.Invalid(
+            problemWith(start, R.string.trim_error_start_missing, R.string.trim_error_start_invalid)
+        )
+        val endMs = end.toMillis() ?: return TrimResolution.Invalid(
+            problemWith(end, R.string.trim_error_end_missing, R.string.trim_error_end_invalid)
+        )
         if (endMs <= startMs) {
             return TrimResolution.Invalid(R.string.trim_error_order)
         }
@@ -32,6 +34,14 @@ data class TrimInput(
         }
         return TrimResolution.Ready(TrimRange(startMs, endMs))
     }
+
+    /** Tells apart boxes nobody has filled in yet from boxes holding something unusable. */
+    @StringRes
+    private fun problemWith(
+        fields: TrimTimeFields,
+        @StringRes missing: Int,
+        @StringRes invalid: Int
+    ): Int = if (fields.isBlank()) missing else invalid
 }
 
 /** What [TrimInput.resolve] made of the current fields. */

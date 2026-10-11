@@ -38,7 +38,7 @@ An Android app that downloads videos from YouTube, X (Twitter), Instagram and Li
 - **Instagram video download**: paste an Instagram post, reel or IGTV link to download videos.
 - **LinkedIn video download**: paste a LinkedIn post or feed update link to download videos from public posts.
 - **Audio download**: extract the audio (MP3) from YouTube, X or Instagram videos. *Download Audio* gives you one file. *Download and split audio* splits it at the size you choose (16 MB by default) and tags each part "Part n of N", so recipients can tell the order even when a messaging app shows the parts in a different one.
-- **Optional segment cut**: turn on *Cut a segment*, type a start and end time (`m:ss.s`, accurate to a tenth of a second) and only that segment is saved. The rest of the download is discarded. This works on every source, and on audio downloads too. With the toggle off, the whole video is kept.
+- **Optional segment cut**: turn on *Cut a segment* and fill in where the clip starts and ends in the hours, min and sec boxes, accurate to a tenth of a second. Only that stretch is downloaded, so a ten-second clip costs about a megabyte instead of the whole video. This works on every source, and on audio downloads too. With the toggle off, the whole video is kept.
 - **Transcript summary**: for a YouTube video, BabakCast gets the captions and asks your AI model for a bullet-point summary. Choose Short, Medium or Long on the Home screen.
 - **Bring your own AI**: add your own API key and model under **Settings > AI Providers**. OpenAI and OpenRouter work in this version. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.
 - **No developer backend**: downloading, splitting and cutting run on your phone. Summaries and translations send text to the AI provider you set up. There are no accounts, no analytics and no tracking.
@@ -70,7 +70,7 @@ An Android app that downloads videos from YouTube, X (Twitter), Instagram and Li
 3. **Copy or share tweet text**: paste an X or Twitter link, then tap *Copy Text* to copy the tweet text to your clipboard (a message confirms it), or *Share Text* to open the Android share sheet.
 4. **Download audio**: paste a YouTube, X or Instagram link. Tap *Download Audio* for a single MP3, or *Download and split audio* to split it at your chosen size (16 MB by default). Each part is tagged "Part n of N" and the share caption notes the count, so recipients can tell the order. Sharing is in two steps: BabakCast first shares the title, then you come back to BabakCast to share the MP3 file or the numbered parts.
 5. **Summarize a transcript**: first open **Settings**, tap a provider under **AI Providers**, enter its API key, select a model and tap *Save and use this provider*. Then paste a YouTube link and tap *Summarize Transcript*. Your API key is sent only to the provider you choose. Summaries work for YouTube videos only.
-6. **Cut a segment**: turn on *Cut a segment* and enter the start and end times as `m:ss.s` (for example `1:23.4` to `1:25.6`). The download is cut to exactly that range before it is split or shared, and nothing outside it is kept.
+6. **Cut a segment**: turn on *Cut a segment* and fill in the hours, min and sec boxes for where the clip starts and where it ends, counted from the beginning of the video. An empty box counts as zero, so the ten seconds starting at 1 minute 23.4 seconds is `1` and `23.4`, then `1` and `33.4`. Only that stretch is downloaded, and it is cut to exactly that range before it is split or shared.
 
 ---
 
