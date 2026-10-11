@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.cocode.babakcast.R
 
 /**
  * Helper for sharing content via Android share sheet
@@ -38,7 +39,7 @@ class ShareHelper @Inject constructor(
         val chooser = buildShareFilesChooser(
             files = filesToShare,
             mimeType = "video/*",
-            title = "Share video",
+            title = context.getString(R.string.share_chooser_video),
             text = videoInfo.title.ifBlank { null }
         )
         if (chooser != null) {
@@ -50,7 +51,7 @@ class ShareHelper @Inject constructor(
     /**
      * Share text content
      */
-    fun shareText(text: String, title: String = "Share") {
+    fun shareText(text: String, title: String = context.getString(R.string.action_share)) {
         val chooser = buildShareTextChooser(text, title).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
@@ -62,7 +63,7 @@ class ShareHelper @Inject constructor(
      */
     fun shareLongText(
         text: String,
-        title: String = "Share",
+        title: String = context.getString(R.string.action_share),
         fileName: String = "summary.txt",
         forceFile: Boolean = false
     ) {
@@ -102,7 +103,7 @@ class ShareHelper @Inject constructor(
         val chooser = buildShareFilesChooser(
             files = files,
             mimeType = mimeType,
-            title = "Share media",
+            title = context.getString(R.string.share_chooser_media),
             text = caption
         )
         if (chooser != null) {
@@ -139,7 +140,7 @@ class ShareHelper @Inject constructor(
     fun shareFiles(
         files: List<File>,
         mimeType: String = "video/*",
-        title: String = "Share videos",
+        title: String = context.getString(R.string.share_chooser_videos),
         text: String? = null
     ) {
         val chooser = buildShareFilesChooser(files, mimeType, title, text)
@@ -157,7 +158,7 @@ class ShareHelper @Inject constructor(
     fun shareFile(
         file: File,
         mimeType: String = "application/octet-stream",
-        title: String = "Share file",
+        title: String = context.getString(R.string.share_chooser_file),
         text: String? = null
     ) {
         val chooser = buildShareFileChooser(file, mimeType, title, text)
@@ -165,7 +166,7 @@ class ShareHelper @Inject constructor(
         context.startActivity(chooser)
     }
 
-    fun buildShareTextChooser(text: String, title: String = "Share"): Intent {
+    fun buildShareTextChooser(text: String, title: String = context.getString(R.string.action_share)): Intent {
         val shareIntent = Intent().apply {
             action = Intent.ACTION_SEND
             type = "text/plain"

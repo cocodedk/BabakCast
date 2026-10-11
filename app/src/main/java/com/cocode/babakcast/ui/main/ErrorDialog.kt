@@ -17,12 +17,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.AppError
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 internal fun ErrorDialog(
     error: AppError,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -35,7 +39,7 @@ internal fun ErrorDialog(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = error.title,
+                text = error.title(context),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
@@ -44,7 +48,7 @@ internal fun ErrorDialog(
             )
 
             Text(
-                text = error.message,
+                text = error.message(context),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 13.sp,
                     lineHeight = 18.sp
@@ -52,7 +56,7 @@ internal fun ErrorDialog(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
 
-            error.fixHint?.let { hint ->
+            error.fixHint(context)?.let { hint ->
                 Text(
                     text = hint,
                     style = MaterialTheme.typography.bodySmall.copy(
@@ -73,7 +77,7 @@ internal fun ErrorDialog(
                     )
                 ) {
                     Text(
-                        "Dismiss",
+                        stringResource(R.string.action_dismiss),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp
                         )

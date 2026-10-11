@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings only the F-Droid build has. It never updates yt-dlp by itself, so its download
+     error points to the button that does. The default is in src/main/res/values/strings.xml. -->
+<resources>
+    <string name="error_hint_ytdlp_failed">Try again, or check that the video is still available. The download tool may be out of date. In Settings, tap \"Update yt-dlp\", then try again.</string>
+</resources>

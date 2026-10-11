@@ -63,7 +63,7 @@ internal class ShareTranslationRunner(
             is ShareTranslationResult.Cancelled -> result.originalText
             is ShareTranslationResult.Failed -> {
                 updateState {
-                    it.copy(error = AppError.NetworkError("Translation failed — sharing original text"))
+                    it.copy(error = AppError.TranslationFailed())
                 }
                 result.originalText
             }

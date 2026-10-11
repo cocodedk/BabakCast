@@ -11,10 +11,12 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cocode.babakcast.R
 import com.cocode.babakcast.domain.video.TrimTimeFields
 import com.cocode.babakcast.ui.theme.BabakCastColors
 
@@ -46,21 +48,21 @@ internal fun TrimTimeRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             TrimTimeBox(
-                label = "hours",
+                label = stringResource(R.string.trim_box_hours),
                 value = fields.hours,
                 enabled = enabled,
                 onValueChange = { onChange(fields.copy(hours = it)) },
                 modifier = Modifier.weight(1f)
             )
             TrimTimeBox(
-                label = "min",
+                label = stringResource(R.string.trim_box_minutes),
                 value = fields.minutes,
                 enabled = enabled,
                 onValueChange = { onChange(fields.copy(minutes = it)) },
                 modifier = Modifier.weight(1f)
             )
             TrimTimeBox(
-                label = "sec",
+                label = stringResource(R.string.trim_box_seconds),
                 value = fields.seconds,
                 enabled = enabled,
                 onValueChange = { onChange(fields.copy(seconds = it)) },

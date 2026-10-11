@@ -1,9 +1,12 @@
 package com.cocode.babakcast.data.remote
 
 import com.cocode.babakcast.data.model.TweetMedia
+import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.AppErrorException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 /**
@@ -523,4 +526,22 @@ class XSyndicationClientParseTest {
 
         assertEquals("Regular short tweet", result.text)
     }
+
+    private fun assertUnavailable(body: String) {
+        try {
+            XSyndicationClient.parseMediaDetails(body)
+            fail("Expected AppErrorException for: $body")
+        } catch (e: AppErrorException) {
+            assertTrue(e.error is AppError.XPostUnavailable)
+        }
+    }
+
+    @Test
+    fun invalidJson_isXPostUnavailable() = assertUnavailable("<html>Not found</html>")
+
+    @Test
+    fun arrayRoot_isXPostUnavailable() = assertUnavailable("[]")
+
+    @Test
+    fun mediaDetailsNotAnArray_isXPostUnavailable() = assertUnavailable("""{"text":"Hi","mediaDetails":"oops"}""")
 }

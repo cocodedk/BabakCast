@@ -35,6 +35,11 @@ import com.cocode.babakcast.ui.player.VideoPlayerDialog
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.DownloadFileParser
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.cocode.babakcast.R
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun DownloadsTab(
@@ -42,6 +47,7 @@ fun DownloadsTab(
     viewModel: DownloadsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var activePlaybackItems by remember { mutableStateOf<List<PlaybackItem>>(emptyList()) }
     var activePlaybackStartIndex by remember { mutableIntStateOf(0) }
     var pendingPartSelection by remember { mutableStateOf<DownloadItem?>(null) }
@@ -79,7 +85,11 @@ fun DownloadsTab(
                 )
             }
             Text(
-                if (uiState.isCleaningDownloads) "Clearing Downloads…" else "Clear Downloads",
+                if (uiState.isCleaningDownloads) {
+                    stringResource(R.string.downloads_clearing)
+                } else {
+                    stringResource(R.string.downloads_clear)
+                },
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -104,7 +114,7 @@ fun DownloadsTab(
                         color = BabakCastColors.PrimaryAccent
                     )
                     Text(
-                        text = "Loading downloads…",
+                        text = stringResource(R.string.downloads_loading),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -112,14 +122,14 @@ fun DownloadsTab(
             }
             uiState.downloadsError != null -> {
                 Text(
-                    text = "Failed to load downloads: ${uiState.downloadsError}",
+                    text = stringResource(R.string.downloads_load_failed, uiState.downloadsError.orEmpty()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
             }
             uiState.downloads.isEmpty() -> {
                 Text(
-                    text = "No downloads yet",
+                    text = stringResource(R.string.downloads_empty),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -152,6 +162,7 @@ fun DownloadsTab(
                                 val file = item.files.firstOrNull()
                                 if (file != null) {
                                     openPlayback(
+                                        context = context,
                                         file = file,
                                         downloads = uiState.downloads
                                     ) { items, startIndex ->
@@ -178,13 +189,14 @@ fun DownloadsTab(
         val item = pendingPartSelection!!
         AlertDialog(
             onDismissRequest = { pendingPartSelection = null },
-            title = { Text(text = "Choose part to play") },
+            title = { Text(text = stringResource(R.string.downloads_choose_part)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     item.files.forEachIndexed { index, file ->
                         TextButton(
                             onClick = {
                                 openPlayback(
+                                    context = context,
                                     file = file,
                                     downloads = uiState.downloads
                                 ) { items, startIndex ->
@@ -195,14 +207,14 @@ fun DownloadsTab(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(text = partLabel(file, index))
+                            Text(text = partLabel(context, file, index))
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { pendingPartSelection = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -212,10 +224,10 @@ fun DownloadsTab(
         val item = pendingDeleteSelection!!
         AlertDialog(
             onDismissRequest = { pendingDeleteSelection = null },
-            title = { Text(text = "Delete download?") },
+            title = { Text(text = stringResource(R.string.downloads_delete_title)) },
             text = {
                 Text(
-                    text = "This will remove the downloaded file${if (item.partCount > 1) "s" else ""} from your device."
+                    text = pluralStringResource(R.plurals.downloads_delete_message, item.partCount)
                 )
             },
             confirmButton = {
@@ -225,12 +237,12 @@ fun DownloadsTab(
                         pendingDeleteSelection = null
                     }
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteSelection = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -239,9 +251,9 @@ fun DownloadsTab(
     if (pendingClearDownloads) {
         AlertDialog(
             onDismissRequest = { pendingClearDownloads = false },
-            title = { Text(text = "Clear all downloads?") },
+            title = { Text(text = stringResource(R.string.downloads_clear_all_title)) },
             text = {
-                Text(text = "This will remove all downloaded files from your device.")
+                Text(text = stringResource(R.string.downloads_clear_all_message))
             },
             confirmButton = {
                 TextButton(
@@ -250,12 +262,12 @@ fun DownloadsTab(
                         pendingClearDownloads = false
                     }
                 ) {
-                    Text("Clear")
+                    Text(stringResource(R.string.action_clear))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingClearDownloads = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -274,27 +286,28 @@ fun DownloadsTab(
     }
 }
 
-private fun partLabel(file: File, index: Int): String {
+private fun partLabel(context: Context, file: File, index: Int): String {
     val base = file.nameWithoutExtension
     val number = DownloadFileParser.extractPartNumber(base)?.toString() ?: (index + 1).toString()
-    return "Part $number"
+    return context.getString(R.string.download_part, number)
 }
 
 private fun openPlayback(
+    context: Context,
     file: File,
     downloads: List<DownloadItem>,
     onReady: (List<PlaybackItem>, Int) -> Unit
 ) {
-    val items = buildPlaybackItems(downloads)
+    val items = buildPlaybackItems(context, downloads)
     val startIndex = items.indexOfFirst { it.file.absolutePath == file.absolutePath }
     onReady(items, if (startIndex >= 0) startIndex else 0)
 }
 
-private fun buildPlaybackItems(downloads: List<DownloadItem>): List<PlaybackItem> {
+private fun buildPlaybackItems(context: Context, downloads: List<DownloadItem>): List<PlaybackItem> {
     val items = mutableListOf<PlaybackItem>()
     downloads.forEach { item ->
         item.files.forEachIndexed { index, file ->
-            val suffix = if (item.files.size > 1) " • ${partLabel(file, index)}" else ""
+            val suffix = if (item.files.size > 1) " • ${partLabel(context, file, index)}" else ""
             items.add(
                 PlaybackItem(
                     file = file,

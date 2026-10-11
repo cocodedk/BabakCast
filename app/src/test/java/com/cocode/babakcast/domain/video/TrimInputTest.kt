@@ -1,5 +1,6 @@
 package com.cocode.babakcast.domain.video
 
+import com.cocode.babakcast.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -8,6 +9,11 @@ class TrimInputTest {
 
     private fun at(hours: String = "", minutes: String = "", seconds: String = "") =
         TrimTimeFields(hours, minutes, seconds)
+
+    private fun messageOf(resolution: TrimResolution): Int {
+        assertTrue(resolution is TrimResolution.Invalid)
+        return (resolution as TrimResolution.Invalid).messageRes
+    }
 
     @Test
     fun `disabled by default`() {
@@ -45,15 +51,13 @@ class TrimInputTest {
     @Test
     fun `asks for the start time when its boxes are empty`() {
         val resolution = TrimInput(enabled = true, end = at(seconds = "10")).resolve()
-        assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("start time"))
+        assertEquals(R.string.trim_error_start_missing, messageOf(resolution))
     }
 
     @Test
     fun `asks for the end time when its boxes are empty`() {
         val resolution = TrimInput(enabled = true, start = at(seconds = "10")).resolve()
-        assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("end time"))
+        assertEquals(R.string.trim_error_end_missing, messageOf(resolution))
     }
 
     @Test
@@ -61,8 +65,15 @@ class TrimInputTest {
         val resolution =
             TrimInput(enabled = true, start = at(seconds = "nope"), end = at(seconds = "10"))
                 .resolve()
-        assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("start time"))
+        assertEquals(R.string.trim_error_start_invalid, messageOf(resolution))
+    }
+
+    @Test
+    fun `rejects an end that is not a plain number`() {
+        val resolution =
+            TrimInput(enabled = true, start = at(seconds = "10"), end = at(seconds = "nope"))
+                .resolve()
+        assertEquals(R.string.trim_error_end_invalid, messageOf(resolution))
     }
 
     @Test
@@ -70,16 +81,15 @@ class TrimInputTest {
         val resolution =
             TrimInput(enabled = true, start = at(seconds = "60"), end = at(minutes = "2"))
                 .resolve()
-        assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("below 60"))
+        assertEquals(R.string.trim_error_start_invalid, messageOf(resolution))
     }
 
     @Test
     fun `rejects an end at or before the start`() {
         val same = TrimInput(enabled = true, start = at(seconds = "10"), end = at(seconds = "10"))
         val earlier = TrimInput(enabled = true, start = at(seconds = "10"), end = at(seconds = "9"))
-        assertTrue(same.resolve() is TrimResolution.Invalid)
-        assertTrue(earlier.resolve() is TrimResolution.Invalid)
+        assertEquals(R.string.trim_error_order, messageOf(same.resolve()))
+        assertEquals(R.string.trim_error_order, messageOf(earlier.resolve()))
     }
 
     @Test
@@ -87,8 +97,7 @@ class TrimInputTest {
         val resolution =
             TrimInput(enabled = true, start = at(seconds = "10.00"), end = at(seconds = "10.05"))
                 .resolve()
-        assertTrue(resolution is TrimResolution.Invalid)
-        assertTrue((resolution as TrimResolution.Invalid).message.contains("tenth"))
+        assertEquals(R.string.trim_error_too_short, messageOf(resolution))
     }
 
     @Test

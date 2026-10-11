@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cocode.babakcast.ui.theme.BabakCastColors
 import com.cocode.babakcast.util.ModelFilter
+import androidx.compose.ui.res.stringResource
+import com.cocode.babakcast.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +34,7 @@ internal fun ModelSelectorSection(
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
-            text = "Model",
+            text = stringResource(R.string.model_label),
             style = MaterialTheme.typography.labelMedium.copy(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
@@ -69,7 +71,7 @@ internal fun ModelSelectorSection(
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.KeyboardArrowDown,
-                        contentDescription = "Select model",
+                        contentDescription = stringResource(R.string.model_select_description),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -82,7 +84,7 @@ internal fun ModelSelectorSection(
                 shape = MaterialTheme.shapes.small,
                 placeholder = {
                     Text(
-                        "Select or enter model",
+                        stringResource(R.string.model_placeholder),
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp)
                     )
                 }
@@ -112,7 +114,7 @@ internal fun ModelSelectorSection(
         }
 
         Text(
-            text = "Type to filter the list, or enter a model name of your own",
+            text = stringResource(R.string.model_filter_hint),
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )

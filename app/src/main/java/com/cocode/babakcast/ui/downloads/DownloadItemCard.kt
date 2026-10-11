@@ -22,9 +22,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cocode.babakcast.ui.theme.BabakCastColors
-import java.text.SimpleDateFormat
+import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.cocode.babakcast.R
 
 @Composable
 internal fun DownloadItemCard(
@@ -56,13 +59,14 @@ internal fun DownloadItemCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                val partsLabel = if (item.partCount > 1) {
-                    " • ${item.partCount} parts"
-                } else {
-                    ""
-                }
+                val details = listOfNotNull(
+                    formatFileSize(item.sizeBytes),
+                    formatDate(item.lastModified),
+                    stringResource(item.mediaType.labelRes),
+                    if (item.partCount > 1) pluralStringResource(R.plurals.download_parts, item.partCount, item.partCount) else null
+                )
                 Text(
-                    text = "${formatFileSize(item.sizeBytes)} • ${formatDate(item.lastModified)} • ${item.mediaType.label}$partsLabel",
+                    text = details.joinToString(" • "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -70,28 +74,28 @@ internal fun DownloadItemCard(
             IconButton(onClick = onPlay) {
                 Icon(
                     imageVector = Icons.Outlined.PlayArrow,
-                    contentDescription = "Play download",
+                    contentDescription = stringResource(R.string.download_play),
                     tint = BabakCastColors.PrimaryAccent
                 )
             }
             IconButton(onClick = onShareDownload) {
                 Icon(
                     imageVector = Icons.Outlined.Share,
-                    contentDescription = "Share download",
+                    contentDescription = stringResource(R.string.download_share),
                     tint = BabakCastColors.SecondaryAccent
                 )
             }
             IconButton(onClick = onShareTitle) {
                 Icon(
                     imageVector = Icons.Outlined.Create,
-                    contentDescription = "Share title",
+                    contentDescription = stringResource(R.string.download_share_title),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    contentDescription = "Delete download",
+                    contentDescription = stringResource(R.string.download_delete),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -102,6 +106,6 @@ internal fun DownloadItemCard(
 private fun formatFileSize(bytes: Long): String = com.cocode.babakcast.util.ByteFormatter.format(bytes)
 
 private fun formatDate(timestamp: Long): String {
-    val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+    val formatter = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault())
     return formatter.format(Date(timestamp))
 }

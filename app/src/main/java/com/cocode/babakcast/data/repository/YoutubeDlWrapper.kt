@@ -3,7 +3,6 @@ package com.cocode.babakcast.data.repository
 import android.util.Log
 import com.cocode.babakcast.domain.video.TrimRange
 import com.cocode.babakcast.util.Platform
-import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
 import java.util.Locale
@@ -19,8 +18,7 @@ internal class YoutubeDlWrapper(
     @Volatile private var lastLoggedProgressBucket = -1
 
     internal fun fetchInfo(request: YoutubeDLRequest): String {
-        val output = YoutubeDL.getInstance().execute(request, null)
-        return output.out
+        return YtDlpUpdater.execute(request).out
     }
 
     internal fun executeDownload(
@@ -28,7 +26,7 @@ internal class YoutubeDlWrapper(
         onProgress: (Float) -> Unit
     ) {
         lastLoggedProgressBucket = -1
-        YoutubeDL.getInstance().execute(request, null) { progress, _, line ->
+        YtDlpUpdater.execute(request) { progress, _, line ->
             val normalized = normalizeProgress(progress, line)
             logProgressIfNeeded(normalized, progress, line)
             onProgress(normalized)
@@ -49,7 +47,7 @@ internal class YoutubeDlWrapper(
         request.addOption("--sub-format", "vtt")
         request.addOption("-o", File(transcriptsDir, "%(title)s.%(ext)s").absolutePath)
 
-        val output = YoutubeDL.getInstance().execute(request, null)
+        val output = YtDlpUpdater.execute(request)
         val newVtt = transcriptsDir
             .listFiles()
             ?.filter { it.isFile && it.extension.equals("vtt", ignoreCase = true) }

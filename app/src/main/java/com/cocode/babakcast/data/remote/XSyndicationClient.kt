@@ -16,6 +16,8 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.cocode.babakcast.util.AppError
+import com.cocode.babakcast.util.AppErrorException
 
 /**
  * Client for the X/Twitter syndication API.
@@ -40,12 +42,14 @@ class XSyndicationClient @Inject constructor(
 
             if (!response.isSuccessful) {
                 return@withContext Result.failure(
-                    IOException("Syndication API returned ${response.code}")
+                    AppErrorException(AppError.XPostUnavailable(), "Syndication API returned ${response.code}")
                 )
             }
 
             val body = response.body?.string()
-                ?: return@withContext Result.failure(IOException("Empty response body"))
+                ?: return@withContext Result.failure(
+                    AppErrorException(AppError.XPostUnavailable(), "Empty response body")
+                )
 
             val result = parseMediaDetails(body)
             Log.d(tag, "Fetched ${result.media.size} media items for tweet $tweetId: ${result.media.map { it::class.simpleName }}")
@@ -87,9 +91,19 @@ class XSyndicationClient @Inject constructor(
 
         /**
          * Parse a syndication API JSON response into a [TweetMediaResult].
-         * Exposed for testability.
+         * Exposed for testability. A reply that is not valid JSON, or not shaped like a post,
+         * ends as an [AppErrorException] with [AppError.XPostUnavailable].
          */
-        fun parseMediaDetails(jsonString: String): TweetMediaResult {
+        fun parseMediaDetails(jsonString: String): TweetMediaResult =
+            try {
+                parseUnchecked(jsonString)
+            } catch (e: AppErrorException) {
+                throw e
+            } catch (e: Exception) {
+                throw AppErrorException(AppError.XPostUnavailable(), "Could not read the syndication response: ${e.message}", e)
+            }
+
+        private fun parseUnchecked(jsonString: String): TweetMediaResult {
             val root = json.parseToJsonElement(jsonString).jsonObject
             val text = root["note_tweet"]?.jsonObject?.get("text")?.jsonPrimitive?.content
                 ?: root["text"]?.jsonPrimitive?.content ?: ""
