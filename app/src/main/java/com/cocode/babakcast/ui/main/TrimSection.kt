@@ -1,36 +1,32 @@
 package com.cocode.babakcast.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.cocode.babakcast.R
 import com.cocode.babakcast.domain.video.TrimInput
 import com.cocode.babakcast.domain.video.TrimResolution
+import com.cocode.babakcast.domain.video.TrimTimeFields
 import com.cocode.babakcast.ui.theme.BabakCastColors
-import androidx.compose.ui.res.stringResource
-import com.cocode.babakcast.R
 
 @Composable
 internal fun TrimSection(
     trim: TrimInput,
     enabled: Boolean,
     onToggle: (Boolean) -> Unit,
-    onStartChange: (String) -> Unit,
-    onEndChange: (String) -> Unit
+    onStartChange: (TrimTimeFields) -> Unit,
+    onEndChange: (TrimTimeFields) -> Unit
 ) {
     val resolution = trim.resolve()
     Column(
@@ -64,28 +60,22 @@ internal fun TrimSection(
         }
 
         AnimatedVisibility(visible = trim.enabled) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TrimTimeField(
-                        label = stringResource(R.string.trim_start),
-                        value = trim.start,
-                        enabled = enabled,
-                        onValueChange = onStartChange,
-                        modifier = Modifier.weight(1f)
-                    )
-                    TrimTimeField(
-                        label = stringResource(R.string.trim_end),
-                        value = trim.end,
-                        enabled = enabled,
-                        onValueChange = onEndChange,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                TrimTimeRow(
+                    label = stringResource(R.string.trim_start),
+                    fields = trim.start,
+                    enabled = enabled,
+                    onChange = onStartChange
+                )
+                TrimTimeRow(
+                    label = stringResource(R.string.trim_end),
+                    fields = trim.end,
+                    enabled = enabled,
+                    onChange = onEndChange
+                )
                 Text(
-                    text = (resolution as? TrimResolution.Invalid)?.let { stringResource(it.messageRes) }
+                    text = (resolution as? TrimResolution.Invalid)
+                        ?.let { stringResource(it.messageRes) }
                         ?: stringResource(R.string.trim_format_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (resolution is TrimResolution.Invalid) {
@@ -97,50 +87,4 @@ internal fun TrimSection(
             }
         }
     }
-}
-
-@Composable
-private fun TrimTimeField(
-    label: String,
-    value: String,
-    enabled: Boolean,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 1.sp
-                )
-            )
-        },
-        placeholder = {
-            Text(
-                "0:00.0",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-        },
-        modifier = modifier,
-        singleLine = true,
-        enabled = enabled,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = BabakCastColors.PrimaryAccent,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            cursorColor = BabakCastColors.PrimaryAccent,
-            disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-        ),
-        textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-        shape = MaterialTheme.shapes.medium
-    )
 }
