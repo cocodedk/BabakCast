@@ -6,6 +6,7 @@ import com.cocode.babakcast.data.model.TweetDownloadResult
 import com.cocode.babakcast.data.model.VideoInfo
 import com.cocode.babakcast.data.model.TweetMedia
 import com.cocode.babakcast.data.remote.XSyndicationClient
+import com.cocode.babakcast.domain.video.TrimRange
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.util.Platform
 import com.cocode.babakcast.util.YouTubeMetadataParser
@@ -123,6 +124,7 @@ class MediaRepository @Inject constructor(
      */
     suspend fun downloadVideo(
         url: String,
+        section: TrimRange? = null,
         onProgress: (Float) -> Unit
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
@@ -138,7 +140,7 @@ class MediaRepository @Inject constructor(
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$mediaId" else mediaId
             val outputFile = File(videosDir, "${baseName}.mp4")
 
-            val request = buildDownloadRequest(url, platform, outputFile.absolutePath)
+            val request = buildDownloadRequest(url, platform, outputFile.absolutePath, section)
             retry(
                 maxAttempts = downloadMaxAttempts,
                 onRetry = { attempt, e ->
@@ -406,8 +408,13 @@ class MediaRepository @Inject constructor(
         fun buildInfoRequest(url: String, platform: Platform): YoutubeDLRequest =
             YoutubeDlWrapper.buildInfoRequest(url, platform)
 
-        fun buildDownloadRequest(url: String, platform: Platform, outputPath: String): YoutubeDLRequest =
-            YoutubeDlWrapper.buildDownloadRequest(url, platform, outputPath)
+        fun buildDownloadRequest(
+            url: String,
+            platform: Platform,
+            outputPath: String,
+            section: TrimRange? = null
+        ): YoutubeDLRequest =
+            YoutubeDlWrapper.buildDownloadRequest(url, platform, outputPath, section)
     }
 }
 
