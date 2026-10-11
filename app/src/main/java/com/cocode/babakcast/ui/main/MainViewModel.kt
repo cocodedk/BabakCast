@@ -20,6 +20,7 @@ import com.cocode.babakcast.domain.split.SplitDecision
 import com.cocode.babakcast.domain.split.SplitMode
 import com.cocode.babakcast.domain.split.SplitSize
 import com.cocode.babakcast.domain.video.TrimResolution
+import com.cocode.babakcast.domain.video.TrimTimeFields
 import com.cocode.babakcast.domain.video.VideoSplitter
 import com.cocode.babakcast.domain.video.VideoTrimmer
 import com.cocode.babakcast.util.AppError
@@ -117,12 +118,12 @@ class MainViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(enabled = enabled))
     }
 
-    fun updateTrimStart(text: String) {
-        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(start = text))
+    fun updateTrimStart(fields: TrimTimeFields) {
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(start = fields))
     }
 
-    fun updateTrimEnd(text: String) {
-        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(end = text))
+    fun updateTrimEnd(fields: TrimTimeFields) {
+        _uiState.value = _uiState.value.copy(trim = _uiState.value.trim.copy(end = fields))
     }
 
     /**
