@@ -1,0 +1,2 @@
+- Settings: the "Adaptive length" switch no longer covers the end of its description.
+- Updated the libraries the app is built with.
