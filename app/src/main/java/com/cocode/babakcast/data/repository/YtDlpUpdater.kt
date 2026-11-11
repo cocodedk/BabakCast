@@ -63,8 +63,9 @@ internal fun ytDlpDir(appContext: Context): File =
 internal fun ytDlpBinary(appContext: Context): File = File(ytDlpDir(appContext), "yt-dlp")
 
 /**
- * The yt-dlp update a user starts from Settings (the fdroid flavour never updates on its own),
- * and the one gate every yt-dlp run goes through. X's direct downloads (XDirectDownloader) do
+ * The yt-dlp update: the one a user starts from Settings (the fdroid flavour never updates on
+ * its own) and the daily one the github flavour runs at start, and the one gate every yt-dlp
+ * run goes through. X's direct downloads (XDirectDownloader) do
  * not run yt-dlp, so they do not use it.
  */
 object YtDlpUpdater {
@@ -82,7 +83,7 @@ object YtDlpUpdater {
         onProgress: ((Float, Long, String) -> Unit)? = null
     ): YoutubeDLResponse = gate.run { runner(request, onProgress) }
 
-    /** Blocking, and over within about a minute: call off the main thread. Never throws. */
+    /** Blocking, with a deadline on every request (see [YtDlpInstaller]): call off the main thread. Never throws. */
     fun update(appContext: Context): YtDlpUpdateResult =
         update(YtDlpInstaller(OkHttpClient(), ReleaseSource.github(channelRepo()), ytDlpBinary(appContext)))
 
