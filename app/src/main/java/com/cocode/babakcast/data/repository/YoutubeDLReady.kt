@@ -38,6 +38,15 @@ internal fun shouldRefreshAtStart(selfUpdate: Boolean, lastUpdateDay: Long, toda
     selfUpdate && lastUpdateDay != today
 
 /**
+ * The day to record after the start refresh. Only a check that reached GitHub counts; a failed
+ * one (or one refused because a download is running) is tried again at the next launch.
+ */
+internal fun refreshedDay(result: YtDlpUpdateResult, today: Long): Long? = when (result) {
+    YtDlpUpdateResult.Updated, YtDlpUpdateResult.AlreadyLatest -> today
+    YtDlpUpdateResult.Failed, YtDlpUpdateResult.DownloadRunning -> null
+}
+
+/**
  * Tracks YoutubeDL initialization. Start from Application.onCreate();
  * UI can observe [status] and show "Preparing..." until [YoutubeDLInitStatus.Ready].
  *
@@ -147,7 +156,7 @@ object YoutubeDLReady {
      *
      * Gated on [BuildConfig.YTDLP_SELF_UPDATE]: the fdroid flavor never updates yt-dlp on its
      * own. It keeps the yt-dlp inside youtubedl-android until the user taps "Update yt-dlp" in
-     * Settings (see [YtDlpUpdater]).
+     * Settings. Both flavors use the same bounded [YtDlpUpdater.update].
      */
     private fun refreshYoutubeDlIfDue(appContext: Context) {
         try {
@@ -155,8 +164,11 @@ object YoutubeDLReady {
             val today = System.currentTimeMillis() / MILLIS_PER_DAY
             val lastDay = prefs.getLong(KEY_LAST_UPDATE_DAY, 0L)
             if (!shouldRefreshAtStart(BuildConfig.YTDLP_SELF_UPDATE, lastDay, today)) return
-            val result = YoutubeDL.getInstance().updateYoutubeDL(appContext, YTDLP_CHANNEL)
-            prefs.edit().putLong(KEY_LAST_UPDATE_DAY, today).apply()
+            // Our own installer, not the library's updater: that one has no timeouts, so a
+            // GitHub that accepts the connection and then goes silent would hold the app at
+            // "Getting ready" for good. This one ends within about a minute and never throws.
+            val result = YtDlpUpdater.update(appContext)
+            refreshedDay(result, today)?.let { prefs.edit().putLong(KEY_LAST_UPDATE_DAY, it).apply() }
             Log.i(TAG, "yt-dlp refresh: $result")
         } catch (e: Exception) {
             Log.w(TAG, "yt-dlp refresh skipped; using bundled binary", e)

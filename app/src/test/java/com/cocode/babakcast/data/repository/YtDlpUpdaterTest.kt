@@ -15,6 +15,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -161,6 +162,31 @@ class YtDlpUpdaterTest {
         assertEquals(YtDlpUpdateResult.Failed, YtDlpUpdater.update(installer(timeoutMs = 2_000)))
         assertArrayEquals(oldFile, binary.readBytes())
         assertGateIsFree()
+    }
+
+    /** The github start refresh goes through the bounded installer: a silent GitHub must not hold the app at "Getting ready". */
+    @Test(timeout = 20_000)
+    fun startRefresh_onAStalledNetwork_endsWithinItsDeadline_andIsTriedAgainNextLaunch() {
+        github.releaseStalls = true
+        val started = System.nanoTime()
+
+        val result = YtDlpUpdater.update(installer(timeoutMs = 1_000))
+
+        assertTrue("ends instead of waiting forever", System.nanoTime() - started < TimeUnit.SECONDS.toNanos(5))
+        assertEquals(YtDlpUpdateResult.Failed, result)
+        assertNull("a failed check records no day", refreshedDay(result, today = 20_000L))
+    }
+
+    @Test
+    fun startRefresh_thatReachedGitHub_recordsToday() {
+        assertEquals(20_000L, refreshedDay(YtDlpUpdateResult.AlreadyLatest, today = 20_000L))
+        assertEquals(20_000L, refreshedDay(YtDlpUpdateResult.Updated, today = 20_000L))
+    }
+
+    @Test
+    fun startRefresh_thatDidNotReachGitHub_recordsNoDay() {
+        assertNull(refreshedDay(YtDlpUpdateResult.Failed, today = 20_000L))
+        assertNull(refreshedDay(YtDlpUpdateResult.DownloadRunning, today = 20_000L))
     }
 
     private fun assertGateIsFree() {
