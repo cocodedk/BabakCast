@@ -1,0 +1,3 @@
+- Appen venter ikke længere uendeligt på "Gør klar til at hente…", når forbindelsen går i stå under det daglige yt-dlp-tjek.
+- "Opdater yt-dlp" virker nu på telefoner, hvor den fejlede hver gang.
+- Når en hentning fejler, ruller fejlmeddelelsen ind på skærmen.
