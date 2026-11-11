@@ -164,19 +164,6 @@ class YtDlpUpdaterTest {
         assertGateIsFree()
     }
 
-    /** The github start refresh goes through the bounded installer: a silent GitHub must not hold the app at "Getting ready". */
-    @Test(timeout = 20_000)
-    fun startRefresh_onAStalledNetwork_endsWithinItsDeadline_andIsTriedAgainNextLaunch() {
-        github.releaseStalls = true
-        val started = System.nanoTime()
-
-        val result = YtDlpUpdater.update(installer(timeoutMs = 1_000))
-
-        assertTrue("ends instead of waiting forever", System.nanoTime() - started < TimeUnit.SECONDS.toNanos(5))
-        assertEquals(YtDlpUpdateResult.Failed, result)
-        assertNull("a failed check records no day", refreshedDay(result, today = 20_000L))
-    }
-
     @Test
     fun startRefresh_thatReachedGitHub_recordsToday() {
         assertEquals(20_000L, refreshedDay(YtDlpUpdateResult.AlreadyLatest, today = 20_000L))

@@ -83,7 +83,7 @@ object YtDlpUpdater {
         onProgress: ((Float, Long, String) -> Unit)? = null
     ): YoutubeDLResponse = gate.run { runner(request, onProgress) }
 
-    /** Blocking, and over within about a minute: call off the main thread. Never throws. */
+    /** Blocking, with a deadline on every request (see [YtDlpInstaller]): call off the main thread. Never throws. */
     fun update(appContext: Context): YtDlpUpdateResult =
         update(YtDlpInstaller(OkHttpClient(), ReleaseSource.github(channelRepo()), ytDlpBinary(appContext)))
 

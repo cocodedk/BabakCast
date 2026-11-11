@@ -19,7 +19,9 @@ import okhttp3.Response
  *  - every address is HTTPS on GitHub, checked before each request (see [UrlPolicy]);
  *  - the file must match the SHA2-256SUMS published with the same release, checked on the bytes
  *    as they are written, before anything is opened or installed;
- *  - nothing it reads is unbounded, and every request has a deadline (about a minute in all);
+ *  - nothing it reads is unbounded, and every request has a deadline: a silent connection ends at
+ *    the client's read timeout (about ten seconds), and a slow one gets three minutes for the
+ *    file, so a weak link still lands the update instead of failing at every launch;
  *  - the new file replaces the old one in a single rename, and a failure leaves the old one as it was.
  * It does not use the library's updater: that one has no timeouts, deletes the old file before it
  * has the new one, and checks nothing. The caller holds the gate, so no yt-dlp runs meanwhile.
@@ -35,7 +37,7 @@ internal class YtDlpInstaller(
     private val source: ReleaseSource,
     private val binary: File,
     private val releaseTimeoutMs: Long = 20_000,
-    private val downloadTimeoutMs: Long = 40_000
+    private val downloadTimeoutMs: Long = 180_000
 ) {
     fun update(): YtDlpUpdateResult {
         val api = YtDlpTransport(client, source.api)

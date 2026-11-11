@@ -3,7 +3,9 @@ package com.cocode.babakcast.ui.main
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -70,7 +74,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.cocode.babakcast.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(
     onNavigateToSettings: () -> Unit,
@@ -401,10 +405,16 @@ fun MainScreen(
                 exit = fadeOut()
             ) {
                 uiState.error?.let { error ->
-                    ErrorDialog(
-                        error = error,
-                        onDismiss = viewModel::clearError
-                    )
+                    // The error sits at the end of a long screen. Without this a failed
+                    // download looks like nothing happened until the user scrolls down.
+                    val errorInView = remember { BringIntoViewRequester() }
+                    LaunchedEffect(error) { errorInView.bringIntoView() }
+                    Box(modifier = Modifier.bringIntoViewRequester(errorInView)) {
+                        ErrorDialog(
+                            error = error,
+                            onDismiss = viewModel::clearError
+                        )
+                    }
                 }
             }
 

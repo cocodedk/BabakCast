@@ -166,7 +166,8 @@ object YoutubeDLReady {
             if (!shouldRefreshAtStart(BuildConfig.YTDLP_SELF_UPDATE, lastDay, today)) return
             // Our own installer, not the library's updater: that one has no timeouts, so a
             // GitHub that accepts the connection and then goes silent would hold the app at
-            // "Getting ready" for good. This one ends within about a minute and never throws.
+            // "Getting ready" for good. This one gives up on silence in about ten seconds, has
+            // a deadline on every request, and never throws.
             val result = YtDlpUpdater.update(appContext)
             refreshedDay(result, today)?.let { prefs.edit().putLong(KEY_LAST_UPDATE_DAY, it).apply() }
             Log.i(TAG, "yt-dlp refresh: $result")
