@@ -1,0 +1,2 @@
+- Indstillinger: kontakten ved "Tilpasset længde" dækker ikke længere slutningen af beskrivelsen.
+- De biblioteker, appen er bygget med, er opdateret.
