@@ -219,7 +219,8 @@ internal fun SummaryLengthRow(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                // Without a weight the text takes the whole row and pushes the switch off the card.
+                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                     Text(
                         text = stringResource(R.string.settings_adaptive_title),
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
