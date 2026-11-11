@@ -1,0 +1,3 @@
+- The app no longer waits forever on "Getting ready to download…" when the connection stalls during the daily yt-dlp check.
+- "Update yt-dlp" now works on phones where it failed every time.
+- When a download fails, the error message scrolls into view.

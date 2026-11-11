@@ -1,0 +1,6 @@
+- Settings has an "Update yt-dlp" button: you choose when to fetch a newer yt-dlp from its GitHub releases.
+- Trim: type the cut times, and only the chosen segment is downloaded.
+- New About screen with a link to the privacy policy.
+- Danish translation.
+- The app no longer asks for storage permissions it never used.
+- 32-bit x86 is no longer built (its audio tools were missing there); x86_64 still is.

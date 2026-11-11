@@ -1,0 +1,6 @@
+- Indstillinger har en knap, "Opdater yt-dlp": du vælger selv, hvornår en nyere yt-dlp hentes fra dens GitHub-udgivelser.
+- Klip: skriv tidspunkterne, og kun det valgte stykke hentes.
+- Ny Om-skærm med et link til privatlivspolitikken.
+- Dansk oversættelse.
+- Appen beder ikke længere om lagertilladelser, den aldrig brugte.
+- 32-bit x86 bygges ikke længere (lydværktøjerne manglede der); x86_64 gør stadig.

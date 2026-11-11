@@ -15,6 +15,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -161,6 +162,18 @@ class YtDlpUpdaterTest {
         assertEquals(YtDlpUpdateResult.Failed, YtDlpUpdater.update(installer(timeoutMs = 2_000)))
         assertArrayEquals(oldFile, binary.readBytes())
         assertGateIsFree()
+    }
+
+    @Test
+    fun startRefresh_thatReachedGitHub_recordsToday() {
+        assertEquals(20_000L, refreshedDay(YtDlpUpdateResult.AlreadyLatest, today = 20_000L))
+        assertEquals(20_000L, refreshedDay(YtDlpUpdateResult.Updated, today = 20_000L))
+    }
+
+    @Test
+    fun startRefresh_thatDidNotReachGitHub_recordsNoDay() {
+        assertNull(refreshedDay(YtDlpUpdateResult.Failed, today = 20_000L))
+        assertNull(refreshedDay(YtDlpUpdateResult.DownloadRunning, today = 20_000L))
     }
 
     private fun assertGateIsFree() {
