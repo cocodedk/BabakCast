@@ -1,37 +1,56 @@
 package com.cocode.babakcast.data.repository
 
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
-import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 
 /**
  * yt-dlp is an executable zip: a `#!/usr/bin/env python3` line, then a zip archive that carries
  * its own version in yt_dlp/version.py, as a date (2025.11.12 for a stable release,
  * 2026.09.27.232945 for a nightly, the last part being the time). The version is read from the
- * file itself, through the zip's index at the end, so it works with that line in front and can
- * never disagree with the binary the way a saved record can (for example after Android restores
- * an app's preferences without its files).
+ * file itself, so it can never disagree with the binary the way a saved record can (for example
+ * after Android restores an app's preferences without its files).
+ *
+ * It is read front to back, from where the zip starts, and not with [java.util.zip.ZipFile]:
+ * on a phone with a current Android runtime ZipFile refuses a file that does not begin with a
+ * zip entry ("Entry at offset zero has invalid LFH signature"), which every yt-dlp does.
  */
 internal object YtDlpVersion {
     private const val VERSION_ENTRY = "yt_dlp/version.py"
     private const val MAX_VERSION_PY = 8 * 1024
     private val VERSION = Regex("""__version__\s*=\s*'([^']+)'""")
+    private const val MAX_PREFIX = 1024
+    private val ENTRY_START = byteArrayOf(0x50, 0x4B, 0x03, 0x04)
 
     /** The version of the yt-dlp file at [file], or null when it is missing or not a yt-dlp. */
     fun of(file: File): String? = try {
-        ZipFile(file).use { zip ->
-            zip.getEntry(VERSION_ENTRY)?.let { entry ->
-                zip.getInputStream(entry).use { readSmall(it) }
-            }?.let { VERSION.find(it)?.groupValues?.get(1) }
+        file.inputStream().buffered().use { input ->
+            if (!skipToZip(input)) return null
+            val zip = ZipInputStream(input)
+            generateSequence { zip.nextEntry }.firstOrNull { it.name == VERSION_ENTRY }
+                ?.let { readSmall(zip) }
+                ?.let { VERSION.find(it)?.groupValues?.get(1) }
         }
     } catch (e: Exception) {
         null
     }
 
+    /** Moves [input] to the first zip entry, past the `#!` line. False when there is none near the front. */
+    private fun skipToZip(input: BufferedInputStream): Boolean {
+        input.mark(MAX_PREFIX + ENTRY_START.size)
+        val head = input.readUpTo(MAX_PREFIX + ENTRY_START.size)
+        val at = (0..head.size - ENTRY_START.size).firstOrNull { i -> ENTRY_START.indices.all { head[i + it] == ENTRY_START[it] } }
+            ?: return false
+        input.reset()
+        var left = at.toLong()
+        while (left > 0) left -= input.skip(left).also { if (it <= 0) return false }
+        return true
+    }
+
     /**
-     * Same, for a yt-dlp read from a stream (the copy that ships inside youtubedl-android). A zip
-     * cannot be read from the front of a stream when something comes before it, so the stream is
-     * copied to a temporary file in [tempDir] first. Null too when that file cannot be made or
+     * Same, for a yt-dlp read from a stream (the copy that ships inside youtubedl-android). The
+     * stream is copied to a temporary file in [tempDir] first. Null too when that file cannot be made or
      * written (a full or missing folder).
      */
     fun ofStream(stream: InputStream, tempDir: File): String? {
