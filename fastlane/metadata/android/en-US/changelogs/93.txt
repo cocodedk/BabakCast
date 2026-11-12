@@ -1,0 +1,3 @@
+- A video you already downloaded is used again at once when you ask for the same link, without downloading it a second time.
+- "Cut a segment", "Download Audio" and "Download and split video" no longer delete a video you had already downloaded from that link.
+- A video used again is shared with its exact title.
