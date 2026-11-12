@@ -1,0 +1,3 @@
+- En video, du allerede har hentet, bruges igen med det samme, når du beder om det samme link. Den hentes ikke en gang til.
+- "Klip et stykke", "Hent lyd" og "Hent og opdel video" sletter ikke længere en video, du allerede havde hentet fra linket.
+- En video, der bruges igen, deles med sin nøjagtige titel.
