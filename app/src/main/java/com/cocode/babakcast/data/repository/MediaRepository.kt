@@ -38,7 +38,8 @@ class MediaRepository @Inject constructor(
     private val okHttpClient: OkHttpClient
 ) {
     private val tag = "MediaRepository"
-    private val videosDir = File(context.getExternalFilesDir(null), "videos")
+    /** Where saved videos live, and where a trim writes its clip. */
+    val videosDir = File(context.getExternalFilesDir(null), "videos")
     private val imagesDir = File(context.getExternalFilesDir(null), "images")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val ytDl = YoutubeDlWrapper(tag)
@@ -120,16 +121,33 @@ class MediaRepository @Inject constructor(
     }
 
     /**
-     * Download video
+     * The video already saved for [url], or null. The same media id means the same video.
+     */
+    suspend fun findSavedVideo(url: String): File? = withContext(Dispatchers.IO) {
+        val mediaId = identifyMedia(url)?.mediaId ?: return@withContext null
+        SavedVideo.find(videosDir, mediaId)
+    }
+
+    /**
+     * Download video, or reuse the one already saved for this link without any network
+     * request. A reused file comes back with [VideoInfo.keepFile] set.
+     *
+     * @param needChapters fetch the chapter list even when the saved copy is used. Costs
+     *   one metadata request, and a failure of it only leaves the chapters empty.
      */
     suspend fun downloadVideo(
         url: String,
         section: TrimRange? = null,
+        needChapters: Boolean = false,
         onProgress: (Float) -> Unit
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
             val (platform, mediaId) = identifyMedia(url)
                 ?: return@withContext Result.failure(IllegalArgumentException("Unsupported URL"))
+
+            SavedVideo.find(videosDir, mediaId)?.let { saved ->
+                return@withContext Result.success(savedVideoInfo(url, platform, mediaId, saved, needChapters))
+            }
 
             val metadataResult = getVideoInfo(url)
             val metadata = metadataResult.getOrNull()
@@ -138,7 +156,7 @@ class MediaRepository @Inject constructor(
 
             val safeTitle = sanitizeFileBaseName(title)
             val baseName = if (safeTitle.isNotBlank()) "${safeTitle}_$mediaId" else mediaId
-            val outputFile = File(videosDir, "${baseName}.mp4")
+            val outputFile = downloadTarget(baseName, section)
 
             val request = buildDownloadRequest(url, platform, outputFile.absolutePath, section)
             retry(
@@ -175,6 +193,40 @@ class MediaRepository @Inject constructor(
             Log.e(tag, "Download failed", e)
             Result.failure(e)
         }
+    }
+
+    private suspend fun savedVideoInfo(
+        url: String,
+        platform: Platform,
+        mediaId: String,
+        saved: File,
+        needChapters: Boolean
+    ): VideoInfo {
+        val metadata = if (needChapters) getVideoInfo(url).getOrNull() else null
+        val fileSize = saved.length()
+        Log.d(tag, "Using the saved video: platform=$platform mediaId=$mediaId path=${saved.absolutePath} sizeBytes=$fileSize")
+        return VideoInfo(
+            videoId = mediaId,
+            title = metadata?.title?.trim().orEmpty().ifBlank { SavedVideo.titleOf(saved, mediaId) },
+            url = url,
+            chapters = metadata?.chapters.orEmpty(),
+            file = saved,
+            fileSizeBytes = fileSize,
+            needsSplitting = fileSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES,
+            keepFile = true
+        )
+    }
+
+    /**
+     * A full download is saved under its own name in the videos folder. A section is only a
+     * working piece to be cut, so it goes to the cache under the same name: it must never
+     * pass for the full video. Any older piece is removed first, because yt-dlp would
+     * silently reuse a stale piece of another range.
+     */
+    private fun downloadTarget(baseName: String, section: TrimRange?): File {
+        if (section == null) return File(videosDir, "$baseName.mp4")
+        val piecesDir = File(context.externalCacheDir ?: context.cacheDir, "pieces").apply { mkdirs() }
+        return File(piecesDir, "$baseName.mp4").also { it.delete() }
     }
 
     suspend fun fetchTweetText(url: String): Result<String> = withContext(Dispatchers.IO) {
