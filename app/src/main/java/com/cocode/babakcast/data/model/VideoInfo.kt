@@ -13,5 +13,7 @@ data class VideoInfo(
     val file: File? = null,
     val splitFiles: List<File> = emptyList(),
     val fileSizeBytes: Long = 0,
-    val needsSplitting: Boolean = false
+    val needsSplitting: Boolean = false,
+    /** The file was already in Downloads before this request, so nothing may delete it as a by-product. */
+    val keepFile: Boolean = false
 )

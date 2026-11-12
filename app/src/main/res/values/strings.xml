@@ -135,6 +135,7 @@
     <string name="loading_downloading_all_media">Downloading post media. Posts with photos and videos save the photos only…</string>
     <string name="loading_downloading_source_video">Downloading the video to get its audio…</string>
     <string name="loading_downloading_segment">Downloading the part you asked for…</string>
+    <string name="loading_using_saved_video">Using the video you already downloaded…</string>
     <string name="loading_extracting_audio">Extracting audio…</string>
     <string name="loading_fetching_transcript">Fetching transcript…</string>
     <string name="loading_generating_summary">Generating summary…</string>

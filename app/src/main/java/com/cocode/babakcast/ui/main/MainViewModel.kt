@@ -88,6 +88,9 @@ class MainViewModel @Inject constructor(
 
     private var pendingSplitRequest: PendingSplitRequest? = null
 
+    // The video that was already saved before the current request. Nothing here may delete it.
+    private var keptSavedVideo: File? = null
+
     init {
         viewModelScope.launch {
             YoutubeDLReady.status.collect { initStatus ->
@@ -156,7 +159,13 @@ class MainViewModel @Inject constructor(
             isProgressIndeterminate = true
         )
 
-        return videoTrimmer.trim(sourceFile, resolution.range).map { clip ->
+        val trimmed = videoTrimmer.trim(
+            sourceFile = sourceFile,
+            range = resolution.range,
+            outputDir = mediaRepository.videosDir,
+            keepSource = videoInfo.keepFile
+        )
+        return trimmed.map { clip ->
             val clipSize = clip.length()
             videoInfo.copy(
                 file = clip,
@@ -164,9 +173,17 @@ class MainViewModel @Inject constructor(
                 needsSplitting = clipSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES,
                 // Chapter timestamps address the original timeline, so they no
                 // longer describe this file and must not reach a chapter split.
-                chapters = emptyList()
+                chapters = emptyList(),
+                // The clip is new, so it is a by-product like any other working file.
+                keepFile = false
             )
         }
+    }
+
+    /** Deletes a working video, unless it is the one the user already had saved. */
+    private fun discardWorkingVideo(file: File?) {
+        if (file == null || file == keptSavedVideo) return
+        if (file.exists()) file.delete()
     }
 
     private fun failDownload(error: Throwable) {
@@ -180,11 +197,11 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun downloadVideo() = startVideoDownload(R.string.loading_downloading_full_video) { videoInfo ->
+    fun downloadVideo() = startVideoDownload(R.string.loading_downloading_full_video, needChapters = false) { videoInfo ->
         splitAndShareVideo(videoInfo, SplitMode.NONE)
     }
 
-    fun downloadSplitVideo() = startVideoDownload(R.string.loading_downloading_video) { videoInfo ->
+    fun downloadSplitVideo() = startVideoDownload(R.string.loading_downloading_video, needChapters = true) { videoInfo ->
         val fileSize = videoInfo.fileSizeBytes.takeIf { it > 0L }
             ?: videoInfo.file?.length() ?: 0L
         val needsSplit = !SplitDecision.skipFor(
@@ -212,6 +229,7 @@ class MainViewModel @Inject constructor(
 
     private fun startVideoDownload(
         @StringRes loadingMessageRes: Int,
+        needChapters: Boolean,
         onReady: suspend (VideoInfo) -> Unit
     ) {
         val url = _uiState.value.url
@@ -228,6 +246,7 @@ class MainViewModel @Inject constructor(
             // A section download reports no percentages — ffmpeg does the fetching, and it
             // prints none — so the bar runs indeterminate rather than sitting frozen at 0%.
             val section = trimSection()
+            val usingSaved = !needChapters && mediaRepository.findSavedVideo(url) != null
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
@@ -236,20 +255,26 @@ class MainViewModel @Inject constructor(
                 isSummarizing = false,
                 isDownloadingAudio = false,
                 loadingMessage = context.getString(
-                    if (section != null) R.string.loading_downloading_segment else loadingMessageRes
+                    when {
+                        usingSaved -> R.string.loading_using_saved_video
+                        section != null -> R.string.loading_downloading_segment
+                        else -> loadingMessageRes
+                    }
                 ),
-                isProgressIndeterminate = section != null,
+                isProgressIndeterminate = section != null || usingSaved,
                 splitChoicePrompt = null
             )
 
-            mediaRepository.downloadVideo(url, section) { progress ->
+            mediaRepository.downloadVideo(url, section, needChapters) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { videoInfo ->
+                    keptSavedVideo = videoInfo.file.takeIf { videoInfo.keepFile }
                     applyTrim(videoInfo).fold(
                         onSuccess = { trimmed -> onReady(trimmed) },
                         onFailure = { error ->
                             Log.e(tag, "startVideoDownload trim failed", error)
+                            discardWorkingVideo(videoInfo.file)
                             failDownload(error)
                         }
                     )
@@ -347,11 +372,11 @@ class MainViewModel @Inject constructor(
     fun fetchAndShareTweetText() =
         fetchTweetTextAndEmit(TweetTextEvent::Share, R.string.error_tweet_no_text_share)
 
-    fun downloadAudio() = startAudioDownload { videoInfo, videoFile, audioFile ->
+    fun downloadAudio() = startAudioDownload(needChapters = false) { videoInfo, videoFile, audioFile ->
         splitAndShareAudio(videoInfo, videoFile, audioFile, SplitMode.NONE)
     }
 
-    fun downloadSplitAudio() = startAudioDownload { videoInfo, videoFile, audioFile ->
+    fun downloadSplitAudio() = startAudioDownload(needChapters = true) { videoInfo, videoFile, audioFile ->
         val audioNeedsSplit = !SplitDecision.skipFor(
             mode = SplitMode.BY_SIZE,
             fileSizeBytes = audioFile.length(),
@@ -374,7 +399,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun startAudioDownload(onAudioReady: suspend (VideoInfo, File, File) -> Unit) {
+    private fun startAudioDownload(
+        needChapters: Boolean,
+        onAudioReady: suspend (VideoInfo, File, File) -> Unit
+    ) {
         val url = _uiState.value.url
         if (!_uiState.value.downloadEngineReady) return
         if (url.isBlank()) {
@@ -388,6 +416,7 @@ class MainViewModel @Inject constructor(
         _pendingAudioFiles.value = null
         viewModelScope.launch {
             val section = trimSection()
+            val usingSaved = !needChapters && mediaRepository.findSavedVideo(url) != null
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
@@ -396,20 +425,21 @@ class MainViewModel @Inject constructor(
                 isSummarizing = false,
                 isDownloadingAudio = true,
                 loadingMessage = context.getString(
-                    if (section != null) {
-                        R.string.loading_downloading_segment
-                    } else {
-                        R.string.loading_downloading_source_video
+                    when {
+                        usingSaved -> R.string.loading_using_saved_video
+                        section != null -> R.string.loading_downloading_segment
+                        else -> R.string.loading_downloading_source_video
                     }
                 ),
-                isProgressIndeterminate = section != null,
+                isProgressIndeterminate = section != null || usingSaved,
                 splitChoicePrompt = null
             )
 
-            mediaRepository.downloadVideo(url, section) { progress ->
+            mediaRepository.downloadVideo(url, section, needChapters) { progress ->
                 _uiState.value = _uiState.value.copy(progress = progress)
             }.fold(
                 onSuccess = { downloadedInfo ->
+                    keptSavedVideo = downloadedInfo.file.takeIf { downloadedInfo.keepFile }
                     if (downloadedInfo.file?.exists() != true) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
@@ -425,7 +455,7 @@ class MainViewModel @Inject constructor(
                     val trimResult = applyTrim(downloadedInfo)
                     val videoInfo = trimResult.getOrElse { error ->
                         Log.e(tag, "downloadAudio trim failed", error)
-                        downloadedInfo.file?.takeIf { it.exists() }?.delete()
+                        discardWorkingVideo(downloadedInfo.file)
                         failDownload(error)
                         return@fold
                     }
@@ -450,7 +480,7 @@ class MainViewModel @Inject constructor(
                         onSuccess = { audioFile -> onAudioReady(videoInfo, videoFile, audioFile) },
                         onFailure = { error ->
                             Log.e(tag, "downloadAudio extract failed", error)
-                            if (videoFile.exists()) videoFile.delete()
+                            discardWorkingVideo(videoFile)
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = AppError.AudioExtractFailed(),
@@ -495,10 +525,9 @@ class MainViewModel @Inject constructor(
         when (val pending = pendingSplitRequest) {
             is PendingSplitRequest.Audio -> {
                 if (pending.audioFile.exists()) pending.audioFile.delete()
-                if (pending.videoFile.exists()) pending.videoFile.delete()
+                discardWorkingVideo(pending.videoFile)
             }
-            is PendingSplitRequest.Video ->
-                pending.videoInfo.file?.let { if (it.exists()) it.delete() }
+            is PendingSplitRequest.Video -> discardWorkingVideo(pending.videoInfo.file)
             null -> {}
         }
     }
@@ -731,7 +760,8 @@ class MainViewModel @Inject constructor(
             videoInfo = videoInfo,
             splitMode = splitMode,
             chunkSizeBytes = chunkSizeBytes,
-            chapterHints = videoInfo.chapters
+            chapterHints = videoInfo.chapters,
+            keepSource = videoInfo.keepFile
         ) { currentPart, totalParts ->
             val denominator = max(totalParts, currentPart).toFloat().coerceAtLeast(1f)
             _uiState.value = _uiState.value.copy(
@@ -840,7 +870,7 @@ class MainViewModel @Inject constructor(
                     return@fold
                 }
 
-                if (videoFile.exists()) videoFile.delete()
+                discardWorkingVideo(videoFile)
                 if (audioFile.exists()) audioFile.delete()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -884,9 +914,7 @@ class MainViewModel @Inject constructor(
             }
             _shareRequests.emit(request)
         }
-        if (videoFile.exists()) {
-            videoFile.delete()
-        }
+        discardWorkingVideo(videoFile)
     }
 
     private fun renameForShare(files: List<File>, title: String): List<File> {

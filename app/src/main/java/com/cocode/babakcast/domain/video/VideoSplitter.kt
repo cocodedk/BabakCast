@@ -31,6 +31,7 @@ class VideoSplitter @Inject constructor() {
         splitMode: SplitMode = SplitMode.BY_SIZE,
         chunkSizeBytes: Long = MAX_CHUNK_SIZE_BYTES,
         chapterHints: List<VideoChapter> = videoInfo.chapters,
+        keepSource: Boolean = false,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)? = null
     ): Result<VideoInfo> = withContext(Dispatchers.IO) {
         try {
@@ -65,6 +66,7 @@ class VideoSplitter @Inject constructor() {
                     sourceSize = sourceSize,
                     duration = duration,
                     chapterHints = chapterHints,
+                    keepSource = keepSource,
                     onProgress = onProgress
                 )
                 SplitMode.BY_SIZE -> splitBySize(
@@ -75,6 +77,7 @@ class VideoSplitter @Inject constructor() {
                     duration = duration,
                     bytesPerSecond = bytesPerSecond,
                     chunkSizeBytes = chunkSizeBytes,
+                    keepSource = keepSource,
                     onProgress = onProgress
                 )
             }
@@ -91,6 +94,7 @@ class VideoSplitter @Inject constructor() {
         duration: Double,
         bytesPerSecond: Double,
         chunkSizeBytes: Long,
+        keepSource: Boolean,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
     ): Result<VideoInfo> {
         val chunkDuration = SplitSize.targetChunkBytes(chunkSizeBytes).toDouble() / bytesPerSecond
@@ -144,7 +148,7 @@ class VideoSplitter @Inject constructor() {
             chunkIndex++
         }
 
-        if (splitFiles.isNotEmpty()) {
+        if (splitFiles.isNotEmpty() && !keepSource) {
             videoFile.delete()
         }
         return Result.success(videoInfo.copy(file = null, splitFiles = splitFiles))
@@ -158,6 +162,7 @@ class VideoSplitter @Inject constructor() {
         sourceSize: Long,
         duration: Double,
         chapterHints: List<VideoChapter>,
+        keepSource: Boolean,
         onProgress: ((currentPart: Int, totalParts: Int) -> Unit)?
     ): Result<VideoInfo> {
         val estimatedChapters = ChapterSplitEstimator.estimateChapterBytes(
@@ -231,7 +236,7 @@ class VideoSplitter @Inject constructor() {
             splitFiles.add(outputFile)
         }
 
-        if (splitFiles.isNotEmpty()) {
+        if (splitFiles.isNotEmpty() && !keepSource) {
             videoFile.delete()
         }
 

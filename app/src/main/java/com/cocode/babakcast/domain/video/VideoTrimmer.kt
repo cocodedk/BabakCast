@@ -49,16 +49,22 @@ class VideoTrimmer @Inject constructor(
 ) {
 
     /**
-     * @return the segment as a new file. The source is deleted on success, so
-     *   only the requested segment survives.
+     * @param outputDir where the segment is written, which need not be the source's folder.
+     * @param keepSource true when the source is a video the user saved earlier, so it
+     *   must survive; false for a working download that only existed to be cut.
+     * @return the segment as a new file in [outputDir]. Unless [keepSource], the source
+     *   is deleted on success, so only the requested segment survives.
      */
-    suspend fun trim(sourceFile: File, range: TrimRange): Result<File> = withContext(Dispatchers.IO) {
+    suspend fun trim(
+        sourceFile: File,
+        range: TrimRange,
+        outputDir: File,
+        keepSource: Boolean
+    ): Result<File> = withContext(Dispatchers.IO) {
         if (!sourceFile.exists()) {
             Log.e(TAG, "trim aborted: source missing path=${sourceFile.absolutePath}")
             return@withContext Result.failure(Exception("Source video not found"))
         }
-        val outputDir = sourceFile.parentFile
-            ?: return@withContext Result.failure(Exception("Invalid output directory"))
 
         val outputFile = File(outputDir, ClipFileName.forSource(sourceFile))
         if (outputFile.absolutePath == sourceFile.absolutePath) {
@@ -81,11 +87,7 @@ class VideoTrimmer @Inject constructor(
         val bitrate = sourceBitrate(sourceFile)
         withContext(Dispatchers.Main) { export(sourceFile, tempFile, range, bitrate) }
             .mapCatching { clip ->
-                if (!clip.exists() || clip.length() <= 0L) {
-                    throw Exception("Trimmed file was not created")
-                }
-                if (!clip.renameTo(outputFile)) throw Exception("Could not save the trimmed file")
-                sourceFile.delete()
+                commitTrim(clip, outputFile, sourceFile, keepSource)
                 Log.d(TAG, "trim success output=${outputFile.name} outputBytes=${outputFile.length()}")
                 outputFile
             }
