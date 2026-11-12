@@ -40,6 +40,7 @@ class MediaRepository @Inject constructor(
     private val tag = "MediaRepository"
     /** Where saved videos live, and where a trim writes its clip. */
     val videosDir = File(context.getExternalFilesDir(null), "videos")
+    private val titlesDir = File(context.getExternalFilesDir(null), "titles")
     private val imagesDir = File(context.getExternalFilesDir(null), "images")
     private val transcriptsDir = File(context.getExternalFilesDir(null), "transcripts")
     private val ytDl = YoutubeDlWrapper(tag)
@@ -174,6 +175,7 @@ class MediaRepository @Inject constructor(
 
             val fileSize = outputFile.length()
             val needsSplitting = fileSize > VideoSplitter.MAX_CHUNK_SIZE_BYTES
+            SavedTitle.write(titlesDir, mediaId, title)
 
             Log.d(tag, "Download complete: platform=$platform baseName=$baseName path=${outputFile.absolutePath} sizeBytes=$fileSize needsSplitting=$needsSplitting")
             Result.success(
@@ -204,10 +206,17 @@ class MediaRepository @Inject constructor(
     ): VideoInfo {
         val metadata = if (needChapters) getVideoInfo(url).getOrNull() else null
         val fileSize = saved.length()
+        // The exact title, in order: just fetched, remembered from the first download, or
+        // (for a video saved by an older version) what the file name still holds.
+        val fetchedTitle = metadata?.title?.trim().orEmpty()
+        SavedTitle.write(titlesDir, mediaId, fetchedTitle)
+        val title = fetchedTitle.ifBlank {
+            SavedTitle.read(titlesDir, mediaId) ?: SavedVideo.titleOf(saved, mediaId)
+        }
         Log.d(tag, "Using the saved video: platform=$platform mediaId=$mediaId path=${saved.absolutePath} sizeBytes=$fileSize")
         return VideoInfo(
             videoId = mediaId,
-            title = metadata?.title?.trim().orEmpty().ifBlank { SavedVideo.titleOf(saved, mediaId) },
+            title = title,
             url = url,
             chapters = metadata?.chapters.orEmpty(),
             file = saved,
