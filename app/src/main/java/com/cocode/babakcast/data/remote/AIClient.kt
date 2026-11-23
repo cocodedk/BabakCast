@@ -46,11 +46,12 @@ class AIClient @Inject constructor(
         messages: List<AIMessage>,
         temperature: Double,
         maxTokens: Int,
-        readTimeoutMs: Long? = null
+        readTimeoutMs: Long? = null,
+        apiKey: String? = null
     ): Result<AIResponse> = withContext(Dispatchers.IO) {
         try {
-            // Get API key
-            val apiKey = secureStorage.getApiKey(provider.id)
+            // A passed key (a provider check before Save) wins over the stored one.
+            val key = apiKey ?: secureStorage.getApiKey(provider.id)
                 ?: return@withContext Result.failure(
                     IllegalArgumentException("API key not found for provider: ${provider.display_name}")
                 )
@@ -65,7 +66,7 @@ class AIClient @Inject constructor(
                 .url(url)
                 .post(requestBody.toRequestBody("application/json".toMediaType()))
                 .addHeader("Accept", "application/json")
-                .addHeader(provider.auth.header, "${provider.auth.prefix}$apiKey")
+                .addHeader(provider.auth.header, "${provider.auth.prefix}$key")
             ChatRequestBody.extraHeaders(provider).forEach { (name, value) -> requestBuilder.addHeader(name, value) }
             val request = requestBuilder.build()
             Log.d(
@@ -89,7 +90,8 @@ class AIClient @Inject constructor(
                 return@withContext Result.failure(
                     AppErrorException(
                         error = requestError(response.code, errorBody),
-                        message = "API request failed: ${response.code} - $errorBody"
+                        message = "API request failed: ${response.code} - $errorBody",
+                        cause = AiHttpStatus(response.code)
                     )
                 )
             }
