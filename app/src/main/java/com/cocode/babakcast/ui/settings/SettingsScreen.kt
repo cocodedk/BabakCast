@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -28,7 +29,8 @@ import com.cocode.babakcast.R
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    testViewModel: ProviderTestViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -126,6 +128,12 @@ fun SettingsScreen(
     // Provider Configuration Dialog
     if (uiState.showProviderDialog && uiState.selectedProvider != null) {
         val selectedProvider = uiState.selectedProvider!!
+        val testState by testViewModel.state.collectAsState()
+        val testInputs = ProviderTestInputs(
+            selectedProvider.id, uiState.editingApiKey, uiState.editingModel, uiState.editingApiUrl
+        )
+        // A result belongs to this dialog; closing it cancels the test and forgets the result.
+        DisposableEffect(selectedProvider.id) { onDispose { testViewModel.reset() } }
         ProviderConfigDialog(
             provider = selectedProvider,
             modelsToShow = viewModel.getModelsForProvider(selectedProvider),
@@ -143,7 +151,8 @@ fun SettingsScreen(
             onDelete = { viewModel.deleteProviderApiKey(selectedProvider.id) },
             onDismiss = viewModel::dismissProviderDialog,
             showUrlField = selectedProvider.id == "azure-openai",
-            hasExistingKey = uiState.editingApiKey.isNotBlank()
+            hasExistingKey = uiState.editingApiKey.isNotBlank(),
+            testRow = { ProviderTestRow(testState, testInputs) { testViewModel.test(selectedProvider, testInputs) } }
         )
     }
 }
@@ -167,7 +176,8 @@ private fun ProviderConfigDialog(
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
     showUrlField: Boolean,
-    hasExistingKey: Boolean
+    hasExistingKey: Boolean,
+    testRow: @Composable () -> Unit
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -285,6 +295,8 @@ private fun ProviderConfigDialog(
                         )
                     }
                 }
+
+                testRow()
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
