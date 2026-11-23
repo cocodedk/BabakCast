@@ -79,6 +79,7 @@ class ProviderRepository @Inject constructor(
         }
         secureStorage.deleteApiKey(providerId)
         deleteSelectedModel(providerId)
+        deleteEndpoint(providerId)
         loadProviders()
     }
 
@@ -122,13 +123,19 @@ class ProviderRepository @Inject constructor(
             .apply()
     }
 
-    /**
-     * Get provider with the currently selected model applied
-     */
+    /** Saves the endpoint the user typed (Azure: their resource and deployment URL). */
+    fun saveEndpoint(providerId: String, url: String) {
+        modelPrefs.edit().putString("url_$providerId", url).apply()
+    }
+
+    fun deleteEndpoint(providerId: String) {
+        modelPrefs.edit().remove("url_$providerId").apply()
+    }
+
+    /** The provider with the user's saved model and endpoint applied. */
     fun getProviderWithSelectedModel(providerId: String): Provider? {
         val provider = getProvider(providerId) ?: return null
-        val selectedModel = getSelectedModel(providerId)
-        return provider.copy(model = selectedModel)
+        return withOverrides(provider, getSelectedModel(providerId), modelPrefs.getString("url_$providerId", null))
     }
 
     /**
@@ -137,4 +144,12 @@ class ProviderRepository @Inject constructor(
      */
     suspend fun fetchModelsForProvider(providerId: String, apiKey: String?): Result<List<String>> =
         modelFetcher.fetchModelsForProvider(providerId, apiKey)
+
+    companion object {
+        /** [provider] with [model] and [endpoint] in place of its defaults; blank or null keeps a default. */
+        fun withOverrides(provider: Provider, model: String?, endpoint: String?): Provider = provider.copy(
+            model = model?.trim()?.ifBlank { null } ?: provider.model,
+            api_base_url = endpoint?.trim()?.ifBlank { null } ?: provider.api_base_url
+        )
+    }
 }

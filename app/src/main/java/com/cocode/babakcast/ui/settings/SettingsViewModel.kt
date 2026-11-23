@@ -103,7 +103,8 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(
             selectedProvider = provider,
             editingApiKey = currentApiKey,
-            editingApiUrl = provider.api_base_url,
+            editingApiUrl = providerRepository.getProviderWithSelectedModel(provider.id)?.api_base_url
+                ?: provider.api_base_url,
             editingModel = selectedModel,
             showModelDropdown = false,
             showProviderDialog = true,
@@ -172,8 +173,9 @@ class SettingsViewModel @Inject constructor(
 
     fun saveProviderConfig() {
         val provider = _uiState.value.selectedProvider ?: return
-        val apiKey = _uiState.value.editingApiKey
-        val model = _uiState.value.editingModel
+        val apiKey = _uiState.value.editingApiKey.trim()
+        val model = _uiState.value.editingModel.trim()
+        val endpoint = _uiState.value.editingApiUrl.trim()
 
         viewModelScope.launch {
             // Save API key
@@ -191,9 +193,17 @@ class SettingsViewModel @Inject constructor(
                 }
             }
 
-            // Save selected model
-            if (model.isNotBlank() && model != provider.model) {
-                providerRepository.saveSelectedModel(provider.id, model)
+            // The default model clears an older choice instead of leaving it in place.
+            when {
+                model.isBlank() -> Unit
+                model == provider.model -> providerRepository.deleteSelectedModel(provider.id)
+                else -> providerRepository.saveSelectedModel(provider.id, model)
+            }
+            // Only Azure shows the endpoint field; for the others it stays the default.
+            if (endpoint.isNotBlank() && endpoint != provider.api_base_url) {
+                providerRepository.saveEndpoint(provider.id, endpoint)
+            } else {
+                providerRepository.deleteEndpoint(provider.id)
             }
 
             refreshProviderStates()
@@ -205,6 +215,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             secureStorage.deleteApiKey(providerId)
             providerRepository.deleteSelectedModel(providerId)
+            providerRepository.deleteEndpoint(providerId)
             val currentDefault = settingsRepository.settings.first().defaultProviderId
             if (currentDefault == providerId) {
                 val fallback = providerRepository.providers.value.firstOrNull {
