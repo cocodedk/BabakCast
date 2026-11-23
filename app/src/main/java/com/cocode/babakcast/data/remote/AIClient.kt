@@ -9,11 +9,7 @@ import com.cocode.babakcast.data.repository.ProviderRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -65,12 +61,13 @@ class AIClient @Inject constructor(
             // Build HTTP request
             val url = provider.api_base_url.replace("{model}", provider.model)
             Log.d(tag, "Requesting provider=${provider.id} url=$url")
-            val request = Request.Builder()
+            val requestBuilder = Request.Builder()
                 .url(url)
                 .post(requestBody.toRequestBody("application/json".toMediaType()))
                 .addHeader("Accept", "application/json")
                 .addHeader(provider.auth.header, "${provider.auth.prefix}$apiKey")
-                .build()
+            ChatRequestBody.extraHeaders(provider).forEach { (name, value) -> requestBuilder.addHeader(name, value) }
+            val request = requestBuilder.build()
             Log.d(
                 tag,
                 "HTTP request provider=${provider.id} url=$url headers=${headerNames(request.headers)} bodyLength=${requestBody.length}"
@@ -133,37 +130,14 @@ class AIClient @Inject constructor(
         }
     }
 
-    /**
-     * Build request JSON based on provider schema
-     */
+    /** The request JSON in the provider's own format (see [ChatRequestBody]). */
     private fun buildRequest(
         provider: Provider,
         messages: List<AIMessage>,
         temperature: Double,
         maxTokens: Int
     ): String {
-        val jsonObject = buildJsonObject {
-            // Add messages
-            val messagesArray: List<JsonObject> = messages.map { msg ->
-                buildJsonObject {
-                    put("role", msg.role)
-                    put("content", msg.content)
-                }
-            }
-            put(provider.request.messages_path, JsonArray(messagesArray.map { it as JsonElement }))
-
-            // Add temperature
-            put(provider.request.temperature_path, temperature)
-
-            // Add max tokens
-            put(provider.request.max_tokens_path, maxTokens)
-
-            // Add model if needed (some providers need it in body)
-            if (provider.request.type == "chat") {
-                put("model", provider.model)
-            }
-        }
-
+        val jsonObject = ChatRequestBody.build(provider, messages, temperature, maxTokens)
         val body = json.encodeToString(JsonObject.serializer(), jsonObject)
         Log.d(tag, "Request body provider=${provider.id} length=${body.length} snippet=${body.take(500)}")
         return body
