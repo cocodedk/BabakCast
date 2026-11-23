@@ -44,6 +44,15 @@ internal class ShareTranslationRunner(
         }
     }
 
+    /**
+     * Shares with [caption] translated first when [enabled], inside the toggle lifecycle.
+     * A blank caption is shared as none, without asking the provider.
+     */
+    suspend fun shareCaptioned(caption: String, enabled: Boolean, share: (String?) -> Unit) =
+        withTranslation {
+            share(caption.ifBlank { null }?.let { textForShare(it, enabled) })
+        }
+
     suspend fun textForShare(text: String, enabled: Boolean): String = coroutineScope {
         val translation = async { translate(text, enabled) }
         activeTranslation = translation

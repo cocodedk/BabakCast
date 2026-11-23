@@ -317,11 +317,8 @@ class MainViewModel @Inject constructor(
                         loadingMessage = null,
                         isProgressIndeterminate = false
                     )
-                    val enabled = _uiState.value.translateBeforeShare
-                    shareTranslationRunner.withTranslation {
-                        val caption = result.text.ifBlank { null }
-                            ?.let { shareTranslationRunner.textForShare(it, enabled) }
-                        shareHelper.shareMixedMedia(result.allFiles, caption)
+                    shareTranslationRunner.shareCaptioned(result.text, _uiState.value.translateBeforeShare) {
+                        shareHelper.shareMixedMedia(result.allFiles, it)
                     }
                 },
                 onFailure = { error ->
@@ -731,6 +728,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /** The caption (an X post's text, a video's title) goes through the translate toggle, like every share. */
+    private suspend fun shareVideo(videoInfo: VideoInfo) =
+        shareTranslationRunner.shareCaptioned(videoInfo.title, _uiState.value.translateBeforeShare) {
+            shareHelper.shareVideos(videoInfo, it)
+        }
+
     private suspend fun splitAndShareVideo(
         videoInfo: VideoInfo,
         splitMode: SplitMode
@@ -747,7 +750,7 @@ class MainViewModel @Inject constructor(
                 isProgressIndeterminate = false,
                 splitChoicePrompt = null
             )
-            shareHelper.shareVideos(videoInfo)
+            shareVideo(videoInfo)
             return
         }
 
@@ -779,7 +782,7 @@ class MainViewModel @Inject constructor(
                     isProgressIndeterminate = false,
                     splitChoicePrompt = null
                 )
-                shareHelper.shareVideos(splitVideoInfo)
+                shareVideo(splitVideoInfo)
             },
             onFailure = { error ->
                 if (splitMode == SplitMode.CHAPTERS && isChapterTooLargeError(error)) {
