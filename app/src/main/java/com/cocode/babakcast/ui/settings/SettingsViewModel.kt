@@ -193,18 +193,14 @@ class SettingsViewModel @Inject constructor(
                 }
             }
 
-            // The default model clears an older choice instead of leaving it in place.
-            when {
-                model.isBlank() -> Unit
-                model == provider.model -> providerRepository.deleteSelectedModel(provider.id)
-                else -> providerRepository.saveSelectedModel(provider.id, model)
-            }
+            // A blank field or the default clears an older choice, as the test button assumes.
+            val modelOverride = ProviderSaveRules.override(model, provider.model)
+            if (modelOverride != null) providerRepository.saveSelectedModel(provider.id, modelOverride)
+            else providerRepository.deleteSelectedModel(provider.id)
             // Only Azure shows the endpoint field; for the others it stays the default.
-            if (endpoint.isNotBlank() && endpoint != provider.api_base_url) {
-                providerRepository.saveEndpoint(provider.id, endpoint)
-            } else {
-                providerRepository.deleteEndpoint(provider.id)
-            }
+            val endpointOverride = ProviderSaveRules.override(endpoint, provider.api_base_url)
+            if (endpointOverride != null) providerRepository.saveEndpoint(provider.id, endpointOverride)
+            else providerRepository.deleteEndpoint(provider.id)
 
             refreshProviderStates()
             dismissProviderDialog()

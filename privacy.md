@@ -17,7 +17,8 @@ When you use the **summarize** or translate features, BabakCast sends the text y
 
 You choose the provider. BabakCast lists the following in Settings and sends your content only to the one you select.
 - **OpenAI** — `api.openai.com`
-- **Azure OpenAI** (Microsoft) — `*.openai.azure.com`- **Anthropic** — `api.anthropic.com`
+- **Azure OpenAI** (Microsoft) — the endpoint address you enter in Settings (usually `*.openai.azure.com`)
+- **Anthropic** — `api.anthropic.com`
 - **Google Gemini** — `generativelanguage.googleapis.com`
 - **OpenRouter** — `openrouter.ai`
 

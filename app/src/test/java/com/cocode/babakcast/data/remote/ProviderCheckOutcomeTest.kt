@@ -13,8 +13,8 @@ import java.net.UnknownHostException
 class ProviderCheckOutcomeTest {
     private fun classify(result: Result<AIResponse>) = ProviderCheckOutcome.classify(result, elapsedMs = 1200)
 
-    private fun http(code: Int, error: AppError = AppError.AiRequestFailed()) =
-        Result.failure<AIResponse>(AppErrorException(error, "API request failed: $code", AiHttpStatus(code)))
+    private fun http(code: Int, error: AppError = AppError.AiRequestFailed(), body: String = "") =
+        Result.failure<AIResponse>(AppErrorException(error, "API request failed: $code", AiHttpStatus(code, body)))
 
     @Test
     fun success_works() {
@@ -31,6 +31,12 @@ class ProviderCheckOutcomeTest {
     fun unauthorizedOrForbidden_isKeyRejected() {
         assertEquals(ProviderCheckOutcome.KeyRejected, classify(http(401)))
         assertEquals(ProviderCheckOutcome.KeyRejected, classify(http(403)))
+    }
+
+    @Test
+    fun geminiInvalidKey_isKeyRejected() {
+        val body = """{"error":{"code":400,"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}"""
+        assertEquals(ProviderCheckOutcome.KeyRejected, classify(http(400, body = body)))
     }
 
     @Test

@@ -74,7 +74,7 @@ internal object PredefinedProviders {
                 header = "x-api-key",
                 prefix = ""
             ),
-            model = "claude-3-5-sonnet-20241022",
+            model = "claude-opus-5-5",
             available_models = emptyList(), // Fetched from Anthropic API when configuring
             request = RequestConfig(
                 type = "chat",
@@ -83,11 +83,13 @@ internal object PredefinedProviders {
                 max_tokens_path = "max_tokens"
             ),
             response = ResponseConfig(
-                content_path = "content[0].text"
+                // A thinking block can come before the reply text.
+                content_path = "content[type=text].text"
             ),
             limits = LimitConfig(
                 max_context_tokens = 200000,
-                max_output_tokens = 8192
+                // Claude always thinks now, and thinking shares this budget.
+                max_output_tokens = 16384
             )
         ),
         Provider(
@@ -99,7 +101,7 @@ internal object PredefinedProviders {
                 header = "x-goog-api-key",
                 prefix = ""
             ),
-            model = "gemini-1.5-flash",
+            model = "gemini-2.5-flash",
             available_models = emptyList(), // Fetched from Gemini API when configuring
             request = RequestConfig(
                 type = "chat",

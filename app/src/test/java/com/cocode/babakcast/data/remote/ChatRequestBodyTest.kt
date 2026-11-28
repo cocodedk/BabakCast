@@ -51,7 +51,8 @@ class ChatRequestBodyTest {
         assertEquals("Say OK.", msgs[0].jsonObject.text("content"))
         assertTrue(b.containsKey("model"))
         assertEquals(JsonPrimitive(100), b["max_tokens"])
-        assertEquals(JsonPrimitive(0.2), b["temperature"])
+        // Current Claude models reject sampling parameters.
+        assertFalse(b.containsKey("temperature"))
     }
 
     @Test

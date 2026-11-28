@@ -87,4 +87,18 @@ class AiResponseParserTest {
         assertEquals("Accept, api-key, x-goog-api-key", logged)
         assertFalse(logged.contains("SECRET"))
     }
+
+    private val anthropicPath = com.cocode.babakcast.data.repository.PredefinedProviders.ALL
+        .first { it.id == "anthropic" }.response.content_path
+
+    @Test
+    fun anthropicTextBlock_afterAThinkingBlock_isFound() {
+        val body = """{"content":[{"type":"thinking","thinking":""},{"type":"text","text":"OK"}]}"""
+        assertEquals("OK", AiResponseParser.parse(body, anthropicPath).content)
+    }
+
+    @Test
+    fun anthropicReply_withoutATextBlock_isUnreadable() {
+        assertUnreadable("""{"content":[{"type":"thinking","thinking":""}]}""", anthropicPath)
+    }
 }

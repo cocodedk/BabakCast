@@ -102,7 +102,7 @@ class ProviderRepository @Inject constructor(
      */
     fun getSelectedModel(providerId: String): String {
         val provider = getProvider(providerId) ?: return ""
-        return modelPrefs.getString("model_$providerId", null) ?: provider.model
+        return modelPrefs.getString("$MODEL_KEY_PREFIX$providerId", null) ?: provider.model
     }
 
     /**
@@ -110,7 +110,7 @@ class ProviderRepository @Inject constructor(
      */
     fun saveSelectedModel(providerId: String, model: String) {
         modelPrefs.edit()
-            .putString("model_$providerId", model)
+            .putString("$MODEL_KEY_PREFIX$providerId", model)
             .apply()
     }
 
@@ -119,23 +119,23 @@ class ProviderRepository @Inject constructor(
      */
     fun deleteSelectedModel(providerId: String) {
         modelPrefs.edit()
-            .remove("model_$providerId")
+            .remove("$MODEL_KEY_PREFIX$providerId")
             .apply()
     }
 
     /** Saves the endpoint the user typed (Azure: their resource and deployment URL). */
     fun saveEndpoint(providerId: String, url: String) {
-        modelPrefs.edit().putString("url_$providerId", url).apply()
+        modelPrefs.edit().putString("$ENDPOINT_KEY_PREFIX$providerId", url).apply()
     }
 
     fun deleteEndpoint(providerId: String) {
-        modelPrefs.edit().remove("url_$providerId").apply()
+        modelPrefs.edit().remove("$ENDPOINT_KEY_PREFIX$providerId").apply()
     }
 
     /** The provider with the user's saved model and endpoint applied. */
     fun getProviderWithSelectedModel(providerId: String): Provider? {
         val provider = getProvider(providerId) ?: return null
-        return withOverrides(provider, getSelectedModel(providerId), modelPrefs.getString("url_$providerId", null))
+        return withOverrides(provider, getSelectedModel(providerId), modelPrefs.getString("$ENDPOINT_KEY_PREFIX$providerId", null))
     }
 
     /**
@@ -146,6 +146,9 @@ class ProviderRepository @Inject constructor(
         modelFetcher.fetchModelsForProvider(providerId, apiKey)
 
     companion object {
+        private const val MODEL_KEY_PREFIX = "model_"
+        private const val ENDPOINT_KEY_PREFIX = "url_"
+
         /** [provider] with [model] and [endpoint] in place of its defaults; blank or null keeps a default. */
         fun withOverrides(provider: Provider, model: String?, endpoint: String?): Provider = provider.copy(
             model = model?.trim()?.ifBlank { null } ?: provider.model,

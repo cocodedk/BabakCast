@@ -59,19 +59,10 @@ class AIClient @Inject constructor(
             // Build request body
             val requestBody = buildRequest(provider, messages, temperature, maxTokens)
 
-            // Build HTTP request
-            val url = provider.api_base_url.replace("{model}", provider.model)
-            Log.d(tag, "Requesting provider=${provider.id} url=$url")
-            val requestBuilder = Request.Builder()
-                .url(url)
-                .post(requestBody.toRequestBody("application/json".toMediaType()))
-                .addHeader("Accept", "application/json")
-                .addHeader(provider.auth.header, "${provider.auth.prefix}$key")
-            ChatRequestBody.extraHeaders(provider).forEach { (name, value) -> requestBuilder.addHeader(name, value) }
-            val request = requestBuilder.build()
+            val request = buildHttpRequest(provider, key, requestBody)
             Log.d(
                 tag,
-                "HTTP request provider=${provider.id} url=$url headers=${headerNames(request.headers)} bodyLength=${requestBody.length}"
+                "HTTP request provider=${provider.id} url=${request.url} headers=${headerNames(request.headers)} bodyLength=${requestBody.length}"
             )
 
             // Execute request
@@ -87,13 +78,7 @@ class AIClient @Inject constructor(
                     "API error provider=${provider.id} code=${response.code} message=${response.message} " +
                         "contentType=${response.header("Content-Type")} headers=${response.headers} body=${errorBody.take(500)}"
                 )
-                return@withContext Result.failure(
-                    AppErrorException(
-                        error = requestError(response.code, errorBody),
-                        message = "API request failed: ${response.code} - $errorBody",
-                        cause = AiHttpStatus(response.code)
-                    )
-                )
+                return@withContext Result.failure(httpFailure(response.code, errorBody))
             }
 
             // Parse response
@@ -145,18 +130,41 @@ class AIClient @Inject constructor(
         return body
     }
 
-    /** A refused request: a usage limit has its own message, anything else is a general AI request failure. */
-    private fun requestError(code: Int, body: String): AppError =
-        if (code == 429 || body.contains("quota", ignoreCase = true)) {
-            AppError.ApiQuotaExceeded()
-        } else {
-            AppError.AiRequestFailed()
-        }
-
     /** A response BabakCast can't use. [technical] is for the log; the screen shows a plain message. */
     private fun unreadable(technical: String) = AppErrorException(AppError.AiResponseUnreadable(), technical)
 
     companion object {
+        /** Printable ASCII without the space: what an API key in an HTTP header may contain. */
+        private val HEADER_SAFE = '!'..'~'
+
+        /**
+         * The chat request for [provider]. A key an HTTP header can't carry is refused here: OkHttp
+         * would throw with the whole key in its message, and that message would reach the log.
+         */
+        internal fun buildHttpRequest(provider: Provider, key: String, body: String): Request {
+            if (key.any { it !in HEADER_SAFE }) {
+                val reason = AiKeyFormatError()
+                throw AppErrorException(AppError.ProviderMisconfigured(), reason.message.orEmpty(), reason)
+            }
+            val builder = Request.Builder()
+                .url(provider.api_base_url.replace("{model}", provider.model))
+                .post(body.toRequestBody("application/json".toMediaType()))
+                .addHeader("Accept", "application/json")
+                .addHeader(provider.auth.header, "${provider.auth.prefix}$key")
+            ChatRequestBody.extraHeaders(provider).forEach { (name, value) -> builder.addHeader(name, value) }
+            return builder.build()
+        }
+
+        /** A refused request: a usage limit has its own message, anything else is a general AI request failure. */
+        internal fun httpFailure(code: Int, body: String): AppErrorException {
+            val error = if (code == HttpStatus.TOO_MANY_REQUESTS || body.contains("quota", ignoreCase = true)) {
+                AppError.ApiQuotaExceeded()
+            } else {
+                AppError.AiRequestFailed()
+            }
+            return AppErrorException(error, "API request failed: $code - $body", AiHttpStatus(code, body))
+        }
+
         /**
          * Header names only. The auth header's value is the API key, and OkHttp redacts only
          * `Authorization`, not `api-key`, `x-api-key` or `x-goog-api-key`, so never log the values.

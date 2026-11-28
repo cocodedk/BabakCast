@@ -1,6 +1,7 @@
 package com.cocode.babakcast.data.repository
 
 import com.cocode.babakcast.data.remote.AnthropicModelsResponse
+import com.cocode.babakcast.data.remote.ChatRequestBody
 import com.cocode.babakcast.data.remote.GeminiModelsResponse
 import com.cocode.babakcast.data.remote.OpenAIModelsResponse
 import com.cocode.babakcast.data.remote.OpenRouterModelsResponse
@@ -58,7 +59,7 @@ internal class AiModelFetcher(
                 .url("https://api.anthropic.com/v1/models?limit=1000")
                 .get()
                 .addHeader("x-api-key", apiKey)
-                .addHeader("anthropic-version", "2023-06-01")
+                .addHeader(ChatRequestBody.ANTHROPIC_VERSION_HEADER, ChatRequestBody.ANTHROPIC_VERSION)
                 .build()
             val response = okHttpClient.newCall(request).execute()
             if (!response.isSuccessful) {
