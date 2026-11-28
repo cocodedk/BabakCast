@@ -101,4 +101,9 @@ class AiResponseParserTest {
     fun anthropicReply_withoutATextBlock_isUnreadable() {
         assertUnreadable("""{"content":[{"type":"thinking","thinking":""}]}""", anthropicPath)
     }
+
+    @Test
+    fun selectorWithoutAnEqualsSign_matchesNothing() {
+        assertUnreadable("""{"content":[{"abc":"abc","text":"no"}]}""", "content[abc].text")
+    }
 }

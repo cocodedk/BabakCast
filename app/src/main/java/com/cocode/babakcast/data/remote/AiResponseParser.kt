@@ -78,6 +78,7 @@ internal object AiResponseParser {
     /** An element by index ("0") or the first one whose field matches ("type=text"). */
     private fun select(array: JsonArray, selector: String): JsonElement? {
         selector.toIntOrNull()?.let { return array.getOrNull(it) }
+        if (!selector.contains("=")) return null
         val field = selector.substringBefore("=")
         val value = selector.substringAfter("=")
         return array.firstOrNull { ((it as? JsonObject)?.get(field) as? JsonPrimitive)?.content == value }
