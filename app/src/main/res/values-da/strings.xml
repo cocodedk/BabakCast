@@ -5,7 +5,7 @@
     <string name="url_clear_description">Ryd link</string>
     <string name="translate_title">Oversæt til persisk</string>
     <string name="translate_in_progress">Oversætter…</string>
-    <string name="translate_hint">Tilføjer en persisk oversættelse til den tekst, du deler: tweet-tekst (også når du kopierer den), resuméer og den tekst, der sendes med lyd eller X-medier. Et kopieret resumé og en delt video får ikke oversættelsen.</string>
+    <string name="translate_hint">Tilføjer en persisk oversættelse til den tekst, du deler: tweet-tekst (også når du kopierer den), resuméer og den tekst, der sendes med en video, lyd eller X-medier. Et kopieret resumé får ikke oversættelsen.</string>
     <string name="translate_share_now">Brug originalteksten</string>
     <string name="summary_title">RESUMÉ</string>
     <string name="summary_share">Del →</string>

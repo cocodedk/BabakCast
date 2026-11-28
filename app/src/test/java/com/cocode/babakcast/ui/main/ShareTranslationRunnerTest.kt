@@ -163,4 +163,53 @@ class ShareTranslationRunnerTest {
         assertTrue(share.isCancelled)
         assertNull(state.error)
     }
+
+    // --- shareCaptioned: the caption a share carries goes through the translation ---
+
+    @Test
+    fun shareCaptioned_enabled_sharesTranslatedCaption_andClearsFlags() = runBlocking {
+        var state = MainUiState(translateBeforeShare = true)
+        val r = runner(
+            state = { state },
+            setState = { state = it },
+            translate = { text, enabled ->
+                assertTrue(enabled)
+                ShareTranslationResult.Translated("$text + سلام")
+            }
+        )
+
+        var shared: String? = "not called"
+        r.shareCaptioned("hello", enabled = true) { shared = it }
+
+        assertEquals("hello + سلام", shared)
+        assertFalse(state.isTranslatingForShare)
+        assertFalse(state.translateBeforeShare)
+    }
+
+    @Test
+    fun shareCaptioned_disabled_sharesOriginalCaption() = runBlocking {
+        var state = MainUiState()
+        val r = runner(
+            state = { state },
+            setState = { state = it },
+            translate = { _, _ -> ShareTranslationResult.Skipped }
+        )
+
+        var shared: String? = "not called"
+        r.shareCaptioned("hello", enabled = false) { shared = it }
+
+        assertEquals("hello", shared)
+    }
+
+    @Test
+    fun shareCaptioned_blankCaption_sharesNoCaption_withoutTranslating() = runBlocking {
+        var state = MainUiState(translateBeforeShare = true)
+        val r = runner(state = { state }, setState = { state = it })
+
+        var shared: String? = "not called"
+        r.shareCaptioned("  ", enabled = true) { shared = it }
+
+        assertNull(shared)
+        assertFalse(state.translateBeforeShare)
+    }
 }

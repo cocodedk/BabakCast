@@ -43,7 +43,7 @@ An Android app that downloads videos from YouTube, X (Twitter), Instagram and Li
 - **Bring your own AI**: add your own API key and model under **Settings > AI Providers**. OpenAI and OpenRouter work in this version. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.
 - **No developer backend**: downloading, splitting and cutting run on your phone. Summaries and translations send text to the AI provider you set up. There are no accounts, no analytics and no tracking.
 - **Encrypted API keys**: stored on your phone with Android's EncryptedSharedPreferences.
-- **Optional Persian translation**: turn on *Translate to Persian* on the Home screen and BabakCast adds an AI-generated Persian translation below the original in the text you copy or share: tweet text, summaries, and the text that goes with audio and X media. A copied summary, shared video downloads and shares from the Downloads tab are not translated. Slow providers get up to 3 minutes. While it runs, *Use original text* skips the translation and shares the original, but if the provider has not answered yet, sharing can wait until that request ends.
+- **Optional Persian translation**: turn on *Translate to Persian* on the Home screen and BabakCast adds an AI-generated Persian translation below the original in the text you copy or share: tweet text, summaries, and the text that goes with videos, audio and X media. A copied summary and shares from the Downloads tab are not translated. Slow providers get up to 3 minutes. While it runs, *Use original text* skips the translation and shares the original, but if the provider has not answered yet, sharing can wait until that request ends.
 
 ---
 

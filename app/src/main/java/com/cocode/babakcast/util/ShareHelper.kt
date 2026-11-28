@@ -22,9 +22,9 @@ class ShareHelper @Inject constructor(
     private val tag = "ShareHelper"
     private val fileProviderAuthority = "${context.packageName}.fileprovider"
     /**
-     * Share video files
+     * Share video files. [caption] travels with them; by default it is the video's title.
      */
-    fun shareVideos(videoInfo: VideoInfo) {
+    fun shareVideos(videoInfo: VideoInfo, caption: String? = videoInfo.title.ifBlank { null }) {
         val filesToShare = if (videoInfo.splitFiles.isNotEmpty()) {
             videoInfo.splitFiles
         } else {
@@ -40,7 +40,7 @@ class ShareHelper @Inject constructor(
             files = filesToShare,
             mimeType = "video/*",
             title = context.getString(R.string.share_chooser_video),
-            text = videoInfo.title.ifBlank { null }
+            text = caption
         )
         if (chooser != null) {
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
