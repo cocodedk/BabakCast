@@ -2,7 +2,7 @@
 
 **App:** BabakCast (`com.cocode.babakcast`)
 **Developer:** CoCode.dk — Babak Bandpey
-**Last updated:** 7 October 2026
+**Last updated:** 28 November 2026
 
 > The canonical, always-current version of this policy is published at
 > **https://cast.cocode.dk/privacy/**
@@ -15,12 +15,10 @@ This policy explains exactly what leaves your device, where it goes, and what st
 
 When you use the **summarize** or translate features, BabakCast sends the text you are processing — the video transcript (for example, YouTube captions) or other text, together with a fixed instruction prompt — to the **AI provider you have configured in Settings**. That content leaves your device and is transmitted, over HTTPS, to that provider's servers, where it is processed under *their* privacy policy and data-retention practices.
 
-You choose the provider. BabakCast lists the following in Settings and sends your content only to the one you select. In this version OpenAI and OpenRouter work. Azure OpenAI, Anthropic and Google Gemini are listed but not finished yet.
-
+You choose the provider. BabakCast lists the following in Settings and sends your content only to the one you select.
 - **OpenAI** — `api.openai.com`
-- **Azure OpenAI** (Microsoft) — `*.openai.azure.com`. Not finished yet: this version cannot save the address of your own Azure resource, so the app uses a placeholder address instead.
-- **Anthropic** — `api.anthropic.com` (not finished yet)
-- **Google Gemini** — `generativelanguage.googleapis.com` (not finished yet)
+- **Azure OpenAI** (Microsoft) — `*.openai.azure.com`- **Anthropic** — `api.anthropic.com`
+- **Google Gemini** — `generativelanguage.googleapis.com`
 - **OpenRouter** — `openrouter.ai`
 
 These providers are independent data controllers. Their handling of your content is governed by their own policies:
