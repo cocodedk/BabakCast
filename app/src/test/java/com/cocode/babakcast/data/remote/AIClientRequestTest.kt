@@ -43,6 +43,12 @@ class AIClientRequestTest {
     }
 
     @Test
+    fun keySavedWithSurroundingWhitespace_isTrimmedNotRejected() {
+        val request = AIClient.buildHttpRequest(provider("anthropic"), " sk-test \n", "{}")
+        assertEquals("sk-test", request.header("x-api-key"))
+    }
+
+    @Test
     fun httpFailure_keepsTheCodeAndBody() {
         val failure = AIClient.httpFailure(400, "{\"error\":\"API_KEY_INVALID\"}")
         val status = failure.cause as AiHttpStatus

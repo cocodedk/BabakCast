@@ -134,23 +134,14 @@ class AIClient @Inject constructor(
     private fun unreadable(technical: String) = AppErrorException(AppError.AiResponseUnreadable(), technical)
 
     companion object {
-        /** Printable ASCII without the space: what an API key in an HTTP header may contain. */
-        private val HEADER_SAFE = '!'..'~'
-
-        /**
-         * The chat request for [provider]. A key an HTTP header can't carry is refused here: OkHttp
-         * would throw with the whole key in its message, and that message would reach the log.
-         */
+        /** The chat request for [provider]; the key goes through [ApiKeyHeader.clean] first. */
         internal fun buildHttpRequest(provider: Provider, key: String, body: String): Request {
-            if (key.any { it !in HEADER_SAFE }) {
-                val reason = AiKeyFormatError()
-                throw AppErrorException(AppError.ProviderMisconfigured(), reason.message.orEmpty(), reason)
-            }
+            val cleanKey = ApiKeyHeader.clean(key)
             val builder = Request.Builder()
                 .url(provider.api_base_url.replace("{model}", provider.model))
                 .post(body.toRequestBody("application/json".toMediaType()))
                 .addHeader("Accept", "application/json")
-                .addHeader(provider.auth.header, "${provider.auth.prefix}$key")
+                .addHeader(provider.auth.header, "${provider.auth.prefix}$cleanKey")
             ChatRequestBody.extraHeaders(provider).forEach { (name, value) -> builder.addHeader(name, value) }
             return builder.build()
         }
