@@ -48,8 +48,8 @@ internal object AiResponseParser {
     }
 
     /**
-     * Extract content from JSON using path notation
-     * Supports simple paths like "choices[0].message.content"
+     * Extract content from JSON using path notation: "choices[0].message.content" takes an index,
+     * "content[type=text].text" takes the first array element whose field has that value.
      */
     private fun extractContent(jsonObject: JsonObject, path: String): String? {
         val parts = path.split(".")
@@ -58,21 +58,30 @@ internal object AiResponseParser {
         for (part in parts) {
             val hasIndex = part.contains("[")
             val name = if (hasIndex) part.substringBefore("[") else part
-            val index = if (hasIndex) part.substringAfter("[").substringBefore("]").toIntOrNull() else null
+            val selector = if (hasIndex) part.substringAfter("[").substringBefore("]") else null
 
             if (name.isNotEmpty()) {
                 val obj = current as? JsonObject ?: return null
                 current = obj[name] ?: return null
             }
 
-            if (index != null) {
+            if (selector != null) {
                 val array = current as? JsonArray ?: return null
-                current = array.getOrNull(index) ?: return null
+                current = select(array, selector) ?: return null
             }
         }
 
         // Only a JSON string is reply text; null, a number or a boolean would read as "null", "42" or "true".
         return (current as? JsonPrimitive)?.takeIf { it.isString }?.content
+    }
+
+    /** An element by index ("0") or the first one whose field matches ("type=text"). */
+    private fun select(array: JsonArray, selector: String): JsonElement? {
+        selector.toIntOrNull()?.let { return array.getOrNull(it) }
+        if (!selector.contains("=")) return null
+        val field = selector.substringBefore("=")
+        val value = selector.substringAfter("=")
+        return array.firstOrNull { ((it as? JsonObject)?.get(field) as? JsonPrimitive)?.content == value }
     }
 
     /** Tokens used, when the reply says so. */

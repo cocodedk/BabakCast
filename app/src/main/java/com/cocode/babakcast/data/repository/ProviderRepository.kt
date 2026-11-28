@@ -3,11 +3,7 @@ package com.cocode.babakcast.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import com.cocode.babakcast.data.local.SecureStorage
-import com.cocode.babakcast.data.model.AuthConfig
-import com.cocode.babakcast.data.model.LimitConfig
 import com.cocode.babakcast.data.model.Provider
-import com.cocode.babakcast.data.model.RequestConfig
-import com.cocode.babakcast.data.model.ResponseConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,144 +46,7 @@ class ProviderRepository @Inject constructor(
         _providers.value = loadedProviders
     }
 
-    /**
-     * Get predefined providers with available models
-     */
-    private fun getPredefinedProviders(): List<Provider> {
-        return listOf(
-            Provider(
-                id = "openai",
-                display_name = "OpenAI",
-                api_base_url = "https://api.openai.com/v1/chat/completions",
-                auth = AuthConfig(
-                    type = "bearer",
-                    header = "Authorization",
-                    prefix = "Bearer "
-                ),
-                model = "gpt-4o-mini",
-                available_models = emptyList(), // Fetched from OpenAI API when configuring
-                request = RequestConfig(
-                    type = "chat",
-                    messages_path = "messages",
-                    temperature_path = "temperature",
-                    max_tokens_path = "max_tokens"
-                ),
-                response = ResponseConfig(
-                    content_path = "choices[0].message.content"
-                ),
-                limits = LimitConfig(
-                    max_context_tokens = 128000,
-                    max_output_tokens = 16384
-                )
-            ),
-            Provider(
-                id = "azure-openai",
-                display_name = "Azure OpenAI",
-                api_base_url = "https://YOUR_RESOURCE.openai.azure.com/openai/deployments/YOUR_DEPLOYMENT/chat/completions?api-version=2024-02-15-preview",
-                auth = AuthConfig(
-                    type = "api_key",
-                    header = "api-key",
-                    prefix = ""
-                ),
-                model = "gpt-4",
-                available_models = listOf(
-                    "gpt-4o",
-                    "gpt-4o-mini",
-                    "gpt-4-turbo",
-                    "gpt-4",
-                    "gpt-35-turbo"
-                ),
-                request = RequestConfig(
-                    type = "chat",
-                    messages_path = "messages",
-                    temperature_path = "temperature",
-                    max_tokens_path = "max_tokens"
-                ),
-                response = ResponseConfig(
-                    content_path = "choices[0].message.content"
-                ),
-                limits = LimitConfig(
-                    max_context_tokens = 128000,
-                    max_output_tokens = 16384
-                )
-            ),
-            Provider(
-                id = "anthropic",
-                display_name = "Anthropic",
-                api_base_url = "https://api.anthropic.com/v1/messages",
-                auth = AuthConfig(
-                    type = "api_key",
-                    header = "x-api-key",
-                    prefix = ""
-                ),
-                model = "claude-3-5-sonnet-20241022",
-                available_models = emptyList(), // Fetched from Anthropic API when configuring
-                request = RequestConfig(
-                    type = "chat",
-                    messages_path = "messages",
-                    temperature_path = "temperature",
-                    max_tokens_path = "max_tokens"
-                ),
-                response = ResponseConfig(
-                    content_path = "content[0].text"
-                ),
-                limits = LimitConfig(
-                    max_context_tokens = 200000,
-                    max_output_tokens = 8192
-                )
-            ),
-            Provider(
-                id = "google-gemini",
-                display_name = "Google Gemini",
-                api_base_url = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                auth = AuthConfig(
-                    type = "api_key",
-                    header = "x-goog-api-key",
-                    prefix = ""
-                ),
-                model = "gemini-1.5-flash",
-                available_models = emptyList(), // Fetched from Gemini API when configuring
-                request = RequestConfig(
-                    type = "chat",
-                    messages_path = "contents",
-                    temperature_path = "generationConfig.temperature",
-                    max_tokens_path = "generationConfig.maxOutputTokens"
-                ),
-                response = ResponseConfig(
-                    content_path = "candidates[0].content.parts[0].text"
-                ),
-                limits = LimitConfig(
-                    max_context_tokens = 1000000,
-                    max_output_tokens = 8192
-                )
-            ),
-            Provider(
-                id = "openrouter",
-                display_name = "OpenRouter",
-                api_base_url = "https://openrouter.ai/api/v1/chat/completions",
-                auth = AuthConfig(
-                    type = "bearer",
-                    header = "Authorization",
-                    prefix = "Bearer "
-                ),
-                model = "openai/gpt-4o-mini",
-                available_models = emptyList(), // Fetched from OpenRouter API when configuring
-                request = RequestConfig(
-                    type = "chat",
-                    messages_path = "messages",
-                    temperature_path = "temperature",
-                    max_tokens_path = "max_tokens"
-                ),
-                response = ResponseConfig(
-                    content_path = "choices[0].message.content"
-                ),
-                limits = LimitConfig(
-                    max_context_tokens = 128000,
-                    max_output_tokens = 16384
-                )
-            )
-        )
-    }
+    private fun getPredefinedProviders(): List<Provider> = PredefinedProviders.ALL
 
     private fun loadCustomProviders(): List<Provider> {
         val customProviders = mutableListOf<Provider>()
@@ -220,6 +79,7 @@ class ProviderRepository @Inject constructor(
         }
         secureStorage.deleteApiKey(providerId)
         deleteSelectedModel(providerId)
+        deleteEndpoint(providerId)
         loadProviders()
     }
 
@@ -242,7 +102,7 @@ class ProviderRepository @Inject constructor(
      */
     fun getSelectedModel(providerId: String): String {
         val provider = getProvider(providerId) ?: return ""
-        return modelPrefs.getString("model_$providerId", null) ?: provider.model
+        return modelPrefs.getString("$MODEL_KEY_PREFIX$providerId", null) ?: provider.model
     }
 
     /**
@@ -250,7 +110,7 @@ class ProviderRepository @Inject constructor(
      */
     fun saveSelectedModel(providerId: String, model: String) {
         modelPrefs.edit()
-            .putString("model_$providerId", model)
+            .putString("$MODEL_KEY_PREFIX$providerId", model)
             .apply()
     }
 
@@ -259,17 +119,23 @@ class ProviderRepository @Inject constructor(
      */
     fun deleteSelectedModel(providerId: String) {
         modelPrefs.edit()
-            .remove("model_$providerId")
+            .remove("$MODEL_KEY_PREFIX$providerId")
             .apply()
     }
 
-    /**
-     * Get provider with the currently selected model applied
-     */
+    /** Saves the endpoint the user typed (Azure: their resource and deployment URL). */
+    fun saveEndpoint(providerId: String, url: String) {
+        modelPrefs.edit().putString("$ENDPOINT_KEY_PREFIX$providerId", url).apply()
+    }
+
+    fun deleteEndpoint(providerId: String) {
+        modelPrefs.edit().remove("$ENDPOINT_KEY_PREFIX$providerId").apply()
+    }
+
+    /** The provider with the user's saved model and endpoint applied. */
     fun getProviderWithSelectedModel(providerId: String): Provider? {
         val provider = getProvider(providerId) ?: return null
-        val selectedModel = getSelectedModel(providerId)
-        return provider.copy(model = selectedModel)
+        return withOverrides(provider, getSelectedModel(providerId), modelPrefs.getString("$ENDPOINT_KEY_PREFIX$providerId", null))
     }
 
     /**
@@ -278,4 +144,15 @@ class ProviderRepository @Inject constructor(
      */
     suspend fun fetchModelsForProvider(providerId: String, apiKey: String?): Result<List<String>> =
         modelFetcher.fetchModelsForProvider(providerId, apiKey)
+
+    companion object {
+        private const val MODEL_KEY_PREFIX = "model_"
+        private const val ENDPOINT_KEY_PREFIX = "url_"
+
+        /** [provider] with [model] and [endpoint] in place of its defaults; blank or null keeps a default. */
+        fun withOverrides(provider: Provider, model: String?, endpoint: String?): Provider = provider.copy(
+            model = model?.trim()?.ifBlank { null } ?: provider.model,
+            api_base_url = endpoint?.trim()?.ifBlank { null } ?: provider.api_base_url
+        )
+    }
 }

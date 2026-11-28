@@ -254,4 +254,13 @@
         <item quantity="one">This permanently deletes the downloaded file from your device.</item>
         <item quantity="other">This permanently deletes the downloaded files from your device.</item>
     </plurals>
+    <string name="provider_test">Test connection</string>
+    <string name="provider_test_running">Testing…</string>
+    <string name="provider_test_works">Works. The provider answered in %1$.1f s.</string>
+    <string name="provider_test_unreadable">Connected, but the reply couldn\'t be read. Try another model.</string>
+    <string name="provider_test_key_rejected">The provider rejected this API key.</string>
+    <string name="provider_test_not_found">The provider couldn\'t find this model or endpoint.</string>
+    <string name="provider_test_usage_limit">Your provider\'s usage limit has been reached.</string>
+    <string name="provider_test_refused">The provider refused the request (code %1$d). Check the model.</string>
+    <string name="provider_test_unreachable">Can\'t reach the provider. Check your internet connection and the endpoint.</string>
 </resources>

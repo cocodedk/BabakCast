@@ -9,11 +9,7 @@ import com.cocode.babakcast.data.repository.ProviderRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -50,11 +46,12 @@ class AIClient @Inject constructor(
         messages: List<AIMessage>,
         temperature: Double,
         maxTokens: Int,
-        readTimeoutMs: Long? = null
+        readTimeoutMs: Long? = null,
+        apiKey: String? = null
     ): Result<AIResponse> = withContext(Dispatchers.IO) {
         try {
-            // Get API key
-            val apiKey = secureStorage.getApiKey(provider.id)
+            // A passed key (a provider check before Save) wins over the stored one.
+            val key = apiKey ?: secureStorage.getApiKey(provider.id)
                 ?: return@withContext Result.failure(
                     IllegalArgumentException("API key not found for provider: ${provider.display_name}")
                 )
@@ -62,18 +59,10 @@ class AIClient @Inject constructor(
             // Build request body
             val requestBody = buildRequest(provider, messages, temperature, maxTokens)
 
-            // Build HTTP request
-            val url = provider.api_base_url.replace("{model}", provider.model)
-            Log.d(tag, "Requesting provider=${provider.id} url=$url")
-            val request = Request.Builder()
-                .url(url)
-                .post(requestBody.toRequestBody("application/json".toMediaType()))
-                .addHeader("Accept", "application/json")
-                .addHeader(provider.auth.header, "${provider.auth.prefix}$apiKey")
-                .build()
+            val request = buildHttpRequest(provider, key, requestBody)
             Log.d(
                 tag,
-                "HTTP request provider=${provider.id} url=$url headers=${headerNames(request.headers)} bodyLength=${requestBody.length}"
+                "HTTP request provider=${provider.id} url=${request.url} headers=${headerNames(request.headers)} bodyLength=${requestBody.length}"
             )
 
             // Execute request
@@ -89,12 +78,7 @@ class AIClient @Inject constructor(
                     "API error provider=${provider.id} code=${response.code} message=${response.message} " +
                         "contentType=${response.header("Content-Type")} headers=${response.headers} body=${errorBody.take(500)}"
                 )
-                return@withContext Result.failure(
-                    AppErrorException(
-                        error = requestError(response.code, errorBody),
-                        message = "API request failed: ${response.code} - $errorBody"
-                    )
-                )
+                return@withContext Result.failure(httpFailure(response.code, errorBody))
             }
 
             // Parse response
@@ -133,54 +117,45 @@ class AIClient @Inject constructor(
         }
     }
 
-    /**
-     * Build request JSON based on provider schema
-     */
+    /** The request JSON in the provider's own format (see [ChatRequestBody]). */
     private fun buildRequest(
         provider: Provider,
         messages: List<AIMessage>,
         temperature: Double,
         maxTokens: Int
     ): String {
-        val jsonObject = buildJsonObject {
-            // Add messages
-            val messagesArray: List<JsonObject> = messages.map { msg ->
-                buildJsonObject {
-                    put("role", msg.role)
-                    put("content", msg.content)
-                }
-            }
-            put(provider.request.messages_path, JsonArray(messagesArray.map { it as JsonElement }))
-
-            // Add temperature
-            put(provider.request.temperature_path, temperature)
-
-            // Add max tokens
-            put(provider.request.max_tokens_path, maxTokens)
-
-            // Add model if needed (some providers need it in body)
-            if (provider.request.type == "chat") {
-                put("model", provider.model)
-            }
-        }
-
+        val jsonObject = ChatRequestBody.build(provider, messages, temperature, maxTokens)
         val body = json.encodeToString(JsonObject.serializer(), jsonObject)
         Log.d(tag, "Request body provider=${provider.id} length=${body.length} snippet=${body.take(500)}")
         return body
     }
 
-    /** A refused request: a usage limit has its own message, anything else is a general AI request failure. */
-    private fun requestError(code: Int, body: String): AppError =
-        if (code == 429 || body.contains("quota", ignoreCase = true)) {
-            AppError.ApiQuotaExceeded()
-        } else {
-            AppError.AiRequestFailed()
-        }
-
     /** A response BabakCast can't use. [technical] is for the log; the screen shows a plain message. */
     private fun unreadable(technical: String) = AppErrorException(AppError.AiResponseUnreadable(), technical)
 
     companion object {
+        /** The chat request for [provider]; the key goes through [ApiKeyHeader.clean] first. */
+        internal fun buildHttpRequest(provider: Provider, key: String, body: String): Request {
+            val cleanKey = ApiKeyHeader.clean(key)
+            val builder = Request.Builder()
+                .url(provider.api_base_url.replace("{model}", provider.model))
+                .post(body.toRequestBody("application/json".toMediaType()))
+                .addHeader("Accept", "application/json")
+                .addHeader(provider.auth.header, "${provider.auth.prefix}$cleanKey")
+            ChatRequestBody.extraHeaders(provider).forEach { (name, value) -> builder.addHeader(name, value) }
+            return builder.build()
+        }
+
+        /** A refused request: a usage limit has its own message, anything else is a general AI request failure. */
+        internal fun httpFailure(code: Int, body: String): AppErrorException {
+            val error = if (code == HttpStatus.TOO_MANY_REQUESTS || body.contains("quota", ignoreCase = true)) {
+                AppError.ApiQuotaExceeded()
+            } else {
+                AppError.AiRequestFailed()
+            }
+            return AppErrorException(error, "API request failed: $code - $body", AiHttpStatus(code, body))
+        }
+
         /**
          * Header names only. The auth header's value is the API key, and OkHttp redacts only
          * `Authorization`, not `api-key`, `x-api-key` or `x-goog-api-key`, so never log the values.

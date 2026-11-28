@@ -1,6 +1,8 @@
 package com.cocode.babakcast.data.repository
 
 import com.cocode.babakcast.data.remote.AnthropicModelsResponse
+import com.cocode.babakcast.data.remote.ApiKeyHeader
+import com.cocode.babakcast.data.remote.ChatRequestBody
 import com.cocode.babakcast.data.remote.GeminiModelsResponse
 import com.cocode.babakcast.data.remote.OpenAIModelsResponse
 import com.cocode.babakcast.data.remote.OpenRouterModelsResponse
@@ -34,7 +36,7 @@ internal class AiModelFetcher(
             val request = Request.Builder()
                 .url("https://api.openai.com/v1/models")
                 .get()
-                .addHeader("Authorization", "Bearer $apiKey")
+                .addHeader("Authorization", "Bearer ${ApiKeyHeader.clean(apiKey)}")
                 .build()
             val response = okHttpClient.newCall(request).execute()
             if (!response.isSuccessful) {
@@ -57,8 +59,8 @@ internal class AiModelFetcher(
             val request = Request.Builder()
                 .url("https://api.anthropic.com/v1/models?limit=1000")
                 .get()
-                .addHeader("x-api-key", apiKey)
-                .addHeader("anthropic-version", "2023-06-01")
+                .addHeader("x-api-key", ApiKeyHeader.clean(apiKey))
+                .addHeader(ChatRequestBody.ANTHROPIC_VERSION_HEADER, ChatRequestBody.ANTHROPIC_VERSION)
                 .build()
             val response = okHttpClient.newCall(request).execute()
             if (!response.isSuccessful) {
@@ -78,7 +80,7 @@ internal class AiModelFetcher(
     private suspend fun fetchGeminiModels(apiKey: String?): Result<List<String>> = withContext(Dispatchers.IO) {
         if (apiKey.isNullOrBlank()) return@withContext Result.failure(Exception("Gemini API key required to list models"))
         try {
-            val url = "https://generativelanguage.googleapis.com/v1beta/models?key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
+            val url = "https://generativelanguage.googleapis.com/v1beta/models?key=${java.net.URLEncoder.encode(ApiKeyHeader.clean(apiKey), "UTF-8")}"
             val request = Request.Builder().url(url).get().build()
             val response = okHttpClient.newCall(request).execute()
             if (!response.isSuccessful) {
@@ -103,7 +105,7 @@ internal class AiModelFetcher(
                 .url("https://openrouter.ai/api/v1/models")
                 .get()
             if (!apiKey.isNullOrBlank()) {
-                requestBuilder.addHeader("Authorization", "Bearer $apiKey")
+                requestBuilder.addHeader("Authorization", "Bearer ${ApiKeyHeader.clean(apiKey)}")
             }
             val response = okHttpClient.newCall(requestBuilder.build()).execute()
             if (!response.isSuccessful) {

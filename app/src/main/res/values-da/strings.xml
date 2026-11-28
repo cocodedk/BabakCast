@@ -254,4 +254,13 @@
         <item quantity="one">Den hentede fil slettes for altid fra din enhed.</item>
         <item quantity="other">De hentede filer slettes for altid fra din enhed.</item>
     </plurals>
+    <string name="provider_test">Test forbindelsen</string>
+    <string name="provider_test_running">Tester…</string>
+    <string name="provider_test_works">Det virker. Udbyderen svarede på %1$.1f s.</string>
+    <string name="provider_test_unreadable">Forbindelsen virker, men svaret kunne ikke læses. Prøv en anden model.</string>
+    <string name="provider_test_key_rejected">Udbyderen afviste denne API-nøgle.</string>
+    <string name="provider_test_not_found">Udbyderen kunne ikke finde denne model eller API-adresse.</string>
+    <string name="provider_test_usage_limit">Din AI-udbyders forbrugsgrænse er nået.</string>
+    <string name="provider_test_refused">Udbyderen afviste anmodningen (kode %1$d). Tjek modellen.</string>
+    <string name="provider_test_unreachable">Udbyderen kan ikke nås. Tjek din internetforbindelse og API-adressen.</string>
 </resources>
