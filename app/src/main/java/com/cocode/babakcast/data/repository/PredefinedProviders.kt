@@ -74,7 +74,7 @@ internal object PredefinedProviders {
                 header = "x-api-key",
                 prefix = ""
             ),
-            model = "claude-opus-5-5",
+            model = "claude-sonnet-5-5",
             available_models = emptyList(), // Fetched from Anthropic API when configuring
             request = RequestConfig(
                 type = "chat",
