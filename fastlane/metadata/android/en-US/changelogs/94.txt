@@ -1,0 +1,1 @@
+- With "Translate to Persian" on, "Download Video" and "Download and split video" now add the Persian translation to the text shared with the video, such as an X post's text.

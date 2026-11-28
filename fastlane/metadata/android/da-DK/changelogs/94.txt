@@ -1,0 +1,1 @@
+- Med "Oversæt til persisk" slået til får "Hent video" og "Hent og opdel video" nu den persiske oversættelse med i teksten, der deles med videoen, fx teksten fra et X-opslag.
